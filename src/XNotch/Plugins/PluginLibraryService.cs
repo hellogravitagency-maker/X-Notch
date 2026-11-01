@@ -288,7 +288,7 @@ public class PluginLibraryService
         return string.Join("_", name.Split(invalid, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
     }
 
-    private class PluginLibrary
+    public class PluginLibrary
     {
         [JsonPropertyName("version")]
         public string Version { get; set; } = "1.0";

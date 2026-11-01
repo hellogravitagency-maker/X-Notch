@@ -1,0 +1,16 @@
+{
+  "id": "com.xnotch.quicknotes",
+  "name": "Quick Notes",
+  "version": "1.0.0",
+  "author": "X-Notch Team",
+  "description": "Instant scratchpad & task notes right inside the dynamic island with auto-save & clipboard copy.",
+  "minimumXNotchVersion": "0.7.0",
+  "downloadUrl": "https://github.com/hellogravitagency-maker/X-Notch/releases/download/v1.0.0/QuickNotesPlugin.dll",
+  "homepage": "https://github.com/hellogravitagency-maker/X-Notch",
+  "iconUrl": "",
+  "category": "Productivity",
+  "permissions": [],
+  "dependencies": [],
+  "releaseDate": "2026-11-02T00:00:00Z",
+  "isVerified": true
+}
