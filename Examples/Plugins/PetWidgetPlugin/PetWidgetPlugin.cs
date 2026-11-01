@@ -5,21 +5,21 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
-using WinNotch.Services;
+using XNotch.Models;
+using XNotch.Plugins;
+using XNotch.Services;
 
 namespace PetWidgetPlugin;
 
-[WinNotchPlugin("com.winnotch.petwidget", "Pet Widget", "1.0.1", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.petwidget", "Pet Widget", "1.0.1", "X-Notch Team")]
 public class PetWidgetPlugin : PluginBase, IUIPlugin
 {
-    public override string Id => "com.winnotch.petwidget";
+    public override string Id => "com.xnotch.petwidget";
     public override string Name => "Pet Widget";
     public override string Version => "1.0.1";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "A tiny notch cat that reacts to battery level, mood, and attention.";
-    public override string MinimumWinNotchVersion => "0.3.0";
+    public override string MinimumXNotchVersion => "0.3.0";
 
     private ThemeService? _themeService;
     private BatteryService? _batteryService;

@@ -1,0 +1,490 @@
+<UserControl x:Class="XNotch.Views.SystemVitalsWidgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="128">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- macOS Segmented Capsule Button -->
+            <Style x:Key="MacSegmentButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="Padding" Value="9,0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    CornerRadius="10"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Opacity" Value="0.85"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Opacity" Value="0.65"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- macOS Minimal Action Button -->
+            <Style x:Key="MacActionButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="22"/>
+                <Setter Property="Padding" Value="8,0"/>
+                <Setter Property="Background" Value="#1A1A1E"/>
+                <Setter Property="BorderBrush" Value="#26262C"/>
+                <Setter Property="BorderThickness" Value="0.8"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="Scale" ScaleX="1.0" ScaleY="1.0"/>
+                                </Border.RenderTransform>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#24242A"/>
+                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#3A3A42"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#2E2E36"/>
+                                    <Setter TargetName="Bg" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.94" ScaleY="0.94"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Compact Mini Pill Button for Drive Switcher -->
+            <Style x:Key="MacMiniPillButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="17"/>
+                <Setter Property="Padding" Value="5,0"/>
+                <Setter Property="Background" Value="#1AFFFFFF"/>
+                <Setter Property="BorderBrush" Value="#22FFFFFF"/>
+                <Setter Property="BorderThickness" Value="0.6"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8"
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="Scale" ScaleX="1.0" ScaleY="1.0"/>
+                                </Border.RenderTransform>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#28FFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#35FFFFFF"/>
+                                    <Setter TargetName="Bg" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.92" ScaleY="0.92"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Center" Margin="2,0">
+        <Grid.RowDefinitions>
+            <!-- Row 0: macOS Header with Title and Segmented Page Switcher -->
+            <RowDefinition Height="24"/>
+            <!-- Row 1: Content Area (Page 1: Primary Vitals | Page 2: Storage & Network & Settings) -->
+            <RowDefinition Height="94"/>
+        </Grid.RowDefinitions>
+
+        <!-- macOS Header Row -->
+        <Grid Grid.Row="0" Margin="2,0,2,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Minimalist macOS Label -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="SYSTEM" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource TextTertiaryBrush}"
+                           VerticalAlignment="Center"/>
+                <TextBlock Text="·" FontSize="9" Foreground="{DynamicResource TextMutedBrush}" Margin="5,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="DeviceModelBadge" Text="VITALS" FontSize="8.5" FontWeight="Medium"
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Right: macOS Segmented Capsule Control [ Vitals | Storage & Net ] -->
+            <Border Grid.Column="1" HorizontalAlignment="Right" Height="22" CornerRadius="11"
+                    Background="{DynamicResource SegmentedBgBrush}" BorderThickness="0.8" BorderBrush="{DynamicResource BorderBrush}"
+                    VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="TabVitalsButton"
+                            Style="{StaticResource MacSegmentButton}"
+                            Background="{DynamicResource SegmentedCheckedBgBrush}"
+                            Click="OnTabVitalsClick"
+                            ToolTip="Core CPU, Memory &amp; Graphics telemetry">
+                        <TextBlock x:Name="TabVitalsText" Text="Vitals" FontSize="8.2" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </Button>
+
+                    <Button x:Name="TabDetailsButton"
+                            Style="{StaticResource MacSegmentButton}"
+                            Background="Transparent"
+                            Click="OnTabDetailsClick"
+                            ToolTip="Storage, Network Throughput &amp; System Settings">
+                        <TextBlock x:Name="TabDetailsText" Text="Storage &amp; Net" FontSize="8.2" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══ PAGE 1: PRIMARY VITALS (CPU, MEMORY, GRAPHICS) ═══ -->
+        <Grid x:Name="PageVitalsGrid" Grid.Row="1" Visibility="Visible">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Card 1: CPU -->
+            <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.8"
+                    CornerRadius="10" Padding="10,8" Margin="0,0,4,0"
+                    ToolTip="Processor Utilization &amp; Dynamic Frequency">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="CPU" FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="CpuCoresPill" Grid.Column="1" Text="Cores" FontSize="7.5"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Large Tabular Value -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,3,0,3" VerticalAlignment="Center">
+                        <TextBlock x:Name="CpuText" Text="0%" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Typography.NumeralAlignment="Tabular"/>
+                        <TextBlock x:Name="CpuSubtitle" Text="-- GHz" FontSize="8.5" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="5,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                    </StackPanel>
+
+                    <!-- Hairline Monochrome Progress Line -->
+                    <Grid Grid.Row="2" Height="2.5" Margin="0,1,0,3">
+                        <Border Background="{DynamicResource ProgressTrackBrush}" CornerRadius="1.25"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="CpuFillCol" Width="0*"/>
+                                <ColumnDefinition x:Name="CpuEmptyCol" Width="100*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{DynamicResource ProgressFillBrush}" CornerRadius="1.25"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="3" x:Name="CpuDetailText" Text="Dynamic Clock" FontSize="7.5"
+                               Foreground="{DynamicResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 2: Memory (RAM) -->
+            <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.8"
+                    CornerRadius="10" Padding="10,8" Margin="0,0,4,0"
+                    ToolTip="Physical Memory Utilization">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="MEMORY" FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="RamSubtitle" Grid.Column="1" Text="-- GB" FontSize="7.5"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Large Tabular Value -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,3,0,3" VerticalAlignment="Center">
+                        <TextBlock x:Name="RamText" Text="0%" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Typography.NumeralAlignment="Tabular"/>
+                        <TextBlock x:Name="RamTotalText" Text="/ -- GB" FontSize="8.5" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="5,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                    </StackPanel>
+
+                    <!-- Hairline Monochrome Progress Line -->
+                    <Grid Grid.Row="2" Height="2.5" Margin="0,1,0,3">
+                        <Border Background="{DynamicResource ProgressTrackBrush}" CornerRadius="1.25"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="RamFillCol" Width="0*"/>
+                                <ColumnDefinition x:Name="RamEmptyCol" Width="100*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{DynamicResource ProgressFillBrush}" CornerRadius="1.25"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="3" x:Name="RamDetailText" Text="Available Memory" FontSize="7.5"
+                               Foreground="{DynamicResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 3: Graphics (GPU) -->
+            <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.8"
+                    CornerRadius="10" Padding="10,8"
+                    ToolTip="Graphics Core &amp; VRAM Utilization">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="GRAPHICS" FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="GpuModePill" Grid.Column="1" Text="GPU" FontSize="7.5"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"
+                                   MaxWidth="55" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+
+                    <!-- Large Tabular Value -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,3,0,3" VerticalAlignment="Center">
+                        <TextBlock x:Name="GpuText" Text="0%" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Typography.NumeralAlignment="Tabular"/>
+                        <TextBlock x:Name="GpuSubtitle" Text="--°C" FontSize="8.5" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="5,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                    </StackPanel>
+
+                    <!-- Hairline Monochrome Progress Line -->
+                    <Grid Grid.Row="2" Height="2.5" Margin="0,1,0,3">
+                        <Border Background="{DynamicResource ProgressTrackBrush}" CornerRadius="1.25"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="GpuFillCol" Width="0*"/>
+                                <ColumnDefinition x:Name="GpuEmptyCol" Width="100*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{DynamicResource ProgressFillBrush}" CornerRadius="1.25"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="3" x:Name="GpuDetailText" Text="Dedicated VRAM" FontSize="7.5"
+                               Foreground="{DynamicResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ═══ PAGE 2: STORAGE, NETWORK & SYSTEM SETTINGS ═══ -->
+        <Grid x:Name="PageDetailsGrid" Grid.Row="1" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="1.15*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Card 1: Storage (Drive Partition) -->
+            <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.8"
+                    CornerRadius="10" Padding="10,8" Margin="0,0,4,0"
+                    ToolTip="Drive Utilization. Click badge to cycle drives.">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="STORAGE" FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <Button x:Name="DiskCycleButton" Grid.Column="1"
+                                Style="{StaticResource MacMiniPillButton}"
+                                Click="OnDiskCycleClick"
+                                ToolTip="Click to cycle mounted drive partition">
+                            <TextBlock x:Name="DiskLetterBadge" Text="C: ⟳" FontSize="7.5"
+                                       FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Large Tabular Value -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,3,0,3" VerticalAlignment="Center">
+                        <TextBlock x:Name="DiskText" Text="0%" FontSize="20" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Typography.NumeralAlignment="Tabular"/>
+                        <TextBlock x:Name="DiskFreeText" Text="-- Free" FontSize="8.5" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="5,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                    </StackPanel>
+
+                    <!-- Hairline Monochrome Progress Line -->
+                    <Grid Grid.Row="2" Height="2.5" Margin="0,1,0,3">
+                        <Border Background="{DynamicResource ProgressTrackBrush}" CornerRadius="1.25"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="DiskFillCol" Width="0*"/>
+                                <ColumnDefinition x:Name="DiskEmptyCol" Width="100*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{DynamicResource ProgressFillBrush}" CornerRadius="1.25"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="3" x:Name="DiskDetailText" Text="Drive Capacity" FontSize="7.5"
+                               Foreground="{DynamicResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 2: Network I/O -->
+            <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.8"
+                    CornerRadius="10" Padding="10,8" Margin="0,0,4,0"
+                    ToolTip="Real-time Network Throughput">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="NETWORK" FontSize="8.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="I/O" FontSize="7.5" Foreground="{DynamicResource TextTertiaryBrush}" Grid.Column="1" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Download & Upload Speeds -->
+                    <StackPanel Grid.Row="1" Margin="0,3,0,3" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="↓" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NetDownText" Text="0 KB/s" FontSize="11" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,1,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="↑" FontSize="8" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NetUpText" Text="0 KB/s" FontSize="9" FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Typography.NumeralAlignment="Tabular" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Hairline Separator -->
+                    <Border Grid.Row="2" Height="1" Background="{DynamicResource ProgressTrackBrush}" Margin="0,1,0,3"/>
+
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="3" Text="Throughput Traffic" FontSize="7.5"
+                               Foreground="{DynamicResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+            </Border>
+
+            <!-- Card 3: System & Settings Shortcuts -->
+            <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.8"
+                    CornerRadius="10" Padding="8,8"
+                    ToolTip="System Power &amp; Quick Utilities">
+                <Grid VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Power Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="PowerIcon" Text="⚡" FontSize="8.5" Margin="0,0,4,0" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="PowerStatusText" Grid.Column="1" Text="AC Power" FontSize="8" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+
+                    <!-- Shortcut 1: Task Manager Button -->
+                    <Button Grid.Row="1"
+                            Style="{StaticResource MacActionButton}"
+                            Click="OnTaskManagerClick"
+                            ToolTip="Open Windows Task Manager (Ctrl+Shift+Esc)"
+                            Margin="0,0,0,4">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="📊" FontSize="8" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Task Manager" FontSize="7.8" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Shortcut 2: Operating Mode Switcher Button -->
+                    <Button x:Name="OperatingModeButton" Grid.Row="2"
+                            Style="{StaticResource MacActionButton}"
+                            Click="OnOperatingModeClick"
+                            ToolTip="Click to change operating power mode (Balanced, Performance, Turbo, Silent, Eco)">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock x:Name="OperatingModeIcon" Text="⚡" FontSize="8.5" Margin="0,0,4,0" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="OperatingModeText" Text="Performance" FontSize="7.8" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

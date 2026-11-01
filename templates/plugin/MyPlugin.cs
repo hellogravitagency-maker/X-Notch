@@ -2,13 +2,13 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using WinNotch.Models;
-using WinNotch.Plugins;
+using XNotch.Models;
+using XNotch.Plugins;
 
-namespace MyWinNotchPlugin;
+namespace MyXNotchPlugin;
 
 /// <summary>
-/// Example WinNotch plugin. Rename this class and update the metadata below.
+/// Example X-Notch plugin. Rename this class and update the metadata below.
 /// 
 /// Plugin types you can implement:
 ///   - IUIPlugin      → Inject UI into the notch (closed, open, settings, overlay)
@@ -16,14 +16,14 @@ namespace MyWinNotchPlugin;
 ///   - IAnimationPlugin → Override notch animations
 ///   - Or just IPlugin for basic lifecycle hooks
 /// </summary>
-[WinNotchPlugin("com.yourname.myplugin", "My Plugin", "1.0.0", "Your Name")]
+[XNotchPlugin("com.yourname.myplugin", "My Plugin", "1.0.0", "Your Name")]
 public class MyPlugin : PluginBase, IUIPlugin
 {
     public override string Id => "com.yourname.myplugin";
     public override string Name => "My Plugin";
     public override string Version => "1.0.0";
     public override string Author => "Your Name";
-    public override string Description => "A template WinNotch plugin.";
+    public override string Description => "A template X-Notch plugin.";
 
     private TextBlock? _closedLabel;
     private StackPanel? _openPanel;

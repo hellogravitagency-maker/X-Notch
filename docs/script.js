@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const themeToggle = document.querySelector("#theme-toggle");
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     const header = document.querySelector(".site-header");
-    const downloadLinks = [...document.querySelectorAll("[data-winnotch-download]")];
+    const downloadLinks = [...document.querySelectorAll("[data-X-Notch-download]")];
     const pluginLibraryTriggers = [...document.querySelectorAll("[data-open-plugin-library]")];
     const pluginLibraryModal = document.querySelector("[data-plugin-library-modal]");
     const pluginLibraryGrid = pluginLibraryModal?.querySelector("[data-plugin-library-grid]");
@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
         rootElement.classList.toggle("dark", isDark);
 
         if (persist) {
-            localStorage.setItem("winnotch-site-theme", isDark ? "dark" : "light");
+            localStorage.setItem("X-Notch-site-theme", isDark ? "dark" : "light");
         }
 
         if (themeToggle) {
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const savedTheme = localStorage.getItem("winnotch-site-theme");
+    const savedTheme = localStorage.getItem("X-Notch-site-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const initialDark = savedTheme ? savedTheme === "dark" : prefersDark;
     applyThemeState(initialDark, false);
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch("https://api.github.com/repos/N3uralCreativity/WinNotch/releases/latest", {
+            const response = await fetch("https://api.github.com/repos/Gravit/X-Notch/releases/latest", {
                 headers: {
                     Accept: "application/vnd.github+json"
                 }
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 link.dataset.releaseVersion = release.tag_name || "";
             });
         } catch (error) {
-            console.warn("WinNotch download link fallback in use.", error);
+            console.warn("X-Notch download link fallback in use.", error);
         }
     };
 
@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const permissions = Array.isArray(plugin.permissions) ? plugin.permissions.filter(Boolean) : [];
             const released = formatPluginDate(plugin.releaseDate);
             const metaBadges = [
-                `Min WinNotch ${escapeHtml(plugin.minimumWinNotchVersion || "n/a")}`,
+                `Min X-Notch ${escapeHtml(plugin.minimumX-NotchVersion || "n/a")}`,
                 escapeHtml(plugin.author || "Unknown author"),
                 ...(permissions.length ? [`Permissions: ${escapeHtml(permissions.join(", "))}`] : []),
                 ...(released ? [`Released ${escapeHtml(released)}`] : [])
@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div class="plugin-library-card__actions">
                         <a class="plugin-library-card__action" href="${escapeHtml(plugin.downloadUrl || "#")}" target="_blank" rel="noreferrer">Download DLL</a>
-                        <a class="plugin-library-card__action plugin-library-card__action--ghost" href="${escapeHtml(plugin.homepage || "https://github.com/N3uralCreativity/WinNotch-Plugins")}" target="_blank" rel="noreferrer">Open page</a>
+                        <a class="plugin-library-card__action plugin-library-card__action--ghost" href="${escapeHtml(plugin.homepage || "https://github.com/Gravit/X-Notch-Plugins")}" target="_blank" rel="noreferrer">Open page</a>
                     </div>
                 </article>
             `;
@@ -180,11 +180,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (state === "ready") {
             renderPluginLibraryCards(plugins);
-            pluginLibrarySubtitle.textContent = `${plugins.length} published plugins currently available in the official WinNotch browser library.`;
+            pluginLibrarySubtitle.textContent = `${plugins.length} published plugins currently available in the official X-Notch browser library.`;
         } else if (state === "error") {
             pluginLibrarySubtitle.textContent = "The live library could not be loaded right now. You can still open the repository directly.";
         } else {
-            pluginLibrarySubtitle.textContent = "Loading the latest published plugins from the official WinNotch library.";
+            pluginLibrarySubtitle.textContent = "Loading the latest published plugins from the official X-Notch library.";
         }
     };
 
@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return pluginLibraryFetchPromise;
         }
 
-        pluginLibraryFetchPromise = fetch(`https://raw.githubusercontent.com/N3uralCreativity/WinNotch-Plugins/main/library.json?v=${Date.now()}`)
+        pluginLibraryFetchPromise = fetch(`https://raw.githubusercontent.com/Gravit/X-Notch-Plugins/main/library.json?v=${Date.now()}`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Plugin library request failed with ${response.status}`);
@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            console.warn("WinNotch plugin library modal fallback in use.", error);
+            console.warn("X-Notch plugin library modal fallback in use.", error);
             setPluginLibraryView("error");
         }
     };

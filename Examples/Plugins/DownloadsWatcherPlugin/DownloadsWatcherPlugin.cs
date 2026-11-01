@@ -9,13 +9,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
-using WinNotch.Services;
+using XNotch.Models;
+using XNotch.Plugins;
+using XNotch.Services;
 
 namespace DownloadsWatcherPlugin;
 
-[WinNotchPlugin("com.winnotch.downloadswatcher", "Downloads Watcher", "1.0.0", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.downloadswatcher", "Downloads Watcher", "1.0.0", "X-Notch Team")]
 public sealed class DownloadsWatcherPlugin : PluginBase, IUIPlugin
 {
     private static readonly Guid DownloadsFolderId = new("374DE290-123F-4565-9164-39C4925E467B");
@@ -29,12 +29,12 @@ public sealed class DownloadsWatcherPlugin : PluginBase, IUIPlugin
         ".opdownload"
     };
 
-    public override string Id => "com.winnotch.downloadswatcher";
+    public override string Id => "com.xnotch.downloadswatcher";
     public override string Name => "Downloads Watcher";
     public override string Version => "1.0.0";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "Tracks active and recent downloads with quick open actions.";
-    public override string MinimumWinNotchVersion => "0.3.8";
+    public override string MinimumXNotchVersion => "0.3.8";
 
     private ThemeService? _themeService;
     private DispatcherTimer? _refreshTimer;

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A1A1E"/>
+      <stop offset="100%" stop-color="#08080A"/>
+    </linearGradient>
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.04"/>
+    </linearGradient>
+    <filter id="tileShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect x="48" y="48" width="928" height="928" rx="210" fill="url(#bgGrad)" filter="url(#tileShadow)"/>
+  <rect x="48" y="48" width="928" height="928" rx="210" fill="none" stroke="url(#rimGrad)" stroke-width="3"/>
+
+  <!-- Centered X-Notch Mark -->
+  <g fill="#FFFFFF" transform="translate(61.44, 61.44) scale(0.88)">
+    <path d="M 568 525 L 419 525 L 409 527 L 395 533 L 374 550 L 254 695 L 408 695 L 432 686 L 452 669 Z"/>
+    <path d="M 513 607 L 519 617 L 558 666 L 573 681 L 588 690 L 605 695 L 769 695 L 653 556 L 611 510 L 608 511 L 740 676 L 746 684 L 744 686 L 610 686 L 594 682 L 585 678 L 569 666 L 515 605 Z"/>
+    <path d="M 777 328 L 620 328 L 597 336 L 583 346 L 573 356 L 454 503 L 604 503 L 618 500 L 630 495 L 641 488 L 654 476 Z"/>
+    <path d="M 246 328 L 374 480 L 409 518 L 414 518 L 270 341 L 271 338 L 399 337 L 418 340 L 430 345 L 442 353 L 507 423 L 509 422 L 505 414 L 460 358 L 442 341 L 425 332 L 409 328 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <PackageId>XNotch.PluginSdk</PackageId>
+    <PackageTitle>X-Notch Plugin SDK</PackageTitle>
+    <Version>0.7.0</Version>
+    <Authors>Gravit</Authors>
+    <Company>Gravit</Company>
+    <Description>Compile-time SDK for building X-Notch plugins against the official X-Notch plugin interfaces and runtime assembly.</Description>
+    <PackageTags>XNotch;X-Notch;Plugins;WPF;Windows;SDK</PackageTags>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Gravit/X-Notch</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Gravit/X-Notch</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>$(NoWarn);NU5128;NU5131</NoWarn>
+    <XNotchRuntimeIdentifier>win-x64</XNotchRuntimeIdentifier>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeXNotchReferenceAssembly</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XNotch\XNotch.csproj"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false" />
+    <None Include="README.md"
+          Pack="true"
+          PackagePath="\" />
+  </ItemGroup>
+
+  <Target Name="IncludeXNotchReferenceAssembly"
+          DependsOnTargets="Build">
+    <PropertyGroup>
+      <XNotchReferenceDirectory>..\XNotch\obj\$(Configuration)\$(TargetFramework)\$(XNotchRuntimeIdentifier)\ref\</XNotchReferenceDirectory>
+      <XNotchDocumentationDirectory>..\XNotch\bin\$(Configuration)\$(TargetFramework)\$(XNotchRuntimeIdentifier)\</XNotchDocumentationDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(XNotchReferenceDirectory)*.dll">
+        <PackagePath>ref\$(TargetFramework)\</PackagePath>
+      </TfmSpecificPackageFile>
+      <TfmSpecificPackageFile Include="$(XNotchDocumentationDirectory)*.xml"
+                              Condition="Exists('$(XNotchDocumentationDirectory)X-Notch.xml')">
+        <PackagePath>ref\$(TargetFramework)\</PackagePath>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -43,10 +43,10 @@ jobs:
           "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Restore package project
-        run: dotnet restore src/WinNotch.PluginSdk/WinNotch.PluginSdk.csproj -p:Configuration=Release -p:RuntimeIdentifier=win-x64
+        run: dotnet restore src/XNotch.PluginSdk/XNotch.PluginSdk.csproj -p:Configuration=Release -p:RuntimeIdentifier=win-x64
 
-      - name: Pack WinNotch Plugin SDK
-        run: dotnet pack src/WinNotch.PluginSdk/WinNotch.PluginSdk.csproj -c Release -p:RuntimeIdentifier=win-x64 -p:PackageVersion=${{ env.PACKAGE_VERSION }} -o artifacts/packages --no-restore
+      - name: Pack X-Notch Plugin SDK
+        run: dotnet pack src/XNotch.PluginSdk/XNotch.PluginSdk.csproj -c Release -p:RuntimeIdentifier=win-x64 -p:PackageVersion=${{ env.PACKAGE_VERSION }} -o artifacts/packages --no-restore
 
       - name: Push to GitHub Packages
         shell: pwsh
@@ -64,5 +64,5 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WinNotch.PluginSdk-${{ env.PACKAGE_VERSION }}
+          name: XNotch.PluginSdk-${{ env.PACKAGE_VERSION }}
           path: artifacts/packages/*.nupkg

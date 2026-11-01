@@ -7,25 +7,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
-using WinNotch.Services;
+using XNotch.Models;
+using XNotch.Plugins;
+using XNotch.Services;
 
 namespace WeatherWidgetPlugin;
 
-[WinNotchPlugin("com.winnotch.weatherwidget", "Weather", "1.0.1", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.weatherwidget", "Weather", "1.0.1", "X-Notch Team")]
 public sealed class WeatherWidgetPlugin : PluginBase, IUIPlugin
 {
     private static readonly HttpClient HttpClient = CreateHttpClient();
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(20);
     private static readonly TimeSpan StaleThreshold = TimeSpan.FromMinutes(10);
 
-    public override string Id => "com.winnotch.weatherwidget";
+    public override string Id => "com.xnotch.weatherwidget";
     public override string Name => "Weather";
     public override string Version => "1.0.1";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "Shows current weather in the expanded notch.";
-    public override string MinimumWinNotchVersion => "0.3.8";
+    public override string MinimumXNotchVersion => "0.3.8";
 
     private ThemeService? _themeService;
     private DispatcherTimer? _refreshTimer;
@@ -379,7 +379,7 @@ public sealed class WeatherWidgetPlugin : PluginBase, IUIPlugin
         {
             Timeout = TimeSpan.FromSeconds(12)
         };
-        client.DefaultRequestHeaders.Add("User-Agent", "WinNotch-Weather/1.0.1");
+        client.DefaultRequestHeaders.Add("User-Agent", "X-Notch-Weather/1.0.1");
         return client;
     }
 

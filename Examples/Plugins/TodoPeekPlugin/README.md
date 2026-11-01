@@ -1,6 +1,6 @@
 # Todo Peek
 
-`Todo Peek` adds a compact task panel to WinNotch's expanded view without adding anything to the reduced notch.
+`Todo Peek` adds a compact task panel to X-Notch's expanded view without adding anything to the reduced notch.
 
 ## What it does
 
@@ -23,7 +23,7 @@ The easiest setup path is now:
 
 When the plugin starts for the first time, it also creates:
 
-`%AppData%\WinNotch\Plugins\com.winnotch.todopeek\settings.json`
+`%AppData%\X-Notch\Plugins\com.X-Notch.todopeek\settings.json`
 
 Default file:
 

@@ -1,6 +1,6 @@
-# WinNotch Example Plugins
+# X-Notch Example Plugins
 
-This directory contains example plugins demonstrating the WinNotch plugin system capabilities.
+This directory contains example plugins demonstrating the X-Notch plugin system capabilities.
 
 ## Included Examples
 
@@ -69,18 +69,18 @@ Demonstrates a complex integration plugin:
 
 ## Installing the Example Plugins
 
-1. Copy the plugin DLL to your WinNotch plugins directory:
+1. Copy the plugin DLL to your X-Notch plugins directory:
    ```
-   %AppData%\WinNotch\Plugins\<plugin-id>\
+   %AppData%\X-Notch\Plugins\<plugin-id>\
    ```
 
    For example:
    ```
-   %AppData%\WinNotch\Plugins\com.winnotch.betteranimation\BetterAnimationPlugin.dll
-   %AppData%\WinNotch\Plugins\com.winnotch.chatgpt\ChatGPTAddonPlugin.dll
+   %AppData%\X-Notch\Plugins\com.X-Notch.betteranimation\BetterAnimationPlugin.dll
+   %AppData%\X-Notch\Plugins\com.X-Notch.chatgpt\ChatGPTAddonPlugin.dll
    ```
 
-2. Restart WinNotch
+2. Restart X-Notch
 
 3. The plugins will be automatically discovered and loaded
 
@@ -169,7 +169,7 @@ Here are some ideas for plugins you could create:
 
 If you create a useful plugin:
 
-1. Add it to the [WinNotch-Plugins](https://github.com/N3uralCreativity/WinNotch-Plugins) repository
+1. Add it to the [X-Notch-Plugins](https://github.com/Gravit/X-Notch-Plugins) repository
 2. Submit a PR to add it to the library.json
 3. Share it with the community!
 
@@ -177,6 +177,6 @@ If you create a useful plugin:
 
 For questions about plugin development:
 - Read the [Plugin Development Guide](../../PLUGIN_DEVELOPMENT.md)
-- Check the [API Reference](https://github.com/N3uralCreativity/WinNotch/wiki)
-- Ask in [GitHub Discussions](https://github.com/N3uralCreativity/WinNotch/discussions)
-- Report issues: [GitHub Issues](https://github.com/N3uralCreativity/WinNotch/issues)
+- Check the [API Reference](https://github.com/Gravit/X-Notch/wiki)
+- Ask in [GitHub Discussions](https://github.com/Gravit/X-Notch/discussions)
+- Report issues: [GitHub Issues](https://github.com/Gravit/X-Notch/issues)

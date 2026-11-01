@@ -1,27 +1,23 @@
-# WinNotch
+# X-Notch
 
-WinNotch is a Dynamic Island-inspired notch overlay for Windows. It brings media controls, calendar, battery, webcam, volume and brightness HUDs, file staging, and installable plugins into a compact surface that can live at the top or side of the screen.
+X-Notch is a Dynamic Island-inspired notch overlay for Windows by Gravit. It brings media controls, calendar, battery, webcam, volume and brightness HUDs, file staging, and installable plugins into a compact surface that can live at the top or side of the screen.
 
 Built with `WPF`, `.NET 8`, and `C#`.
 
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%2F11-blue)
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-purple)
 
-## Links
+## Copyright
 
-- Home page: `https://n3uralcreativity.github.io/WinNotch/`
-- Documentation: `https://n3uralcreativity.github.io/WinNotch/documentation/`
-- Releases: `https://github.com/N3uralCreativity/WinNotch/releases`
-- Plugin library repo: `https://github.com/N3uralCreativity/WinNotch-Plugins`
-- Plugin development guide: [PLUGIN_DEVELOPMENT.md](PLUGIN_DEVELOPMENT.md)
+**Copyright © Gravit. All rights reserved.**
 
 ## Features
 
 - Dynamic notch with hover, click, drag, and scroll interactions
 - Multi-monitor support: drag the island to any screen and dock it there; optional island on every screen with synchronized (or independent) open state
-- Built-in media controls and audio visualizer
+- Built-in media controls, audio visualizer, and lyrics sync
 - Volume and brightness HUDs
-- Calendar, battery, file shelf, and webcam mirror
+- Full Calendar with Agenda, Tasks & Reminders, Battery indicator, File Shelf, and Webcam mirror
 - Light, dark, and auto theme support
 - Position-aware layouts, including vertical plugin surfaces
 - Plugin Manager and Plugin Browser with online library support
@@ -31,9 +27,9 @@ Built with `WPF`, `.NET 8`, and `C#`.
 
 ### Release build
 
-1. Download the latest installer from [Releases](https://github.com/N3uralCreativity/WinNotch/releases/latest).
-2. Run `WinNotch-Setup.exe`.
-3. Launch WinNotch.
+1. Download the latest installer from Releases.
+2. Run `X-Notch-Setup.exe`.
+3. Launch X-Notch.
 
 ### Build from source
 
@@ -43,20 +39,18 @@ Requirements:
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ```bash
-git clone https://github.com/N3uralCreativity/WinNotch.git
-cd WinNotch
-dotnet run --project src/WinNotch/WinNotch.csproj
+dotnet run --project src/XNotch/XNotch.csproj
 ```
 
 To create a publish folder:
 
 ```bash
-dotnet publish src/WinNotch/WinNotch.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
+dotnet publish src/XNotch/XNotch.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
 ```
 
 ## Plugins
 
-WinNotch supports several plugin types:
+X-Notch supports several plugin types:
 
 - `IUIPlugin`
 - `IServicePlugin`
@@ -66,30 +60,8 @@ WinNotch supports several plugin types:
 Plugins can be installed in two ways:
 
 1. From the in-app Plugin Browser.
-2. Manually by placing a plugin DLL in `%AppData%\WinNotch\Plugins\<plugin-id>\`.
-
-The in-app browser only shows plugins listed in the `WinNotch-Plugins` repository's `library.json`. If a plugin is not listed there, it will not appear in the browser even if the DLL exists elsewhere.
-
-## Create plugins
-
-If you want to build plugins:
-
-- start with [PLUGIN_DEVELOPMENT.md](PLUGIN_DEVELOPMENT.md)
-- use the ready-to-send [AI plugin prompt](AI_PLUGIN_PROMPT.md) if you want another AI to build a plugin from zero context
-- browse the live examples in `Examples/Plugins`
-- use the `WinNotch.PluginSdk` package from GitHub Packages if you do not want to clone the full repo
-
-The package is intended for plugin authors, not end users. Runtime installation still happens through the WinNotch app or manual DLL deployment.
-
-## Contributing
-
-Contributions are welcome for both the app and the plugin ecosystem.
-
-- app changes and plugin API changes belong in this repository
-- community plugin browser listings belong in [WinNotch-Plugins](https://github.com/N3uralCreativity/WinNotch-Plugins)
-
-If you want your plugin to appear in the browser, publish the DLL publicly, then add its manifest entry to `WinNotch-Plugins/library.json`.
+2. Manually by placing a plugin DLL in `%AppData%\X-Notch\Plugins\<plugin-id>\`.
 
 ## License
 
-`GPL-3.0`
+GPL-3.0 • Copyright © Gravit. All rights reserved.

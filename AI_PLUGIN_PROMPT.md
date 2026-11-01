@@ -1,19 +1,19 @@
-# WinNotch AI Plugin Prompt
+# X-Notch AI Plugin Prompt
 
-Use the prompt below when you want another AI to build a WinNotch plugin from zero context.
+Use the prompt below when you want another AI to build a X-Notch plugin from zero context.
 
 Replace the placeholder values before sending it.
 
 ## Copy-paste prompt
 
 ```text
-You are building a plugin for the WinNotch project.
+You are building a plugin for the X-Notch project.
 
 Repository:
-- Main app repo: https://github.com/N3uralCreativity/WinNotch
-- Plugin library repo: https://github.com/N3uralCreativity/WinNotch-Plugins
+- Main app repo: https://github.com/N3uralCreativity/X-Notch
+- Plugin library repo: https://github.com/N3uralCreativity/X-Notch-Plugins
 
-Your job is to create a complete, working WinNotch plugin from zero context, inside the current repository workspace, using the existing WinNotch plugin system and coding style.
+Your job is to create a complete, working X-Notch plugin from zero context, inside the current repository workspace, using the existing X-Notch plugin system and coding style.
 
 Plugin request:
 - Plugin name: [PLUGIN_NAME]
@@ -28,13 +28,13 @@ Plugin request:
 - Configuration requirements: [NONE or LIST OF REQUIRED TOKENS / URLS / SETTINGS]
 - External services or APIs: [NONE or LIST]
 - Permissions needed: [clipboard / network / filesystem / location / etc.]
-- Minimum WinNotch version target: [for example 0.6.2]
+- Minimum X-Notch version target: [for example 0.6.2]
 - Should it be browser-listable: [yes / no]
 
-Important WinNotch context:
-- WinNotch is a Windows WPF app built on .NET 8.
+Important X-Notch context:
+- X-Notch is a Windows WPF app built on .NET 8.
 - Plugins live under Examples/Plugins in this repo for source examples.
-- Runtime-installed plugins are loaded from %AppData%\WinNotch\Plugins\<plugin-id>\
+- Runtime-installed plugins are loaded from %AppData%\X-Notch\Plugins\<plugin-id>\
 - A plugin can implement:
   - IPlugin
   - IUIPlugin
@@ -54,17 +54,17 @@ Important WinNotch context:
 - If the plugin has any user-facing visuals, it must support both dark and light theme.
 - Theme changes can be observed through Context.ThemeService.
 - Plugin-specific files should be stored using Context.GetPluginDataPath(Id).
-- If the plugin requires user setup, implement IConfigurablePlugin so WinNotch can show the built-in configuration UI in Plugin Manager.
+- If the plugin requires user setup, implement IConfigurablePlugin so X-Notch can show the built-in configuration UI in Plugin Manager.
 
 Current project structure and conventions:
-- Main app project: src/WinNotch/WinNotch.csproj
-- Plugin interfaces: src/WinNotch/Plugins/
+- Main app project: src/XNotch/XNotch.csproj
+- Plugin interfaces: src/XNotch/Plugins/
 - Example plugins: Examples/Plugins/
 - Plugin development guide: PLUGIN_DEVELOPMENT.md
 - Example browser manifest format: Examples/Plugins/example-library.json
 - Target framework used by example plugins: net8.0-windows10.0.22621.0
 - WPF should be enabled in plugin projects.
-- If building inside this repo, prefer a ProjectReference to src/WinNotch/WinNotch.csproj with:
+- If building inside this repo, prefer a ProjectReference to src/XNotch/XNotch.csproj with:
   - Private false
   - ExcludeAssets runtime
 
@@ -82,10 +82,10 @@ Expected .csproj shape if created inside this repo:
 - UseWPF: true
 - Nullable: enable
 - ImplicitUsings: enable
-- Reference WinNotch via ProjectReference to src/WinNotch/WinNotch.csproj
+- Reference X-Notch via ProjectReference to src/XNotch/XNotch.csproj
 
 Behavior requirements:
-1. The plugin must feel native to WinNotch, not like a generic floating panel.
+1. The plugin must feel native to X-Notch, not like a generic floating panel.
 2. The UI must be compact and clean.
 3. If the plugin is visible in expanded mode, it must not break the notch layout.
 4. If the plugin makes sense only in expanded mode, return nothing for reduced mode.
@@ -108,17 +108,17 @@ Behavior requirements:
 Implementation instructions:
 1. First inspect the actual current interfaces and relevant examples in the repo before coding.
 2. Then implement the plugin fully, not just a draft.
-3. Reuse established WinNotch patterns where possible.
+3. Reuse established X-Notch patterns where possible.
 4. Keep comments minimal and useful.
 5. Do not invent APIs that do not exist in the repo.
-6. If the requested feature needs new host-side WinNotch app support, say so clearly before assuming it already exists.
+6. If the requested feature needs new host-side X-Notch app support, say so clearly before assuming it already exists.
 7. If the request can be done as a plugin only, keep it plugin-only.
 
 Required repository checks before coding:
-- inspect src/WinNotch/Plugins/IPlugin.cs
-- inspect src/WinNotch/Plugins/IUIPlugin.cs
-- inspect src/WinNotch/Plugins/IConfigurablePlugin.cs if configuration is needed
-- inspect src/WinNotch/Plugins/IPluginContext.cs
+- inspect src/XNotch/Plugins/IPlugin.cs
+- inspect src/XNotch/Plugins/IUIPlugin.cs
+- inspect src/XNotch/Plugins/IConfigurablePlugin.cs if configuration is needed
+- inspect src/XNotch/Plugins/IPluginContext.cs
 - inspect at least 2 relevant examples under Examples/Plugins
 - inspect PLUGIN_DEVELOPMENT.md
 
@@ -142,13 +142,13 @@ Validation requirements:
 - If there are tests relevant to plugin interfaces, run them too.
 
 If browser listing is requested:
-- Also prepare a manifest entry matching the WinNotch plugin library format, using fields:
+- Also prepare a manifest entry matching the X-Notch plugin library format, using fields:
   - id
   - name
   - version
   - author
   - description
-  - minimumWinNotchVersion
+  - minimumX-NotchVersion
   - downloadUrl
   - homepage
   - iconUrl
@@ -162,10 +162,10 @@ If browser listing is requested:
 - If a real release URL does not exist yet, clearly mark that manifest entry as a draft example.
 
 Quality bar:
-- The plugin should be polished enough to realistically ship in WinNotch.
+- The plugin should be polished enough to realistically ship in X-Notch.
 - The layout should not feel generic.
 - The code should compile against the actual repo.
-- The plugin should respect WinNotch theme, spacing, and docking behavior.
+- The plugin should respect X-Notch theme, spacing, and docking behavior.
 
 Now do the work end to end.
 ```
@@ -174,7 +174,7 @@ Now do the work end to end.
 
 ```text
 Plugin name: Battery Insights
-Plugin id: com.winnotch.batteryinsights
+Plugin id: com.X-Notch.batteryinsights
 Plugin type: UI + Configurable
 Short description: Advanced battery widget with time remaining and charge trends.
 Closed notch behavior: nothing
@@ -184,12 +184,12 @@ Theme behavior: adapt brushes for both dark and light theme through ThemeService
 Configuration requirements: allow user to choose refresh interval and whether trend history is saved
 External services or APIs: none
 Permissions needed: []
-Minimum WinNotch version target: 0.6.2
+Minimum X-Notch version target: 0.6.2
 Should it be browser-listable: yes
 ```
 
 ## Notes
 
-- This prompt is intentionally strict so the AI does not guess old WinNotch APIs.
-- If you are using the prompt inside the WinNotch repo, leave the repository paths as-is.
+- This prompt is intentionally strict so the AI does not guess old X-Notch APIs.
+- If you are using the prompt inside the X-Notch repo, leave the repository paths as-is.
 - If you are using it outside the repo, also give the AI either the local cloned repo or direct access to the referenced files.

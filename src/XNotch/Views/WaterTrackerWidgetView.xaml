@@ -1,0 +1,247 @@
+<UserControl x:Class="XNotch.Views.WaterTrackerWidgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="128">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- macOS Segmented Capsule Sub-Button Style (Matches Sleep Stepper Style) -->
+            <Style x:Key="WaterCapsuleSubButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="26"/>
+                <Setter Property="Padding" Value="9,0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    CornerRadius="13"
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="Scale" ScaleX="1.0" ScaleY="1.0"/>
+                                </Border.RenderTransform>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#1EFFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#32FFFFFF"/>
+                                    <Setter TargetName="Bg" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.94" ScaleY="0.94"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Center" Margin="8,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Column: Stylized Glass Hydration Tumbler with Liquid & Specular Rim -->
+        <Grid Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
+            <!-- Glass Tumbler Ambient Water Glow (macOS Soft Diffuse Occlusion) -->
+            <Border Width="56" Height="92" CornerRadius="18"
+                    Background="#1600C7BE">
+                <Border.Effect>
+                    <BlurEffect Radius="12" KernelType="Gaussian"/>
+                </Border.Effect>
+            </Border>
+
+            <!-- Actual Glass Tumbler Container with Specular Edges -->
+            <Border Width="56" Height="92" CornerRadius="18"
+                    Background="#121620" BorderThickness="1.2"
+                    ClipToBounds="True">
+                <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#5000F5D4" Offset="0.0"/>
+                        <GradientStop Color="#1800C7BE" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Border.BorderBrush>
+                <Grid VerticalAlignment="Stretch">
+                    <!-- Liquid Level with 3-Stop Ocean Gradient Wave Fill -->
+                    <Border x:Name="LiquidFill" VerticalAlignment="Bottom" Height="48" CornerRadius="0,0,18,18">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                <GradientStop Color="#00F5D4" Offset="0.0"/>
+                                <GradientStop Color="#00C7BE" Offset="0.45"/>
+                                <GradientStop Color="#007AFF" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!-- Wave Lip Glow -->
+                    <Border VerticalAlignment="Top" Height="2" Background="#90FFFFFF" CornerRadius="1"/>
+
+                    <!-- Glass Specular Left Rim Reflection -->
+                    <Border HorizontalAlignment="Left" Width="4" VerticalAlignment="Stretch" Margin="2,4,0,4" CornerRadius="2">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#60FFFFFF" Offset="0.0"/>
+                                <GradientStop Color="#15FFFFFF" Offset="0.6"/>
+                                <GradientStop Color="#00FFFFFF" Offset="1.0"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!-- Percentage Badge Centered in Glass -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="💧" FontSize="13" HorizontalAlignment="Center" Margin="0,0,0,1" Opacity="0.9"/>
+                        <TextBlock x:Name="PercentText" Text="60%"
+                                   FontSize="12.5" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Typography.NumeralAlignment="Tabular"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Right Column: Stats & Action Buttons -->
+        <Grid Grid.Column="1" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header Badge -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,2">
+                <Border Width="6" Height="6" CornerRadius="3" Background="#00F5D4" VerticalAlignment="Center" Margin="0,0,5,0">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#00F5D4" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                    </Border.Effect>
+                </Border>
+                <TextBlock Text="HYDRATION TRACKER" FontSize="9.5" FontWeight="Bold"
+                           Foreground="{DynamicResource TextMutedBrush}"/>
+            </StackPanel>
+
+            <!-- Current Amount / Goal -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,3">
+                <TextBlock x:Name="CurrentAmountText" Text="1,200"
+                           FontSize="24" FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           Typography.NumeralAlignment="Tabular"/>
+                <TextBlock x:Name="GoalAmountText" Text=" / 2,000 ml"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+            </StackPanel>
+
+            <!-- Mini Horizontal Progress Bar with Glowing Capsule Fill -->
+            <Border Grid.Row="2" Height="5" Background="#2000C7BE" CornerRadius="2.5" Margin="0,0,16,6">
+                <Border x:Name="ProgressBarFill" HorizontalAlignment="Left" Width="100" CornerRadius="2.5">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                            <GradientStop Color="#00F5D4" Offset="0.0"/>
+                            <GradientStop Color="#00C7BE" Offset="0.5"/>
+                            <GradientStop Color="#0A84FF" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect Color="#00F5D4" BlurRadius="6" ShadowDepth="0" Opacity="0.45"/>
+                    </Border.Effect>
+                </Border>
+            </Border>
+
+            <!-- Status message -->
+            <TextBlock x:Name="StatusMessageText"
+                       Grid.Row="3"
+                       Text="3 glasses remaining to reach daily goal"
+                       FontSize="11"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="0,0,0,8"/>
+
+            <!-- Action Buttons Row with macOS Dual Segmented Glass Capsules -->
+            <StackPanel Grid.Row="4" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Capsule 1: Hydration Intake Stepper [ + 250 ml | + 500 ml ] -->
+                <Border Height="28" CornerRadius="14" BorderThickness="1" Margin="0,0,7,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#2400F5D4" Offset="0.0"/>
+                            <GradientStop Color="#0E00C7BE" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#6000F5D4" Offset="0.0"/>
+                            <GradientStop Color="#2000C7BE" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Add 250ml Button -->
+                        <Button x:Name="Add250Button"
+                                Style="{StaticResource WaterCapsuleSubButton}"
+                                Click="OnAdd250Click"
+                                ToolTip="Log +250 ml (1 glass)">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="+" FontSize="11" FontWeight="Bold" Foreground="#00F5D4" Margin="0,-1,3,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="250" FontSize="9.2" FontWeight="SemiBold" Foreground="#00F5D4" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                                <TextBlock Text=" ml" FontSize="8" FontWeight="SemiBold" Foreground="#8000F5D4" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Hairline Segment Divider -->
+                        <Border Width="1" Height="14" Background="#3000F5D4" VerticalAlignment="Center"/>
+                        <!-- Add 500ml Button -->
+                        <Button x:Name="Add500Button"
+                                Style="{StaticResource WaterCapsuleSubButton}"
+                                Click="OnAdd500Click"
+                                ToolTip="Log +500 ml (bottle)">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="+" FontSize="11" FontWeight="Bold" Foreground="#64D2FF" Margin="0,-1,3,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="500" FontSize="9.2" FontWeight="SemiBold" Foreground="#64D2FF" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                                <TextBlock Text=" ml" FontSize="8" FontWeight="SemiBold" Foreground="#8064D2FF" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Capsule 2: Hydration Adjustment & Reset [ − 250 | ↺ ] -->
+                <Border Height="28" CornerRadius="14" BorderThickness="1"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Undo 250ml Button -->
+                        <Button x:Name="Sub250Button"
+                                Style="{StaticResource WaterCapsuleSubButton}"
+                                Click="OnSub250Click"
+                                ToolTip="Undo -250 ml">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="−" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,-1,3,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="250" FontSize="9.2" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Hairline Segment Divider -->
+                        <Border Width="1" Height="14" Background="#1FFFFFFF" VerticalAlignment="Center"/>
+                        <!-- Reset Button -->
+                        <Button x:Name="ResetButton"
+                                Style="{StaticResource WaterCapsuleSubButton}"
+                                Padding="8,0"
+                                Click="OnResetClick"
+                                ToolTip="Reset Today's Log">
+                            <TextBlock Text="↺" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

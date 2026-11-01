@@ -1,0 +1,147 @@
+<Window x:Class="XNotch.Views.SpotlightLauncher"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="X-Notch Spotlight"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Width="580" Height="420"
+        KeyDown="OnWindowKeyDown">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
+                <ResourceDictionary Source="Components/RoundedScrollBarStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <!-- Floating Shadow Drop -->
+        <Border CornerRadius="16" Background="{DynamicResource NotchFillBrush}"
+                BorderBrush="{DynamicResource NotchBorderBrush}" BorderThickness="1.2">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="24" ShadowDepth="8" Opacity="0.45" Direction="270" Color="#000000"/>
+            </Border.Effect>
+
+            <Grid Margin="14">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Search Input Row -->
+                <Grid Grid.Row="0" Margin="4,2,4,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="🔍" FontSize="18" Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" Margin="2,0,10,0"/>
+
+                    <TextBox x:Name="SearchTextBox" Grid.Column="1"
+                             Background="Transparent" BorderThickness="0"
+                             FontSize="16" FontWeight="Medium"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             CaretBrush="{DynamicResource TextPrimaryBrush}"
+                             VerticalAlignment="Center"
+                             TextChanged="OnSearchTextChanged"/>
+
+                    <Button x:Name="ClearButton" Grid.Column="2" Style="{StaticResource IconButton}"
+                            Width="24" Height="24" Visibility="Collapsed" Click="OnClearClick">
+                        <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource TextDimBrush}"/>
+                    </Button>
+                </Grid>
+
+                <!-- Separator -->
+                <Border Grid.Row="1" Height="1" Background="{DynamicResource SeparatorBrush}" Margin="2,0,2,8"/>
+
+                <!-- Search Results List -->
+                <ListBox x:Name="ResultsListBox" Grid.Row="2"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         MouseDoubleClick="OnResultDoubleClick">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="OverridesDefaultStyle" Value="True"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Margin" Value="0,2"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="ItemBorder" CornerRadius="8" Padding="10,6" Background="Transparent">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SegmentedHoverBgBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SegmentedCheckedBgBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Width="28" Height="28" CornerRadius="6"
+                                        Background="{DynamicResource SurfaceBrush}" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <TextBlock Text="{Binding IconGlyph}" FontSize="13"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Subtitle}" FontSize="10"
+                                               Foreground="{DynamicResource TextDimBrush}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+
+                                <Border Grid.Column="2" CornerRadius="4" Background="{DynamicResource SurfaceBrush}"
+                                        Padding="6,2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Category}" FontSize="9"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Footer Hint -->
+                <Grid Grid.Row="3" Margin="4,8,4,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Navigate " FontSize="9" Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="↑↓" FontWeight="Bold" FontSize="9" Foreground="{DynamicResource TextDimBrush}"/>
+                        <TextBlock Text=" • Select " FontSize="9" Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="↵" FontWeight="Bold" FontSize="9" Foreground="{DynamicResource TextDimBrush}"/>
+                        <TextBlock Text=" • Dismiss " FontSize="9" Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="Esc" FontWeight="Bold" FontSize="9" Foreground="{DynamicResource TextDimBrush}"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -8,6 +8,6 @@ Open `Plugin Manager`, find `ChatGPT Add-on`, click `Configure`, then update the
 
 The plugin also stores its values in:
 
-`%AppData%\WinNotch\Plugins\com.winnotch.chatgpt\settings.json`
+`%AppData%\X-Notch\Plugins\com.X-Notch.chatgpt\settings.json`
 
 Manual edits are still supported, but the manager UI is the recommended setup path.

@@ -1,4 +1,4 @@
-# WinNotch — Project Plan
+# X-Notch — Project Plan
 
 ## 1. What is Boring Notch (Reference Project)
 
@@ -52,10 +52,10 @@
 ## 3. Architecture
 
 ```
-WinNotch/
+X-Notch/
 ├── src/
-│   └── WinNotch/                          # Main WPF application
-│       ├── WinNotch.csproj
+│   └── X-Notch/                          # Main WPF application
+│       ├── X-Notch.csproj
 │       ├── App.xaml / App.xaml.cs          # Application entry, tray icon, single instance
 │       ├── Models/
 │       │   ├── NotchState.cs              # Enum: Closed, Open
@@ -103,13 +103,13 @@ WinNotch/
 │           ├── Icons/
 │           └── Animations/                # Lottie JSON files
 ├── tests/
-│   └── WinNotch.Tests/
-│       └── WinNotch.Tests.csproj
+│   └── X-Notch.Tests/
+│       └── X-Notch.Tests.csproj
 ├── .gitignore
 ├── README.md
 ├── LICENSE
 ├── PLAN.md                                # This file
-└── WinNotch.sln
+└── X-Notch.sln
 ```
 
 ---
@@ -220,7 +220,7 @@ WinNotch/
   - **Webcam**: enable/disable, camera selection
   - **Gestures**: enable/disable, sensitivity
   - **About**: version, links
-- [ ] Settings persistence: JSON file in `%AppData%/WinNotch/settings.json`
+- [ ] Settings persistence: JSON file in `%AppData%/X-Notch/settings.json`
 - [ ] Startup registration: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 
 ### Phase 9 — Gestures & Polish

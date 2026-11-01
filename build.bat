@@ -1,9 +1,9 @@
 @echo off
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "[xml]$proj = Get-Content 'src\WinNotch\WinNotch.csproj'; $proj.Project.PropertyGroup.Version"`) do set "APP_VERSION=%%V"
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "[xml]$proj = Get-Content 'src\XNotch\XNotch.csproj'; $proj.Project.PropertyGroup.Version"`) do set "APP_VERSION=%%V"
 if not defined APP_VERSION set "APP_VERSION=unknown"
 
 echo ========================================
-echo  WinNotch v%APP_VERSION% - Build Release
+echo  X-Notch v%APP_VERSION% - Build Release
 echo ========================================
 echo.
 
@@ -14,7 +14,7 @@ if exist "publish" rmdir /s /q "publish"
 
 echo.
 echo [1/2] Building self-contained single-file executable...
-dotnet publish src\WinNotch\WinNotch.csproj ^
+dotnet publish src\XNotch\XNotch.csproj ^
     -c Release ^
     -o publish
 
@@ -28,9 +28,9 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 echo ========================================
 echo  Build complete!
-echo  Output: publish\WinNotch.exe
+echo  Output: publish\X-Notch.exe
 echo ========================================
-for %%A in ("publish\WinNotch.exe") do echo  Size: %%~zA bytes
+for %%A in ("publish\X-Notch.exe") do echo  Size: %%~zA bytes
 echo.
 
 :: Build installer if Inno Setup is available
@@ -40,7 +40,7 @@ if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC=%ProgramFiles%\Inno Se
 
 if defined ISCC (
     echo [2/2] Building installer with Inno Setup...
-    "%ISCC%" "/DMyAppVersion=%APP_VERSION%" installer\WinNotch.iss
+    "%ISCC%" "/DMyAppVersion=%APP_VERSION%" installer\X-Notch.iss
     if %ERRORLEVEL% NEQ 0 (
         echo.
         echo INSTALLER BUILD FAILED!
@@ -50,9 +50,9 @@ if defined ISCC (
     echo.
     echo ========================================
     echo  Installer created!
-    echo  Output: publish\installer\WinNotch-%APP_VERSION%-Setup.exe
+    echo  Output: publish\installer\X-Notch-%APP_VERSION%-Setup.exe
     echo ========================================
-    for %%A in ("publish\installer\WinNotch-%APP_VERSION%-Setup.exe") do echo  Size: %%~zA bytes
+    for %%A in ("publish\installer\X-Notch-%APP_VERSION%-Setup.exe") do echo  Size: %%~zA bytes
 ) else (
     echo [2/2] Inno Setup not found - skipping installer.
     echo  Install from: https://jrsoftware.org/isinfo.php
@@ -61,7 +61,7 @@ if defined ISCC (
 
 echo.
 echo Done! Release artifacts:
-echo   - publish\WinNotch.exe          (standalone)
-if defined ISCC echo   - publish\installer\WinNotch-%APP_VERSION%-Setup.exe (installer)
+echo   - publish\X-Notch.exe          (standalone)
+if defined ISCC echo   - publish\installer\X-Notch-%APP_VERSION%-Setup.exe (installer)
 echo.
 pause

@@ -7,13 +7,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
-using WinNotch.Services;
+using XNotch.Models;
+using XNotch.Plugins;
+using XNotch.Services;
 
 namespace ClipboardStackPlugin;
 
-[WinNotchPlugin("com.winnotch.clipboardstack", "Clipboard Stack", "1.0.2", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.clipboardstack", "Clipboard Stack", "1.0.2", "X-Notch Team")]
 [PluginPermission("clipboard", "Required to read recent clipboard text and file copies.")]
 public sealed class ClipboardStackPlugin : PluginBase, IUIPlugin
 {
@@ -22,14 +22,14 @@ public sealed class ClipboardStackPlugin : PluginBase, IUIPlugin
     private const double VerticalViewportHeight = 72;
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(1100);
     private static readonly Uri RoundedScrollBarStyleUri =
-        new("pack://application:,,,/WinNotch;component/Views/Components/RoundedScrollBarStyle.xaml", UriKind.Absolute);
+        new("pack://application:,,,/X-Notch;component/Views/Components/RoundedScrollBarStyle.xaml", UriKind.Absolute);
 
-    public override string Id => "com.winnotch.clipboardstack";
+    public override string Id => "com.xnotch.clipboardstack";
     public override string Name => "Clipboard Stack";
     public override string Version => "1.0.2";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "Keeps the last five copied text snippets and file lists ready to copy back into the clipboard.";
-    public override string MinimumWinNotchVersion => "0.3.8";
+    public override string MinimumXNotchVersion => "0.3.8";
 
     private ThemeService? _themeService;
     private DispatcherTimer? _pollTimer;

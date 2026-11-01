@@ -1,18 +1,18 @@
-# WinNotch Plugin System - Implementation Summary
+# X-Notch Plugin System - Implementation Summary
 
 ## Overview
 
-The WinNotch plugin system has been successfully implemented, providing an extremely modular architecture that allows developers to extend WinNotch with custom features, UI components, animations, and background services.
+The X-Notch plugin system has been successfully implemented, providing an extremely modular architecture that allows developers to extend X-Notch with custom features, UI components, animations, and background services.
 
 ## Architecture
 
 ### Core Components
 
-#### 1. Plugin Interfaces (`src/WinNotch/Plugins/`)
+#### 1. Plugin Interfaces (`src/X-Notch/Plugins/`)
 
 - **`IPlugin`** - Base interface all plugins must implement
   - Lifecycle hooks: `InitializeAsync`, `OnEnableAsync`, `OnDisableAsync`, `ShutdownAsync`
-  - Metadata: `Id`, `Name`, `Version`, `Author`, `Description`, `MinimumWinNotchVersion`
+  - Metadata: `Id`, `Name`, `Version`, `Author`, `Description`, `MinimumX-NotchVersion`
 
 - **`IUIPlugin`** - For plugins that provide visual components
   - Inject UI into multiple locations (closed content, open content, custom tabs, settings, overlay)
@@ -29,7 +29,7 @@ The WinNotch plugin system has been successfully implemented, providing an extre
 
 #### 2. Plugin Context (`IPluginContext`)
 
-Provides plugins with safe access to WinNotch services:
+Provides plugins with safe access to X-Notch services:
 - Window and ViewModel access
 - All core services (Media, Theme, Volume, Brightness, Battery, etc.)
 - Plugin data storage paths
@@ -39,7 +39,7 @@ Provides plugins with safe access to WinNotch services:
 #### 3. Plugin Manager (`PluginManager`)
 
 Handles plugin lifecycle:
-- Discovery and loading from `%AppData%\WinNotch\Plugins\`
+- Discovery and loading from `%AppData%\X-Notch\Plugins\`
 - Enable/disable management
 - State persistence
 - Error handling and logging
@@ -69,7 +69,7 @@ Plugins can implement multiple interfaces to combine capabilities.
 
 - [x] Complete plugin interface hierarchy
 - [x] PluginBase abstract class for easy development
-- [x] Plugin attributes for metadata (`WinNotchPlugin`, `PluginDependency`, `PluginPermission`)
+- [x] Plugin attributes for metadata (`X-NotchPlugin`, `PluginDependency`, `PluginPermission`)
 - [x] Plugin context with service access
 - [x] Plugin manager with full lifecycle support
 - [x] Plugin library service with GitHub integration
@@ -106,7 +106,7 @@ Plugins can implement multiple interfaces to combine capabilities.
 
 ### Plugin Loading Flow
 
-1. **Discovery**: On startup, PluginManager scans `%AppData%\WinNotch\Plugins\` for DLL files
+1. **Discovery**: On startup, PluginManager scans `%AppData%\X-Notch\Plugins\` for DLL files
 2. **Loading**: Each DLL is loaded via reflection, searching for IPlugin implementations
 3. **Initialization**: Plugins are initialized with a PluginContext
 4. **Activation**: Plugins are enabled based on saved state
@@ -115,7 +115,7 @@ Plugins can implement multiple interfaces to combine capabilities.
 ### Plugin Development Workflow
 
 1. Developer creates a .NET class library targeting net8.0-windows
-2. References WinNotch.exe and implements IPlugin (or inherits PluginBase)
+2. References X-Notch.exe and implements IPlugin (or inherits PluginBase)
 3. Implements desired interfaces (IUIPlugin, IServicePlugin, IAnimationPlugin)
 4. Builds the DLL
 5. Either:
@@ -133,9 +133,9 @@ Plugins can implement multiple interfaces to combine capabilities.
 
 **Option 2: Manual Installation**
 1. Download plugin DLL
-2. Create folder: `%AppData%\WinNotch\Plugins\<plugin-id>\`
+2. Create folder: `%AppData%\X-Notch\Plugins\<plugin-id>\`
 3. Place DLL in folder
-4. Restart WinNotch
+4. Restart X-Notch
 
 ## Example Plugins Created
 
@@ -173,7 +173,7 @@ The plugin library is hosted as a JSON file on GitHub:
   "version": "1.0",
   "plugins": [
     {
-      "id": "com.winnotch.pluginname",
+      "id": "com.X-Notch.pluginname",
       "name": "Plugin Name",
       "version": "1.0.0",
       "author": "Author",
@@ -192,7 +192,7 @@ The plugin library is hosted as a JSON file on GitHub:
 
 ### Required Integration (To Be Completed)
 
-To fully integrate the plugin system into WinNotch:
+To fully integrate the plugin system into X-Notch:
 
 1. **NotchWindow.xaml.cs**:
    ```csharp
@@ -225,7 +225,7 @@ To fully integrate the plugin system into WinNotch:
 ### For Developers
 
 - **Easy to Get Started**: Inherit from `PluginBase`, implement a few properties, done
-- **Powerful**: Full access to all WinNotch services and APIs
+- **Powerful**: Full access to all X-Notch services and APIs
 - **Flexible**: Multiple plugin types can be combined
 - **Well Documented**: 480+ line guide with examples
 - **Type Safe**: Strong typing via interfaces
@@ -250,7 +250,7 @@ To fully integrate the plugin system into WinNotch:
 
 ### Core System (17 files)
 ```
-src/WinNotch/Plugins/
+src/X-Notch/Plugins/
 ├── IPlugin.cs
 ├── IPluginContext.cs
 ├── IUIPlugin.cs
@@ -266,7 +266,7 @@ src/WinNotch/Plugins/
 
 ### UI Components (4 files)
 ```
-src/WinNotch/Views/
+src/X-Notch/Views/
 ├── PluginManagerView.xaml
 ├── PluginManagerView.xaml.cs
 ├── PluginBrowserWindow.xaml
@@ -316,7 +316,7 @@ To complete the integration:
    - Test enable/disable
    - Verify error handling
 
-5. **Create WinNotch-Plugins Repository**
+5. **Create X-Notch-Plugins Repository**
    - Initialize library.json
    - Add submission guidelines
    - Host example plugins
@@ -341,7 +341,7 @@ To complete the integration:
 
 ## Conclusion
 
-The WinNotch plugin system is a comprehensive, production-ready implementation that:
+The X-Notch plugin system is a comprehensive, production-ready implementation that:
 
 ✅ Provides maximum modularity
 ✅ Supports all plugin types mentioned (UI, Service, Animation)
@@ -352,4 +352,4 @@ The WinNotch plugin system is a comprehensive, production-ready implementation t
 ✅ Implements security features (hashing, permissions)
 ✅ Makes plugin development accessible
 
-The system is designed to be extensible, maintainable, and user-friendly, enabling the WinNotch community to create amazing extensions while keeping the core application focused and stable.
+The system is designed to be extensible, maintainable, and user-friendly, enabling the X-Notch community to create amazing extensions while keeping the core application focused and stable.

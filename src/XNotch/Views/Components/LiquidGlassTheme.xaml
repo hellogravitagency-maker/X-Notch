@@ -1,0 +1,70 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══ Liquid Glass Theme — Apple macOS / iOS Inspired Frosted Acrylic ═══ -->
+    <!-- Crisp 100% black and high-contrast typography over silky frosted translucent glass -->
+
+    <!-- Notch: Silky frosted glass tint with clear border & shadow -->
+    <SolidColorBrush x:Key="NotchFillBrush" Color="#75FFFFFF"/>
+    <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#25000000"/>
+    <SolidColorBrush x:Key="ShelfBadgeBorderBrush" Color="#45000000"/>
+    <SolidColorBrush x:Key="DropZoneGlowBrush" Color="#33007AFF"/>
+
+    <!-- Text hierarchy — crisp 100% black and rich high-contrast dark charcoals -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FF000000"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF1C1C1E"/>
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#FF2C2C2E"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#FF3A3A3C"/>
+    <SolidColorBrush x:Key="TextDimBrush" Color="#FF48484A"/>
+    <SolidColorBrush x:Key="TextSubtleBrush" Color="#FF555558"/>
+    <SolidColorBrush x:Key="TextFaintBrush" Color="#FF636366"/>
+    <SolidColorBrush x:Key="TextFaintestBrush" Color="#FF75757A"/>
+    <SolidColorBrush x:Key="SettingLabelBrush" Color="#FF111111"/>
+    <SolidColorBrush x:Key="BatteryTextBrush" Color="#FF000000"/>
+
+    <!-- Surfaces — layered translucent glass with refined depth -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#75FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#22000000"/>
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#38000000"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#25000000"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#25000000"/>
+    <SolidColorBrush x:Key="ProgressTrackBrush" Color="#28000000"/>
+    <SolidColorBrush x:Key="ProgressFillBrush" Color="#FF000000"/>
+    <SolidColorBrush x:Key="SegmentedBgBrush" Color="#1E000000"/>
+    <SolidColorBrush x:Key="SegmentedCheckedBgBrush" Color="#45FFFFFF"/>
+
+    <!-- Toggle switch — dark track, white thumb -->
+    <SolidColorBrush x:Key="ToggleTrackOffBrush" Color="#35000000"/>
+    <SolidColorBrush x:Key="ToggleThumbBrush" Color="#FFFFFFFF"/>
+
+    <!-- Segmented radio — dark text on glass -->
+    <SolidColorBrush x:Key="SegmentedTextBrush" Color="#FF2C2C2E"/>
+    <SolidColorBrush x:Key="SegmentedHoverBgBrush" Color="#22000000"/>
+    <SolidColorBrush x:Key="SegmentedHoverTextBrush" Color="#FF000000"/>
+    <SolidColorBrush x:Key="SegmentedCheckedTextBrush" Color="#FF000000"/>
+
+    <!-- Overlays / hover — interaction states -->
+    <SolidColorBrush x:Key="TransportHoverBrush" Color="#20000000"/>
+    <SolidColorBrush x:Key="TransportPressedBrush" Color="#35000000"/>
+    <SolidColorBrush x:Key="HoverOverlayBrush" Color="#18000000"/>
+    <SolidColorBrush x:Key="PressedOverlayBrush" Color="#28000000"/>
+
+    <!-- Scrollbar — translucent dark -->
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="#40000000"/>
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#60000000"/>
+    <SolidColorBrush x:Key="ScrollThumbDragBrush" Color="#80000000"/>
+
+    <!-- Battery — crisp and readable on glass -->
+    <SolidColorBrush x:Key="BatteryBorderBrush" Color="#FF3A3A3C"/>
+    <SolidColorBrush x:Key="BatteryNormalFillBrush" Color="#FF000000"/>
+
+    <!-- HUD — dark for visibility through glass -->
+    <SolidColorBrush x:Key="HudIconBrush" Color="#FF000000"/>
+    <SolidColorBrush x:Key="HudSliderFillBrush" Color="#FF000000"/>
+
+    <!-- Audio visualizer -->
+    <Color x:Key="VisualizerBarColor">#FF000000</Color>
+
+</ResourceDictionary>

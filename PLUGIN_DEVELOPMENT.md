@@ -1,14 +1,14 @@
-# WinNotch Plugin Development Guide
+# X-Notch Plugin Development Guide
 
-This guide covers the current WinNotch plugin workflow: how to reference the plugin API, build a plugin, test it locally, and get it listed in the in-app browser.
+This guide covers the current X-Notch plugin workflow: how to reference the plugin API, build a plugin, test it locally, and get it listed in the in-app browser.
 
 If you want the broader user and developer walkthrough, see the live documentation site:
 
-- `https://n3uralcreativity.github.io/WinNotch/documentation/`
+- `https://n3uralcreativity.github.io/X-Notch/documentation/`
 
-## What a WinNotch plugin can do
+## What a X-Notch plugin can do
 
-WinNotch plugins can extend the app in several ways:
+X-Notch plugins can extend the app in several ways:
 
 - add visible UI to the closed or expanded notch
 - add accessory content beside built-in expanded content
@@ -39,11 +39,11 @@ UI plugins can return elements for these locations:
 - `Settings`
 - `Overlay`
 
-The live contracts are in `src/WinNotch/Plugins/`.
+The live contracts are in `src/XNotch/Plugins/`.
 
 ## Choose a development setup
 
-There are two good ways to reference WinNotch when building plugins.
+There are two good ways to reference X-Notch when building plugins.
 
 ### Option 1: Use the GitHub Packages SDK
 
@@ -53,7 +53,7 @@ Add the GitHub Packages source:
 
 ```bash
 dotnet nuget add source "https://nuget.pkg.github.com/N3uralCreativity/index.json" \
-  --name github-winnotch \
+  --name github-X-Notch \
   --username YOUR_GITHUB_USERNAME \
   --password YOUR_GITHUB_PAT \
   --store-password-in-clear-text
@@ -62,14 +62,14 @@ dotnet nuget add source "https://nuget.pkg.github.com/N3uralCreativity/index.jso
 Then install the SDK package:
 
 ```bash
-dotnet add package WinNotch.PluginSdk --version 0.6.2 --source github-winnotch
+dotnet add package X-Notch.PluginSdk --version 0.6.2 --source github-X-Notch
 ```
 
 Your personal access token needs `read:packages`.
 
-### Option 2: Reference the WinNotch project directly
+### Option 2: Reference the X-Notch project directly
 
-This is the best setup when you are already working inside the WinNotch repository and want easy access to the example plugins.
+This is the best setup when you are already working inside the X-Notch repository and want easy access to the example plugins.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -81,7 +81,7 @@ This is the best setup when you are already working inside the WinNotch reposito
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\WinNotch\WinNotch.csproj">
+    <ProjectReference Include="..\..\..\src\XNotch\XNotch.csproj">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </ProjectReference>
@@ -103,7 +103,7 @@ Whether you use the package or a direct project reference, your plugin project s
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WinNotch.PluginSdk" Version="0.6.2" />
+    <PackageReference Include="X-Notch.PluginSdk" Version="0.6.2" />
   </ItemGroup>
 </Project>
 ```
@@ -113,12 +113,12 @@ Whether you use the package or a direct project reference, your plugin project s
 ```csharp
 using System.Windows;
 using System.Windows.Controls;
-using WinNotch.Models;
-using WinNotch.Plugins;
+using XNotch.Models;
+using XNotch.Plugins;
 
 namespace HelloWorldPlugin;
 
-[WinNotchPlugin("com.example.helloworld", "Hello World", "1.0.0", "Your Name")]
+[XNotchPlugin("com.example.helloworld", "Hello World", "1.0.0", "Your Name")]
 public sealed class HelloWorldPlugin : PluginBase, IUIPlugin
 {
     public override string Id => "com.example.helloworld";
@@ -126,14 +126,14 @@ public sealed class HelloWorldPlugin : PluginBase, IUIPlugin
     public override string Version => "1.0.0";
     public override string Author => "Your Name";
     public override string Description => "A simple test plugin.";
-    public override string MinimumWinNotchVersion => "0.6.2";
+    public override string MinimumXNotchVersion => "0.6.2";
 
     public UIElement? GetUIElement(UIPluginLocation location)
     {
         return location switch
         {
             UIPluginLocation.ClosedContent => new TextBlock { Text = "Hi" },
-            UIPluginLocation.OpenContent => new TextBlock { Text = "Hello from WinNotch" },
+            UIPluginLocation.OpenContent => new TextBlock { Text = "Hello from X-Notch" },
             _ => null
         };
     }
@@ -155,16 +155,16 @@ dotnet build -c Release
 For a manual local install, place the DLL under:
 
 ```text
-%AppData%\WinNotch\Plugins\com.example.helloworld\HelloWorldPlugin.dll
+%AppData%\X-Notch\Plugins\com.example.helloworld\HelloWorldPlugin.dll
 ```
 
-Restart WinNotch after copying the file.
+Restart X-Notch after copying the file.
 
-If you also include a `manifest.json` beside the DLL, WinNotch can show better installed metadata and compare versions for updates.
+If you also include a `manifest.json` beside the DLL, X-Notch can show better installed metadata and compare versions for updates.
 
 ## Plugin context
 
-Every plugin receives an `IPluginContext` during initialization. It gives access to WinNotch services and plugin storage.
+Every plugin receives an `IPluginContext` during initialization. It gives access to X-Notch services and plugin storage.
 
 ```csharp
 public interface IPluginContext
@@ -273,7 +273,7 @@ The normal plugin release flow is:
 2. Upload that DLL to a public release URL, usually a GitHub Release.
 3. Compute its SHA-256 hash.
 4. Create or update a plugin manifest entry.
-5. Add that entry to `WinNotch-Plugins/library.json` if you want it to appear in the in-app browser.
+5. Add that entry to `X-Notch-Plugins/library.json` if you want it to appear in the in-app browser.
 
 Example manifest:
 
@@ -284,7 +284,7 @@ Example manifest:
   "version": "1.0.0",
   "author": "Your Name",
   "description": "Does something useful in the notch.",
-  "minimumWinNotchVersion": "0.6.2",
+  "minimumXNotchVersion": "0.6.2",
   "downloadUrl": "https://github.com/you/myplugin/releases/download/v1.0.0/MyPlugin.dll",
   "homepage": "https://github.com/you/myplugin",
   "iconUrl": "",
@@ -299,12 +299,12 @@ Example manifest:
 
 ## How a plugin gets into the browser
 
-The WinNotch app does not search GitHub releases directly. The in-app browser reads plugin metadata from the `WinNotch-Plugins` repository's `library.json`.
+The X-Notch app does not search GitHub releases directly. The in-app browser reads plugin metadata from the `X-Notch-Plugins` repository's `library.json`.
 
 That means a plugin appears in the browser only when:
 
 - the DLL is publicly downloadable
-- the manifest entry is present in `WinNotch-Plugins/library.json`
+- the manifest entry is present in `X-Notch-Plugins/library.json`
 - the entry passes the library validation checks in that repository
 
 The plugin library repo now includes:
@@ -316,16 +316,16 @@ The plugin library repo now includes:
 
 ## Release checklist
 
-Before opening a PR to `WinNotch-Plugins`, confirm:
+Before opening a PR to `X-Notch-Plugins`, confirm:
 
 - your plugin ID is unique
 - your version is updated
-- `minimumWinNotchVersion` matches the APIs you actually use
+- `minimumXNotchVersion` matches the APIs you actually use
 - `downloadUrl` points directly to the DLL
 - `homepage` points to the repo or project page
 - the SHA-256 hash matches the released DLL
 - your category is one of the supported values
-- the plugin has been tested in WinNotch
+- the plugin has been tested in X-Notch
 
 Supported categories:
 
@@ -364,9 +364,9 @@ There is also a sample browser manifest file at:
 - clean up timers, subscriptions, and unmanaged resources in `ShutdownAsync` and `Dispose`
 - handle theme changes and layout changes explicitly
 - document any required setup clearly if your plugin is configurable
-- raise `MinimumWinNotchVersion` when you depend on newer WinNotch APIs
+- raise `MinimumXNotchVersion` when you depend on newer X-Notch APIs
 
 ## Help
 
-- Main repo issues: `https://github.com/N3uralCreativity/WinNotch/issues`
-- Plugin browser listings: `https://github.com/N3uralCreativity/WinNotch-Plugins`
+- Main repo issues: `https://github.com/N3uralCreativity/X-Notch/issues`
+- Plugin browser listings: `https://github.com/N3uralCreativity/X-Notch-Plugins`

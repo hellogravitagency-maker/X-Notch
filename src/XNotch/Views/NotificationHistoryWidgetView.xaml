@@ -1,0 +1,65 @@
+<UserControl x:Class="XNotch.Views.NotificationHistoryWidgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="128"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
+                <ResourceDictionary Source="Components/RoundedScrollBarStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Stretch" Margin="6,0" Background="Transparent" PreviewMouseWheel="OnPreviewMouseWheel">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Row -->
+        <Grid Grid.Row="0" Margin="0,0,0,4">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="🔔" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                <TextBlock Text="NOTIFICATIONS &amp; ALERTS" FontSize="9.5" FontWeight="Bold"
+                           Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
+                <Border Background="#250A84FF" CornerRadius="4" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="NotificationCountText" Text="0 alerts" FontSize="9.5" FontWeight="Bold" Foreground="#0A84FF"/>
+                </Border>
+            </StackPanel>
+
+            <Button x:Name="ClearAllButton"
+                    HorizontalAlignment="Right"
+                    Style="{StaticResource IconButton}"
+                    Height="20" Padding="8,1"
+                    Click="OnClearAllClick"
+                    ToolTip="Clear notification history">
+                <TextBlock Text="Clear All" FontSize="9.5" Foreground="{DynamicResource TextTertiaryBrush}"/>
+            </Button>
+        </Grid>
+
+        <!-- Notifications Scroll List -->
+        <ScrollViewer x:Name="NotificationScrollViewer"
+                      Grid.Row="1"
+                      VerticalAlignment="Stretch"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      PanningMode="VerticalOnly"
+                      Background="Transparent"
+                      Style="{StaticResource RoundedScrollViewer}">
+            <StackPanel x:Name="NotificationListPanel">
+                <Border x:Name="EmptyPlaceholder" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="12,16" Margin="0,4,0,0" Visibility="Collapsed">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="🔔" FontSize="16" HorizontalAlignment="Center" Opacity="0.5" Margin="0,0,0,2"/>
+                        <TextBlock Text="No recent notifications"
+                                   FontSize="10.5" FontStyle="Italic"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFaintestBrush}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

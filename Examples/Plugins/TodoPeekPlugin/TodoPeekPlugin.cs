@@ -15,25 +15,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
-using WinNotch.Services;
+using XNotch.Models;
+using XNotch.Plugins;
+using XNotch.Services;
 
 namespace TodoPeekPlugin;
 
-[WinNotchPlugin("com.winnotch.todopeek", "Todo Peek", "1.0.2", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.todopeek", "Todo Peek", "1.0.2", "X-Notch Team")]
 [PluginPermission("network", "Required to fetch tasks from Todoist or Microsoft Graph.")]
 public sealed class TodoPeekPlugin : PluginBase, IUIPlugin, IConfigurablePlugin
 {
     private static readonly HttpClient HttpClient = CreateHttpClient();
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public override string Id => "com.winnotch.todopeek";
+    public override string Id => "com.xnotch.todopeek";
     public override string Name => "Todo Peek";
     public override string Version => "1.0.2";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "Expanded-view task widget with quick completion for Todoist, plus manual-token Microsoft To Do support.";
-    public override string MinimumWinNotchVersion => "0.5.3";
+    public override string MinimumXNotchVersion => "0.5.3";
 
     private ThemeService? _themeService;
     private DispatcherTimer? _refreshTimer;
@@ -1048,7 +1048,7 @@ public sealed class TodoPeekPlugin : PluginBase, IUIPlugin, IConfigurablePlugin
         {
             Timeout = TimeSpan.FromSeconds(12)
         };
-        client.DefaultRequestHeaders.Add("User-Agent", "WinNotch-TodoPeek/1.0.2");
+        client.DefaultRequestHeaders.Add("User-Agent", "X-Notch-TodoPeek/1.0.2");
         return client;
     }
 
@@ -1101,7 +1101,7 @@ public sealed class TodoPeekPlugin : PluginBase, IUIPlugin, IConfigurablePlugin
                         {
                             Key = "refreshMinutes",
                             Label = "Refresh every (minutes)",
-                            HelpText = "How often Todo Peek should refresh in the background while WinNotch is running.",
+                            HelpText = "How often Todo Peek should refresh in the background while X-Notch is running.",
                             Value = _settings.RefreshMinutes.ToString(CultureInfo.InvariantCulture),
                             Placeholder = "Between 1 and 60 minutes.",
                             FieldType = PluginConfigurationFieldType.Number,

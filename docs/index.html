@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinNotch</title>
-    <meta name="description" content="WinNotch brings a polished notch experience to Windows with music controls, drag-and-drop, system HUDs, and a growing plugin ecosystem.">
+    <title>X-Notch</title>
+    <meta name="description" content="X-Notch brings a polished notch experience to Windows with music controls, drag-and-drop, system HUDs, and a growing plugin ecosystem.">
     <meta name="theme-color" content="#f6f7fb">
-    <link rel="icon" type="image/x-icon" href="./assets/icons/winnotch.ico">
+    <link rel="icon" type="image/x-icon" href="./assets/icons/X-Notch.ico">
     <script>
         (() => {
-            const savedTheme = localStorage.getItem("winnotch-site-theme");
+            const savedTheme = localStorage.getItem("X-Notch-site-theme");
             const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
             if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
                 document.documentElement.classList.add("dark");
@@ -24,11 +24,11 @@
 <body>
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="brand" href="#top" aria-label="WinNotch home">
+            <a class="brand" href="#top" aria-label="X-Notch home">
                 <span class="brand__icon" aria-hidden="true">
-                    <img src="./assets/brand/winnotch-wordmark.svg" alt="" class="brand__mark">
+                    <img src="./assets/brand/X-Notch-wordmark.svg" alt="" class="brand__mark">
                 </span>
-                <span class="brand__text">WinNotch</span>
+                <span class="brand__text">X-Notch</span>
             </a>
 
             <nav class="site-nav" aria-label="Primary">
@@ -43,8 +43,8 @@
                     <input type="checkbox" id="theme-toggle">
                     <div></div>
                 </label>
-                <a class="header-link" href="https://github.com/N3uralCreativity/WinNotch" target="_blank" rel="noreferrer">GitHub</a>
-                <a class="header-button" href="https://github.com/N3uralCreativity/WinNotch/releases/latest" target="_blank" rel="noreferrer" data-winnotch-download>Get WinNotch</a>
+                <a class="header-link" href="https://github.com/Gravit/X-Notch" target="_blank" rel="noreferrer">GitHub</a>
+                <a class="header-button" href="https://github.com/Gravit/X-Notch/releases/latest" target="_blank" rel="noreferrer" data-X-Notch-download>Get X-Notch</a>
             </div>
         </div>
     </header>
@@ -64,7 +64,7 @@
                 <div class="hero__layout">
                     <div class="hero__copy">
                         <h1>
-                            WinNotch keeps Windows
+                            X-Notch keeps Windows
                             <span class="hero__word">alive.</span>
                         </h1>
                     </div>
@@ -76,11 +76,11 @@
                         </p>
 
                         <div class="hero__actions">
-                            <a class="header-button" href="https://github.com/N3uralCreativity/WinNotch/releases/latest" target="_blank" rel="noreferrer" data-winnotch-download>Download for Windows</a>
+                            <a class="header-button" href="https://github.com/Gravit/X-Notch/releases/latest" target="_blank" rel="noreferrer" data-X-Notch-download>Download for Windows</a>
                             <button class="header-link header-link--inline plugin-library-trigger" type="button" data-open-plugin-library>Browse plugins</button>
                         </div>
 
-                        <ul class="hero__facts" aria-label="WinNotch facts">
+                        <ul class="hero__facts" aria-label="X-Notch facts">
                             <li>.NET 8 + WPF</li>
                             <li>Windows 10 / 11</li>
                             <li>UI, service, and animation plugins</li>
@@ -305,8 +305,8 @@
                     </div>
 
                     <div class="download__actions">
-                        <a class="header-button" href="https://github.com/N3uralCreativity/WinNotch/releases/latest" target="_blank" rel="noreferrer" data-winnotch-download>Download latest release</a>
-                        <a class="header-link header-link--inline" href="https://github.com/N3uralCreativity/WinNotch-Plugins" target="_blank" rel="noreferrer">Open plugin repository</a>
+                        <a class="header-button" href="https://github.com/Gravit/X-Notch/releases/latest" target="_blank" rel="noreferrer" data-X-Notch-download>Download latest release</a>
+                        <a class="header-link header-link--inline" href="https://github.com/Gravit/X-Notch-Plugins" target="_blank" rel="noreferrer">Open plugin repository</a>
                     </div>
                 </div>
             </div>
@@ -320,12 +320,12 @@
             <header class="plugin-library-modal__header">
                 <div>
                     <p class="section-kicker">Plugin library</p>
-                    <h2 id="plugin-library-title">Browse the live WinNotch plugin catalog.</h2>
-                    <p class="plugin-library-modal__lede" data-plugin-library-subtitle>Loading the latest published plugins from the official WinNotch library.</p>
+                    <h2 id="plugin-library-title">Browse the live X-Notch plugin catalog.</h2>
+                    <p class="plugin-library-modal__lede" data-plugin-library-subtitle>Loading the latest published plugins from the official X-Notch library.</p>
                 </div>
 
                 <div class="plugin-library-modal__actions">
-                    <a class="header-link header-link--inline plugin-library-modal__repo" href="https://github.com/N3uralCreativity/WinNotch-Plugins" target="_blank" rel="noreferrer">Open repository</a>
+                    <a class="header-link header-link--inline plugin-library-modal__repo" href="https://github.com/Gravit/X-Notch-Plugins" target="_blank" rel="noreferrer">Open repository</a>
                     <button class="plugin-library-modal__close" type="button" aria-label="Close plugin library" data-close-plugin-library>
                         <span></span>
                         <span></span>
@@ -377,8 +377,8 @@
 
                 <div class="plugin-library-modal__error" data-plugin-library-error hidden>
                     <strong>Plugin library unavailable right now.</strong>
-                    <p>The live list could not be loaded from the WinNotch plugin repository. You can still open the repository directly.</p>
-                    <a class="header-button" href="https://github.com/N3uralCreativity/WinNotch-Plugins" target="_blank" rel="noreferrer">Open WinNotch-Plugins</a>
+                    <p>The live list could not be loaded from the X-Notch plugin repository. You can still open the repository directly.</p>
+                    <a class="header-button" href="https://github.com/Gravit/X-Notch-Plugins" target="_blank" rel="noreferrer">Open X-Notch-Plugins</a>
                 </div>
 
                 <div class="plugin-library-modal__grid" data-plugin-library-grid hidden></div>
@@ -387,11 +387,11 @@
     </div>
 
     <footer class="site-footer">
-        <span>WinNotch</span>
+        <span>X-Notch</span>
         <a href="./documentation/">Docs</a>
-        <a href="https://github.com/N3uralCreativity/WinNotch" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="https://github.com/N3uralCreativity/WinNotch/releases" target="_blank" rel="noreferrer">Releases</a>
-        <a href="https://github.com/N3uralCreativity/WinNotch-Plugins" target="_blank" rel="noreferrer">Plugins</a>
+        <a href="https://github.com/Gravit/X-Notch" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://github.com/Gravit/X-Notch/releases" target="_blank" rel="noreferrer">Releases</a>
+        <a href="https://github.com/Gravit/X-Notch-Plugins" target="_blank" rel="noreferrer">Plugins</a>
     </footer>
 
     <script src="./script.js"></script>

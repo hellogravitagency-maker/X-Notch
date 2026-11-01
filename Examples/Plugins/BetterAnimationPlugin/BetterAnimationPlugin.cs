@@ -3,20 +3,20 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using WinNotch.Plugins;
+using XNotch.Plugins;
 
 namespace BetterAnimationPlugin;
 
 /// <summary>
 /// Example plugin that replaces the default notch animations with smooth fade + slide effects.
 /// </summary>
-[WinNotchPlugin("com.winnotch.betteranimation", "Better Animation", "1.0.0", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.betteranimation", "Better Animation", "1.0.0", "X-Notch Team")]
 public class BetterAnimationPlugin : PluginBase, IAnimationPlugin
 {
-    public override string Id => "com.winnotch.betteranimation";
+    public override string Id => "com.xnotch.betteranimation";
     public override string Name => "Better Animation";
     public override string Version => "1.0.0";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "Replaces default animations with smooth fade + slide effects";
 
     public double AnimationDurationMs => 450;

@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const rootElement = document.documentElement;
     const themeToggle = document.querySelector("#theme-toggle");
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    const downloadLinks = [...document.querySelectorAll("[data-winnotch-download]")];
+    const downloadLinks = [...document.querySelectorAll("[data-X-Notch-download]")];
     const searchInput = document.querySelector("#docs-search-input");
     const searchResults = document.querySelector("#docs-search-results");
     const searchRoot = document.querySelector("[data-search-root]");
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
         rootElement.classList.toggle("dark", isDark);
 
         if (persist) {
-            localStorage.setItem("winnotch-site-theme", isDark ? "dark" : "light");
+            localStorage.setItem("X-Notch-site-theme", isDark ? "dark" : "light");
         }
 
         if (themeToggle) {
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const savedTheme = localStorage.getItem("winnotch-site-theme");
+    const savedTheme = localStorage.getItem("X-Notch-site-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     applyThemeState(savedTheme ? savedTheme === "dark" : prefersDark, false);
 
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch("https://api.github.com/repos/N3uralCreativity/WinNotch/releases/latest", {
+            const response = await fetch("https://api.github.com/repos/Gravit/X-Notch/releases/latest", {
                 headers: {
                     Accept: "application/vnd.github+json"
                 }
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 link.dataset.releaseVersion = release.tag_name || "";
             });
         } catch (error) {
-            console.warn("WinNotch docs download link fallback in use.", error);
+            console.warn("X-Notch docs download link fallback in use.", error);
         }
     };
 

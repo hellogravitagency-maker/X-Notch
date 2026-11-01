@@ -9,23 +9,23 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
-using WinNotch.Services;
+using XNotch.Models;
+using XNotch.Plugins;
+using XNotch.Services;
 
 namespace FocusTimerPlugin;
 
-[WinNotchPlugin("com.winnotch.focustimer", "Focus Timer", "1.0.1", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.focustimer", "Focus Timer", "1.0.1", "X-Notch Team")]
 public sealed class FocusTimerPlugin : PluginBase, IUIPlugin, IConfigurablePlugin
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
 
-    public override string Id => "com.winnotch.focustimer";
+    public override string Id => "com.xnotch.focustimer";
     public override string Name => "Focus Timer";
     public override string Version => "1.0.1";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "Pomodoro-style focus timer with break cycles, streak tracking, and compact session controls.";
-    public override string MinimumWinNotchVersion => "0.5.3";
+    public override string MinimumXNotchVersion => "0.5.3";
 
     private ThemeService? _themeService;
     private DispatcherTimer? _timer;

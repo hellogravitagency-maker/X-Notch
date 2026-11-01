@@ -1,6 +1,6 @@
 # Clipboard Stack
 
-`Clipboard Stack` keeps your five most recent clipboard text snippets and file lists inside the expanded WinNotch view.
+`Clipboard Stack` keeps your five most recent clipboard text snippets and file lists inside the expanded X-Notch view.
 
 ## What it does
 
@@ -15,4 +15,4 @@
 ## Notes
 
 - This first release tracks `text` and `file list` clipboard content
-- Clipboard history is kept in memory while WinNotch is running
+- Clipboard history is kept in memory while X-Notch is running

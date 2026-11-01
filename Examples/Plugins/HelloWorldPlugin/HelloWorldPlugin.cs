@@ -3,20 +3,20 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using WinNotch.Models;
-using WinNotch.Plugins;
+using XNotch.Models;
+using XNotch.Plugins;
 
 namespace HelloWorldPlugin;
 
-[WinNotchPlugin("com.winnotch.helloworld", "Hello World", "1.0.0", "WinNotch Team")]
+[XNotchPlugin("com.xnotch.helloworld", "Hello World", "1.0.0", "X-Notch Team")]
 public class HelloWorldPlugin : PluginBase, IUIPlugin
 {
-    public override string Id => "com.winnotch.helloworld";
+    public override string Id => "com.xnotch.helloworld";
     public override string Name => "Hello World";
     public override string Version => "1.0.0";
-    public override string Author => "WinNotch Team";
+    public override string Author => "X-Notch Team";
     public override string Description => "A simple test plugin that displays system info in the notch.";
-    public override string MinimumWinNotchVersion => "0.3.0";
+    public override string MinimumXNotchVersion => "0.3.0";
 
     private TextBlock? _closedLabel;
     private StackPanel? _openPanel;

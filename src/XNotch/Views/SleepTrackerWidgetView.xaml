@@ -1,0 +1,229 @@
+<UserControl x:Class="XNotch.Views.SleepTrackerWidgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="128">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- macOS Swiss Minimal Sleep Stepper Button Style -->
+            <Style x:Key="SleepStepperSubButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="26"/>
+                <Setter Property="Padding" Value="9,0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    CornerRadius="13"
+                                    Padding="{TemplateBinding Padding}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="Scale" ScaleX="1.0" ScaleY="1.0"/>
+                                </Border.RenderTransform>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#1EFFFFFF"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#30FFFFFF"/>
+                                    <Setter TargetName="Bg" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.94" ScaleY="0.94"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- macOS Swiss Minimal Sleep Pill Button Style -->
+            <Style x:Key="SleepPillButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="10,0"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="14"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="Scale" ScaleX="1.0" ScaleY="1.0"/>
+                                </Border.RenderTransform>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Opacity" Value="0.88"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Opacity" Value="0.75"/>
+                                    <Setter TargetName="Bg" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.94" ScaleY="0.94"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Center" Margin="8,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Column: Circular Moon & Rest Score with Swiss Minimalist Disc -->
+        <Grid Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+            <!-- Subtle Soft Ambient Occlusion -->
+            <Border Width="72" Height="72" CornerRadius="36"
+                    Background="#15000000">
+                <Border.Effect>
+                    <BlurEffect Radius="12" KernelType="Gaussian"/>
+                </Border.Effect>
+            </Border>
+
+            <!-- Main Moon Frosted Disc with Fine Swiss Hairline Border -->
+            <Border Width="72" Height="72" CornerRadius="36"
+                    Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1.2">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="🌙" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,1" Opacity="0.9"/>
+                    <TextBlock x:Name="SleepDurationText" Text="7h 45m"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                    <Border CornerRadius="4" Padding="5,1" Margin="0,3,0,0"
+                            Background="{DynamicResource SegmentedBgBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <TextBlock x:Name="SleepQualityText" Text="94% REST"
+                                   FontSize="7.5" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Right Column: Schedule Timeline & Swiss Controls -->
+        <Grid Grid.Column="1" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header Badge -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,2">
+                <Border Width="5" Height="5" CornerRadius="2.5" Background="#818CF8" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <TextBlock Text="SLEEP &amp; RECOVERY" FontSize="9" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextMutedBrush}"/>
+            </StackPanel>
+
+            <!-- Bedtime & Wake up summary -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBlock Text="🌙 In Bed: " FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                <TextBlock x:Name="BedtimeText" Text="11:00 PM" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0"/>
+
+                <TextBlock Text="☀️ Wake: " FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"/>
+                <TextBlock x:Name="WakeTimeText" Text="07:00 AM" FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+            </StackPanel>
+
+            <!-- Schedule Timeline Gradient Bar with Swiss Minimalist Gradient -->
+            <Border Grid.Row="2" Height="4.5" CornerRadius="2.25" Background="#1A1D27" Margin="0,0,16,6">
+                <Border CornerRadius="2.25">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                            <GradientStop Color="#3730A3" Offset="0.0"/>
+                            <GradientStop Color="#4F46E5" Offset="0.35"/>
+                            <GradientStop Color="#818CF8" Offset="0.75"/>
+                            <GradientStop Color="#F59E0B" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+            </Border>
+
+            <!-- Goal Subtitle -->
+            <TextBlock x:Name="GoalSubtitleText"
+                       Grid.Row="3"
+                       Text="Target: 8.0 hrs • Wind-down at 10:30 PM"
+                       FontSize="9.5"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="0,0,0,7"/>
+
+            <!-- Action buttons row with macOS Swiss Minimal Glass Stepper & Capsule Controls -->
+            <StackPanel Grid.Row="4" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Paired Sleep Adjustment Stepper [ − 15m | + 15m ] -->
+                <Border Height="28" CornerRadius="14" BorderThickness="1" Margin="0,0,7,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#1B1E2E" Offset="0.0"/>
+                            <GradientStop Color="#10131E" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#35FFFFFF" Offset="0.0"/>
+                            <GradientStop Color="#14FFFFFF" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Minus 15m Button -->
+                        <Button x:Name="MinusTimeButton"
+                                Style="{StaticResource SleepStepperSubButton}"
+                                Click="OnMinus15Click"
+                                ToolTip="Subtract 15 minutes of sleep">
+                            <TextBlock Text="− 15m" FontSize="9.2" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </Button>
+                        <!-- Hairline Segment Divider -->
+                        <Border Width="1" Height="14" Background="#1FFFFFFF" VerticalAlignment="Center"/>
+                        <!-- Plus 15m Button -->
+                        <Button x:Name="PlusTimeButton"
+                                Style="{StaticResource SleepStepperSubButton}"
+                                Click="OnPlus15Click"
+                                ToolTip="Add 15 minutes of sleep">
+                            <TextBlock Text="+ 15m" FontSize="9.2" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Wind-down Dynamic macOS Switch Button (Clean Twilight Indigo without green light) -->
+                <Button x:Name="WindDownToggle"
+                        Style="{StaticResource SleepPillButton}"
+                        Height="28"
+                        Padding="10,0"
+                        BorderThickness="1"
+                        Click="OnWindDownToggleClick"
+                        ToolTip="Toggle Sleep Wind-Down Routine">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🌙" FontSize="9.5" Margin="0,0,5,0" VerticalAlignment="Center" Opacity="0.85"/>
+                        <TextBlock x:Name="WindDownLabel" Text="Wind-down" FontSize="9.2" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Border x:Name="WindDownBadge" CornerRadius="4" Padding="5,1" Background="#28818CF8" VerticalAlignment="Center">
+                            <TextBlock x:Name="WindDownStatusText" Text="ON" FontSize="7.5" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                        </Border>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

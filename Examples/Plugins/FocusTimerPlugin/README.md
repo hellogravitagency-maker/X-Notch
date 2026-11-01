@@ -1,6 +1,6 @@
 # Focus Timer
 
-`Focus Timer` adds a clean Pomodoro-style timer to the expanded WinNotch view.
+`Focus Timer` adds a clean Pomodoro-style timer to the expanded X-Notch view.
 
 ## What it does
 
@@ -16,7 +16,7 @@ You can configure Focus Timer directly from `Plugin Manager` by clicking `Config
 
 The plugin also creates:
 
-`%AppData%\WinNotch\Plugins\com.winnotch.focustimer\settings.json`
+`%AppData%\X-Notch\Plugins\com.X-Notch.focustimer\settings.json`
 
 Default file:
 
