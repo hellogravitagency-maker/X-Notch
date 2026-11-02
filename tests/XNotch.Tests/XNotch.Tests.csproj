@@ -19,6 +19,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\XNotch\XNotch.csproj" />
     <ProjectReference Include="..\..\Examples\Plugins\QuickNotesPlugin\QuickNotesPlugin.csproj" />
+    <ProjectReference Include="..\..\Examples\Plugins\CyberpunkThemePlugin\CyberpunkThemePlugin.csproj" />
+    <ProjectReference Include="..\..\Examples\Plugins\NordThemePlugin\NordThemePlugin.csproj" />
+    <ProjectReference Include="..\..\Examples\Plugins\SunsetThemePlugin\SunsetThemePlugin.csproj" />
   </ItemGroup>
 
 </Project>

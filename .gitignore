@@ -29,6 +29,7 @@ packages/
 *.exe
 *.pdb
 *.cache
+!src/XNotch/Assets/BundledPlugins/*.dll
 
 # OS files
 Thumbs.db

@@ -121,9 +121,90 @@ public class UpdateServiceAndPluginsTests
 
         Assert.NotNull(library);
         Assert.NotNull(library.Plugins);
-        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.quicknotes");
         Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.betteranimation");
         Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.todopeek");
+        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.focustimer");
+        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.cyberpunktheme");
+        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.nordtheme");
+        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.sunsettheme");
+        Assert.DoesNotContain(library.Plugins, p => p.Id == "com.xnotch.quicknotes");
+        Assert.DoesNotContain(library.Plugins, p => p.Id == "com.xnotch.helloworld");
+    }
+
+    [Fact]
+    public void ThemePlugins_ImplementIThemePlugin_AndReturnDistinctPalettes()
+    {
+        var cyberpunk = new CyberpunkThemePlugin.CyberpunkThemePlugin();
+        var nord = new NordThemePlugin.NordThemePlugin();
+        var sunset = new SunsetThemePlugin.SunsetThemePlugin();
+
+        Assert.IsAssignableFrom<IThemePlugin>(cyberpunk);
+        Assert.IsAssignableFrom<IThemePlugin>(nord);
+        Assert.IsAssignableFrom<IThemePlugin>(sunset);
+
+        var cyberPalette = cyberpunk.GetThemePalette();
+        var nordPalette = nord.GetThemePalette();
+        var sunsetPalette = sunset.GetThemePalette();
+
+        Assert.NotNull(cyberPalette);
+        Assert.NotNull(nordPalette);
+        Assert.NotNull(sunsetPalette);
+
+        Assert.NotEqual(cyberPalette.Accent, nordPalette.Accent);
+        Assert.NotEqual(cyberPalette.Background, sunsetPalette.Background);
+        Assert.NotEqual(nordPalette.Accent, sunsetPalette.Accent);
+    }
+
+    [Fact]
+    public void PluginLibraryService_EmbeddedOrLocalPlugins_ExtractOrFindSuccessfully()
+    {
+        var manifest = new PluginManifest
+        {
+            Id = "com.xnotch.cyberpunktheme",
+            Name = "Cyberpunk Neon Theme",
+            Version = "1.0.0"
+        };
+
+        var localDll = PluginLibraryService.FindLocalPluginDll(manifest);
+        var tempFile = Path.Combine(Path.GetTempPath(), "xnotch_test_theme.dll");
+        try
+        {
+            var extracted = PluginLibraryService.TryExtractEmbeddedPlugin(manifest, tempFile);
+            Assert.True(!string.IsNullOrEmpty(localDll) || extracted);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void AllPluginsInLibrary_CanBeResolvedLocallyOrEmbedded()
+    {
+        var repoRoot = FindRepoRoot();
+        var libraryJsonPath = Path.Combine(repoRoot, "src", "XNotch", "Assets", "example-library.json");
+        var json = File.ReadAllText(libraryJsonPath);
+        var library = JsonSerializer.Deserialize<PluginLibraryService.PluginLibrary>(json);
+
+        Assert.NotNull(library);
+        Assert.NotEmpty(library.Plugins);
+
+        foreach (var plugin in library.Plugins)
+        {
+            var localDll = PluginLibraryService.FindLocalPluginDll(plugin);
+            var tempFile = Path.Combine(Path.GetTempPath(), $"xnotch_test_{plugin.Id}.dll");
+            try
+            {
+                var extracted = PluginLibraryService.TryExtractEmbeddedPlugin(plugin, tempFile);
+                Assert.True(
+                    !string.IsNullOrWhiteSpace(localDll) || extracted,
+                    $"Plugin {plugin.Id} ({plugin.Name}) could not be resolved from local paths or embedded resources!");
+            }
+            finally
+            {
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            }
+        }
     }
 
     [Fact]

@@ -1,0 +1,16 @@
+{
+  "id": "com.xnotch.nordtheme",
+  "name": "Nord Arctic Theme",
+  "version": "1.0.0",
+  "author": "X-Notch Team",
+  "description": "An arctic, north-bluish clean dark palette based on the legendary Nord design system.",
+  "minimumXNotchVersion": "0.7.0",
+  "downloadUrl": "https://github.com/hellogravitagency-maker/X-Notch/releases/download/v1.0.0/NordThemePlugin.dll",
+  "homepage": "https://github.com/hellogravitagency-maker/X-Notch",
+  "iconUrl": "",
+  "category": "Theme",
+  "permissions": [],
+  "dependencies": [],
+  "releaseDate": "2026-11-02T00:00:00Z",
+  "isVerified": true
+}

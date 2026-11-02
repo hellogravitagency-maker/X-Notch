@@ -139,50 +139,87 @@ public class PluginLibraryService
             var pluginDir = Path.Combine(targetDirectory, SanitizeFileName(pluginId));
             Directory.CreateDirectory(pluginDir);
 
-            var fileName = $"{SanitizeFileName(manifest.Name)}.dll";
+            var localDll = FindLocalPluginDll(manifest);
+            string fileName;
+            if (!string.IsNullOrWhiteSpace(localDll))
+            {
+                fileName = Path.GetFileName(localDll);
+            }
+            else if (!string.IsNullOrEmpty(manifest.DownloadUrl))
+            {
+                try
+                {
+                    fileName = Path.GetFileName(new Uri(manifest.DownloadUrl).LocalPath);
+                }
+                catch
+                {
+                    fileName = $"{manifest.Name.Replace(" ", "")}Plugin.dll";
+                }
+            }
+            else
+            {
+                fileName = $"{manifest.Name.Replace(" ", "")}Plugin.dll";
+            }
+            if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+            {
+                fileName = $"{manifest.Name.Replace(" ", "")}Plugin.dll";
+            }
+
             var targetPath = Path.Combine(pluginDir, fileName);
             var tempPath = targetPath + ".tmp";
 
-            // Check for local plugin DLL first (bundled / local build)
-            var localDll = FindLocalPluginDll(manifest);
+            // 1. Check for local plugin DLL first (bundled / local build / repo)
             if (!string.IsNullOrWhiteSpace(localDll) && File.Exists(localDll))
             {
                 progress?.Report(50);
                 File.Copy(localDll, tempPath, true);
                 progress?.Report(100);
             }
+            // 2. Check for embedded assembly resource
+            else if (TryExtractEmbeddedPlugin(manifest, tempPath))
+            {
+                progress?.Report(100);
+            }
+            // 3. Fallback to HTTP download
             else
             {
                 if (string.IsNullOrEmpty(manifest.DownloadUrl))
                 {
-                    throw new InvalidOperationException($"Plugin {pluginId} has no download URL or local binary");
+                    throw new InvalidOperationException($"Plugin '{manifest.Name}' has no download URL or bundled binary.");
                 }
 
                 // Download the plugin DLL to a temp file first
-                using var response = await _httpClient.GetAsync(manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                response.EnsureSuccessStatusCode();
-
-                var totalBytes = response.Content.Headers.ContentLength ?? 0;
-                var downloadedBytes = 0L;
-
-                using var contentStream = await response.Content.ReadAsStreamAsync();
-                using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-                var buffer = new byte[8192];
-                int bytesRead;
-
-                while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                try
                 {
-                    await fileStream.WriteAsync(buffer, 0, bytesRead);
-                    downloadedBytes += bytesRead;
+                    using var response = await _httpClient.GetAsync(manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                    response.EnsureSuccessStatusCode();
 
-                    if (totalBytes > 0)
+                    var totalBytes = response.Content.Headers.ContentLength ?? 0;
+                    var downloadedBytes = 0L;
+
+                    using var contentStream = await response.Content.ReadAsStreamAsync();
+                    using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+                    var buffer = new byte[8192];
+                    int bytesRead;
+
+                    while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        progress?.Report((double)downloadedBytes / totalBytes * 100);
-                    }
-                }
+                        await fileStream.WriteAsync(buffer, 0, bytesRead);
+                        downloadedBytes += bytesRead;
 
-                fileStream.Close();
+                        if (totalBytes > 0)
+                        {
+                            progress?.Report((double)downloadedBytes / totalBytes * 100);
+                        }
+                    }
+
+                    fileStream.Close();
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw new InvalidOperationException($"Failed to download plugin from {manifest.DownloadUrl}: {ex.Message}", ex);
+                }
             }
 
             // Verify SHA256 if provided
@@ -358,6 +395,52 @@ public class PluginLibraryService
         return null;
     }
 
+    public static bool TryExtractEmbeddedPlugin(PluginManifest manifest, string destinationPath)
+    {
+        try
+        {
+            var assembly = typeof(PluginLibraryService).Assembly;
+            var resourceNames = assembly.GetManifestResourceNames();
+            if (resourceNames == null || resourceNames.Length == 0)
+                return false;
+
+            var candidates = new List<string>();
+            if (!string.IsNullOrEmpty(manifest.DownloadUrl))
+            {
+                try
+                {
+                    var uri = new Uri(manifest.DownloadUrl);
+                    var fn = Path.GetFileName(uri.LocalPath);
+                    if (!string.IsNullOrWhiteSpace(fn)) candidates.Add(fn);
+                }
+                catch { }
+            }
+
+            var cleanName = manifest.Name.Replace(" ", "").Replace("-", "");
+            candidates.Add($"{cleanName}Plugin.dll");
+            candidates.Add($"{cleanName}.dll");
+            candidates.Add($"{manifest.Id}.dll");
+
+            foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var match = resourceNames.FirstOrDefault(r => r.EndsWith(candidate, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    using var stream = assembly.GetManifestResourceStream(match);
+                    if (stream != null)
+                    {
+                        using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                        stream.CopyTo(fileStream);
+                        return true;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return false;
+    }
+
     public static string? FindLocalPluginDll(PluginManifest manifest)
     {
         var possibleFileNames = new List<string>();
@@ -366,7 +449,9 @@ public class PluginLibraryService
             try
             {
                 var uri = new Uri(manifest.DownloadUrl);
-                possibleFileNames.Add(Path.GetFileName(uri.LocalPath));
+                var fn = Path.GetFileName(uri.LocalPath);
+                if (!string.IsNullOrWhiteSpace(fn))
+                    possibleFileNames.Add(fn);
             }
             catch { }
         }
@@ -375,8 +460,33 @@ public class PluginLibraryService
         possibleFileNames.Add($"{baseName}.dll");
         possibleFileNames.Add($"{baseName}Plugin.dll");
         possibleFileNames.Add($"{SanitizeFileName(manifest.Name)}.dll");
+        possibleFileNames.Add($"{manifest.Id}.dll");
+        if (manifest.Id.StartsWith("com.xnotch."))
+        {
+            possibleFileNames.Add($"{manifest.Id.Replace("com.xnotch.", "")}.dll");
+            possibleFileNames.Add($"{manifest.Id.Replace("com.xnotch.", "")}Plugin.dll");
+        }
 
         var searchDirs = new List<string>();
+
+        // 1. Process directory (e.g. publish\ folder for published single-file app)
+        try
+        {
+            var processPath = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(processPath))
+            {
+                var procDir = Path.GetDirectoryName(processPath);
+                if (!string.IsNullOrWhiteSpace(procDir) && Directory.Exists(procDir))
+                {
+                    searchDirs.Add(procDir);
+                    searchDirs.Add(Path.Combine(procDir, "BundledPlugins"));
+                    searchDirs.Add(Path.Combine(procDir, "Plugins"));
+                }
+            }
+        }
+        catch { }
+
+        // 2. Base directory and repo directories
         var baseDir = AppContext.BaseDirectory;
         if (!string.IsNullOrWhiteSpace(baseDir) && Directory.Exists(baseDir))
         {
@@ -391,7 +501,16 @@ public class PluginLibraryService
                 if (Directory.Exists(examplesPath))
                 {
                     searchDirs.Add(examplesPath);
-                    break;
+                }
+                var bundledPath = Path.Combine(current.FullName, "src", "XNotch", "Assets", "BundledPlugins");
+                if (Directory.Exists(bundledPath))
+                {
+                    searchDirs.Add(bundledPath);
+                }
+                var publishBundledPath = Path.Combine(current.FullName, "publish", "BundledPlugins");
+                if (Directory.Exists(publishBundledPath))
+                {
+                    searchDirs.Add(publishBundledPath);
                 }
                 current = current.Parent;
             }

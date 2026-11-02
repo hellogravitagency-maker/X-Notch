@@ -142,12 +142,17 @@ public class PluginManager : IDisposable
                 // Auto-enable if previously enabled or first time
                 if (!_pluginEnabledState.ContainsKey(plugin.Id))
                 {
-                    _pluginEnabledState[plugin.Id] = true; // Default to enabled
+                    // Theme plugins default to disabled on first load so the user explicitly activates them
+                    _pluginEnabledState[plugin.Id] = !(plugin is IThemePlugin);
                 }
 
                 if (_pluginEnabledState[plugin.Id])
                 {
                     await plugin.OnEnableAsync();
+                    if (plugin is IThemePlugin themePlugin)
+                    {
+                        _context.ThemeService.SetPluginThemeOverride(themePlugin.GetThemePalette());
+                    }
                 }
 
                 PluginLoaded?.Invoke(plugin);
@@ -175,6 +180,30 @@ public class PluginManager : IDisposable
 
         try
         {
+            if (plugin is IThemePlugin themePlugin)
+            {
+                // Deactivate any other loaded theme plugins
+                foreach (var other in _loadedPlugins.OfType<IThemePlugin>())
+                {
+                    if (other.Id != pluginId && _pluginEnabledState.GetValueOrDefault(other.Id))
+                    {
+                        try
+                        {
+                            await other.OnDisableAsync();
+                        }
+                        catch { }
+                        _pluginEnabledState[other.Id] = false;
+                    }
+                }
+
+                await plugin.OnEnableAsync();
+                _pluginEnabledState[pluginId] = true;
+                _context.ThemeService.SetPluginThemeOverride(themePlugin.GetThemePalette());
+                SavePluginStates();
+                PluginStateChanged?.Invoke();
+                return true;
+            }
+
             await plugin.OnEnableAsync();
             _pluginEnabledState[pluginId] = true;
             SavePluginStates();
@@ -201,6 +230,10 @@ public class PluginManager : IDisposable
         {
             await plugin.OnDisableAsync();
             _pluginEnabledState[pluginId] = false;
+            if (plugin is IThemePlugin)
+            {
+                _context.ThemeService.SetPluginThemeOverride(null);
+            }
             SavePluginStates();
             PluginStateChanged?.Invoke();
             return true;
@@ -226,6 +259,10 @@ public class PluginManager : IDisposable
             if (_pluginEnabledState.GetValueOrDefault(pluginId))
             {
                 await plugin.OnDisableAsync();
+                if (plugin is IThemePlugin)
+                {
+                    _context.ThemeService.SetPluginThemeOverride(null);
+                }
             }
 
             await plugin.ShutdownAsync();

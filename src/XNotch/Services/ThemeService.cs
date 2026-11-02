@@ -20,12 +20,20 @@ public class ThemeService
     private bool _isTransitioning;
     private bool _useLiquidGlass;
     private bool _adaptToWindowsTheme;
+    private ThemePalette? _pluginThemeOverride;
 
     public event Action? ThemeChanged;
 
     public bool IsLight => _isLightResolved;
     public bool IsLiquidGlass => _useLiquidGlass;
     public ThemePalette CurrentPalette { get; private set; } = ThemePalette.Create(false, false);
+    public ThemePalette? PluginThemeOverride => _pluginThemeOverride;
+
+    public void SetPluginThemeOverride(ThemePalette? palette)
+    {
+        _pluginThemeOverride = palette;
+        ApplyInternal(_currentSetting, _adaptToWindowsTheme, _useLiquidGlass, palette);
+    }
 
     public void Apply(AppSettings settings)
     {
@@ -126,7 +134,7 @@ public class ThemeService
         _adaptToWindowsTheme = adaptToWindowsTheme;
         _useLiquidGlass = useLiquidGlass;
 
-        CurrentPalette = paletteOverride ?? BuildPalette(theme, useLiquidGlass);
+        CurrentPalette = paletteOverride ?? _pluginThemeOverride ?? BuildPalette(theme, useLiquidGlass);
         _isLightResolved = CurrentPalette.IsLight;
 
         SwapThemeDictionary();
@@ -153,26 +161,28 @@ public class ThemeService
 
     private void SwapThemeDictionary()
     {
-        string themeFile;
-        if (_useLiquidGlass || _currentSetting == AppTheme.LiquidGlass)
-        {
-            themeFile = "LiquidGlassTheme.xaml";
-        }
-        else if (_isLightResolved)
-        {
-            themeFile = "LightTheme.xaml";
-        }
-        else
-        {
-            themeFile = "DarkTheme.xaml";
-        }
-
-        string asmName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name ?? "X-Notch";
-        var dictUri = new Uri($"pack://application:,,,/{asmName};component/Views/Components/{themeFile}", UriKind.Absolute);
-
         var app = Application.Current;
-        if (app != null)
+        if (app == null) return;
+
+        try
         {
+            string themeFile;
+            if (_useLiquidGlass || _currentSetting == AppTheme.LiquidGlass)
+            {
+                themeFile = "LiquidGlassTheme.xaml";
+            }
+            else if (_isLightResolved)
+            {
+                themeFile = "LightTheme.xaml";
+            }
+            else
+            {
+                themeFile = "DarkTheme.xaml";
+            }
+
+            string asmName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name ?? "X-Notch";
+            var dictUri = new Uri($"pack://application:,,,/{asmName};component/Views/Components/{themeFile}", UriKind.Absolute);
+
             var mergedDicts = app.Resources.MergedDictionaries;
 
             for (int i = mergedDicts.Count - 1; i >= 0; i--)
@@ -187,6 +197,10 @@ public class ThemeService
             }
 
             mergedDicts.Insert(0, new ResourceDictionary { Source = dictUri });
+        }
+        catch
+        {
+            // In test runners or head-less environments, resource dictionary pack URIs may not resolve.
         }
     }
 

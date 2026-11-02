@@ -283,6 +283,15 @@ public partial class PluginBrowserWindow : Window
 
             if (filePath != null)
             {
+                if (_pluginManager != null && !filePath.EndsWith(".pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        await _pluginManager.LoadPluginFromFileAsync(filePath);
+                    }
+                    catch { }
+                }
+
                 button.Content = "Installed";
                 button.Style = TryGetStyle("PluginSecondaryButton");
                 ShowRestartPopup($"{manifest.Name} has been installed.");

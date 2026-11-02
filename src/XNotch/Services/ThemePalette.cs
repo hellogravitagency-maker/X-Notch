@@ -121,6 +121,78 @@ public sealed class ThemePalette
         };
     }
 
+    public static ThemePalette CreateCustom(
+        Color background,
+        Color surface,
+        Color surfaceRaised,
+        Color textPrimary,
+        Color border,
+        Color accent,
+        bool isLight = false,
+        Color? visualizerBar = null,
+        Color? success = null,
+        Color? warning = null,
+        Color? danger = null)
+    {
+        var textSecondary = Mix(textPrimary, background, isLight ? 0.60 : 0.35);
+        var textTertiary = Mix(textPrimary, background, isLight ? 0.70 : 0.45);
+        var textMuted = Mix(textPrimary, background, isLight ? 0.78 : 0.55);
+        var textDim = Mix(textPrimary, background, isLight ? 0.82 : 0.65);
+        var textSubtle = Mix(textPrimary, background, isLight ? 0.86 : 0.72);
+        var textFaint = Mix(textPrimary, background, isLight ? 0.90 : 0.78);
+        var textFaintest = Mix(textPrimary, background, isLight ? 0.94 : 0.84);
+
+        var accentPressed = Mix(accent, isLight ? Colors.Black : Colors.White, isLight ? 0.16 : 0.12);
+        var accentSoft = WithAlpha(accent, (byte)(isLight ? 0x26 : 0x36));
+        var accentText = PickReadableForeground(accent, MinimumTextContrast);
+
+        var disabledBackground = Mix(surfaceRaised, textPrimary, isLight ? 0.06 : 0.12);
+        var disabledText = Mix(textPrimary, background, isLight ? 0.85 : 0.75);
+        var hoverOverlay = WithAlpha(textPrimary, (byte)(isLight ? 0x12 : 0x1F));
+        var pressedOverlay = WithAlpha(textPrimary, (byte)(isLight ? 0x20 : 0x32));
+        var scrollThumb = WithAlpha(textPrimary, (byte)(isLight ? 0x45 : 0x55));
+        var scrollThumbHover = WithAlpha(textPrimary, (byte)(isLight ? 0x66 : 0x72));
+        var scrollThumbDrag = WithAlpha(textPrimary, (byte)(isLight ? 0x88 : 0x92));
+        var shadow = WithAlpha(Colors.Black, (byte)(isLight ? 0x5A : 0x62));
+
+        return new ThemePalette
+        {
+            IsLight = isLight,
+            IsHighContrast = false,
+            UseReducedMotion = false,
+            UseLiquidGlass = false,
+            Background = background,
+            Surface = surface,
+            SurfaceRaised = surfaceRaised,
+            TextPrimary = textPrimary,
+            TextSecondary = textSecondary,
+            TextTertiary = textTertiary,
+            TextMuted = textMuted,
+            TextDim = textDim,
+            TextSubtle = textSubtle,
+            TextFaint = textFaint,
+            TextFaintest = textFaintest,
+            Border = border,
+            Accent = accent,
+            AccentPressed = accentPressed,
+            AccentSoft = accentSoft,
+            AccentText = accentText,
+            Success = success ?? Color.FromRgb(0x10, 0xB9, 0x81),
+            Warning = warning ?? Color.FromRgb(0xD9, 0x77, 0x06),
+            Danger = danger ?? Color.FromRgb(0xEF, 0x44, 0x44),
+            FocusRing = accent,
+            DisabledBackground = disabledBackground,
+            DisabledText = disabledText,
+            HoverOverlay = hoverOverlay,
+            PressedOverlay = pressedOverlay,
+            ScrollThumb = scrollThumb,
+            ScrollThumbHover = scrollThumbHover,
+            ScrollThumbDrag = scrollThumbDrag,
+            Shadow = shadow,
+            VisualizerBar = visualizerBar ?? accent
+        };
+    }
+
     private static ThemePalette CreateStandard(bool isLight, bool useLiquidGlass, Color accentSeed, bool reduceMotion)
     {
         if (useLiquidGlass)

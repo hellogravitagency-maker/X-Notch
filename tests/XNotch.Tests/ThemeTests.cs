@@ -188,4 +188,28 @@ public class ThemeTests
             Assert.True(settingsView.AdaptToWindowsThemeCheck.IsChecked);
         });
     }
+
+    [Fact]
+    public void ThemeService_PluginThemeOverride_WorksCorrectly()
+    {
+        RunOnSta(() =>
+        {
+            var service = new ThemeService();
+            var custom = ThemePalette.CreateCustom(
+                System.Windows.Media.Color.FromRgb(10, 10, 10),
+                System.Windows.Media.Color.FromRgb(20, 20, 20),
+                System.Windows.Media.Color.FromRgb(30, 30, 30),
+                System.Windows.Media.Colors.White,
+                System.Windows.Media.Color.FromRgb(40, 40, 40),
+                System.Windows.Media.Colors.Cyan
+            );
+
+            service.SetPluginThemeOverride(custom);
+            Assert.Equal(custom, service.PluginThemeOverride);
+            Assert.Equal(System.Windows.Media.Colors.Cyan, service.CurrentPalette.Accent);
+
+            service.SetPluginThemeOverride(null);
+            Assert.Null(service.PluginThemeOverride);
+        });
+    }
 }
