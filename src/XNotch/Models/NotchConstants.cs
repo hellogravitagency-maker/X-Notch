@@ -55,12 +55,12 @@ public static class NotchConstants
     public const double HudWidth = 320;
 
     // S3 Open dimensions (sized to fit music player & carousel content comfortably)
-    public const double OpenWidth = 500;
-    public const double OpenWidthWithCalendar = 735;
-    public const double OpenWidthWithWebcam = 650;
-    public const double OpenWidthWithCalendarAndWebcam = 885;
-    public const double OpenHeight = 168;
-    public const double OpenSettingsHeight = 420;
+    public const double OpenWidth = 520;
+    public const double OpenWidthWithCalendar = 755;
+    public const double OpenWidthWithWebcam = 670;
+    public const double OpenWidthWithCalendarAndWebcam = 905;
+    public const double OpenHeight = 210;
+    public const double OpenSettingsHeight = 440;
 
     // Corner radii
     public const double ClosedTopRadius = 6;
@@ -95,8 +95,8 @@ public static class NotchConstants
 
     // File Shelf
     public const double ShelfRowHeight = 80;
-    public const double OpenHeightWithShelf = 268;
-    public const double OpenSettingsHeightWithShelf = 500;
+    public const double OpenHeightWithShelf = 300;
+    public const double OpenSettingsHeightWithShelf = 520;
 
     // Shadow
     public static readonly System.Windows.Media.Color ShadowColor = System.Windows.Media.Color.FromArgb(180, 0, 0, 0);

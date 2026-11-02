@@ -222,7 +222,7 @@ public partial class NotchWindow : Window
         _currentHeight = NotchConstants.ClosedHeight;
         _currentTopRadius = NotchConstants.ClosedTopRadius;
         _currentBottomRadius = NotchConstants.ClosedBottomRadius;
-        _currentShadowOpacity = 0.0;
+        _currentShadowOpacity = _settings.ShowShadow ? 0.6 : 0.0;
         _currentContentOpacity = 0.0;
         _currentContentScale = 0.92;
         _currentAuraOpacity = 0.0;
@@ -259,7 +259,7 @@ public partial class NotchWindow : Window
         {
             _globalHotkey.Register(this);
             _globalHotkey.HotkeyPressed += OnGlobalHotkeyPressed;
-            _globalHotkey.SpotlightHotkeyPressed += () => Dispatcher.BeginInvoke(OpenSpotlight);
+            _globalHotkey.SpotlightHotkeyPressed += () => Dispatcher.BeginInvoke(ToggleCommandCenter);
         }
     }
 
@@ -1324,9 +1324,9 @@ public partial class NotchWindow : Window
         System.Windows.Controls.Canvas.SetLeft(GlassInnerShadowPath, offsetX);
         System.Windows.Controls.Canvas.SetTop(GlassInnerShadowPath, offsetY);
 
-        // Shadow opacity (disabled by default for seamless borderless cutout)
-        ShadowPath.Opacity = _settings.ShowShadow ? _currentShadowOpacity : 0.0;
-        ShadowPath.Visibility = _settings.ShowShadow && ShadowPath.Opacity > 0.01 ? Visibility.Visible : Visibility.Collapsed;
+        // Shadow opacity: soft ambient depth in closed state, elevated depth in open state
+        ShadowPath.Opacity = _settings.ShowShadow ? Math.Max(0.25, _currentShadowOpacity) : 0.0;
+        ShadowPath.Visibility = _settings.ShowShadow ? Visibility.Visible : Visibility.Collapsed;
 
         // Content grid: positioned inside the notch shape (inset from corners)
         double contentLeft, contentTop, contentWidth, contentHeight;
@@ -2814,7 +2814,7 @@ public partial class NotchWindow : Window
 
     public void OpenSpotlight()
     {
-        _spotlightLauncher?.Open();
+        OpenCommandCenter();
     }
 
     #endregion

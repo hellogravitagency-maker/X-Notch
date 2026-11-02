@@ -17,10 +17,10 @@
     <SolidColorBrush x:Key="AccentWarningBrush" Color="#FF9F0A"/>
     <SolidColorBrush x:Key="AccentErrorBrush" Color="#FF453A"/>
 
-    <!-- Notch: Apple Dynamic Island pure OLED obsidian black (seamless, borderless, shadowless) -->
-    <SolidColorBrush x:Key="NotchFillBrush" Color="#000000"/>
-    <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
-    <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
+    <!-- Notch: Apple Dynamic Island obsidian graphite with subtle Liquid Glass rim and depth shadow -->
+    <SolidColorBrush x:Key="NotchFillBrush" Color="#0B0D14"/>
+    <SolidColorBrush x:Key="NotchShadowBrush" Color="#000000"/>
+    <SolidColorBrush x:Key="NotchBorderBrush" Color="#28FFFFFF"/>
     <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#22FFFFFF"/>
     <SolidColorBrush x:Key="ShelfBadgeBorderBrush" Color="#30FFFFFF"/>
     <SolidColorBrush x:Key="DropZoneGlowBrush" Color="#338B5CF6"/>

@@ -74,7 +74,7 @@ public class AppSettings
     public AppTheme Theme { get; set; } = AppTheme.Auto;
     public bool AdaptToWindowsTheme { get; set; } = true;
     public double CornerRadiusScale { get; set; } = 1.0;
-    public bool ShowShadow { get; set; } = false;
+    public bool ShowShadow { get; set; } = true;
 
     // Music
     public bool ShowMusicControls { get; set; } = true;

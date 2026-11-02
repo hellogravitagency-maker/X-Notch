@@ -20,9 +20,9 @@
     <SolidColorBrush x:Key="AccentErrorBrush" Color="#FF3B30"/>
 
     <!-- Notch: Silky frosted glass tint with clear border & shadow -->
-    <SolidColorBrush x:Key="NotchFillBrush" Color="#75FFFFFF"/>
-    <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
-    <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="NotchFillBrush" Color="#85FFFFFF"/>
+    <SolidColorBrush x:Key="NotchShadowBrush" Color="#40000000"/>
+    <SolidColorBrush x:Key="NotchBorderBrush" Color="#30000000"/>
     <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#25000000"/>
     <SolidColorBrush x:Key="ShelfBadgeBorderBrush" Color="#45000000"/>
     <SolidColorBrush x:Key="DropZoneGlowBrush" Color="#33007AFF"/>

@@ -239,8 +239,8 @@ public class ThemeService
         UpdateBrush("DisabledTextBrush", palette.DisabledText);
 
         UpdateBrush("NotchFillBrush", palette.Background);
-        UpdateBrush("NotchShadowBrush", Colors.Transparent);
-        UpdateBrush("NotchBorderBrush", Colors.Transparent);
+        UpdateBrush("NotchShadowBrush", palette.IsLight ? Color.FromArgb(0x40, 0, 0, 0) : Color.FromArgb(0x80, 0, 0, 0));
+        UpdateBrush("NotchBorderBrush", palette.IsLight ? Color.FromArgb(0x20, 0, 0, 0) : Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
         UpdateBrush("SettingLabelBrush", palette.TextSecondary);
         UpdateBrush("BatteryTextBrush", palette.TextPrimary);
         UpdateBrush("SeparatorBrush", palette.Border);

@@ -17,10 +17,10 @@
     <SolidColorBrush x:Key="AccentWarningBrush" Color="#FF9500"/>
     <SolidColorBrush x:Key="AccentErrorBrush" Color="#FF3B30"/>
 
-    <!-- Notch: seamless, borderless, shadowless -->
-    <SolidColorBrush x:Key="NotchFillBrush" Color="#F5F5F7"/>
-    <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
-    <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
+    <!-- Notch: Crisp daylight Dynamic Island with soft ambient shadow and refined rim -->
+    <SolidColorBrush x:Key="NotchFillBrush" Color="#F2F3F7"/>
+    <SolidColorBrush x:Key="NotchShadowBrush" Color="#30000000"/>
+    <SolidColorBrush x:Key="NotchBorderBrush" Color="#20000000"/>
     <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#12000000"/>
     <SolidColorBrush x:Key="ShelfBadgeBorderBrush" Color="#20000000"/>
     <SolidColorBrush x:Key="DropZoneGlowBrush" Color="#228B5CF6"/>

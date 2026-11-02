@@ -108,11 +108,15 @@
             <!-- Ambient aura & shadow light — disabled for pure clean cutout -->
             <Path x:Name="AmbientAuraPath" Opacity="0" Visibility="Collapsed" IsHitTestVisible="False"/>
 
-            <!-- Shadow layer — disabled -->
+            <!-- Ambient depth shadow behind dynamic island -->
             <Path x:Name="ShadowPath"
                   Fill="{DynamicResource NotchShadowBrush}"
-                  Opacity="0"
-                  Visibility="Collapsed"/>
+                  Opacity="0.45"
+                  Visibility="Visible">
+                <Path.Effect>
+                    <BlurEffect Radius="16" KernelType="Gaussian"/>
+                </Path.Effect>
+            </Path>
 
             <!-- Liquid Glass: refracted + vibrancy-boosted backdrop; GPU blur on top -->
             <Path x:Name="BackdropBlurPath" Opacity="0" IsHitTestVisible="False">
@@ -127,11 +131,11 @@
                     IsHitTestVisible="True"
                     Cursor="Hand"/>
 
-            <!-- Main notch shape — seamless, borderless pure cutout (no border lighting) -->
+            <!-- Main dynamic island shape with continuous curvature and liquid glass rim -->
             <Path x:Name="NotchPath"
                   Fill="{DynamicResource NotchFillBrush}"
-                  Stroke="{x:Null}"
-                  StrokeThickness="0"
+                  Stroke="{DynamicResource NotchBorderBrush}"
+                  StrokeThickness="1"
                   Cursor="Hand"/>
 
             <!-- Specular rim, border lighting & inner shadow layers completely disabled -->
@@ -154,8 +158,8 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Dynamic Island Logo Anchor & Plugin closed content -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
-                        <comp:XNotchLogo Width="13" Height="13" Margin="0,0,3,0" VerticalAlignment="Center" Opacity="0.85"/>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <comp:XNotchLogo Width="15" Height="15" Margin="0,0,4,0" VerticalAlignment="Center" Opacity="0.95"/>
                         <StackPanel x:Name="PluginClosedPanel" Orientation="Horizontal" VerticalAlignment="Center"/>
                     </StackPanel>
 
