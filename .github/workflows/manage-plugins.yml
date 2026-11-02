@@ -1,0 +1,100 @@
+﻿name: Manage Plugins
+
+# Validates, builds, tests, and packages official X-Notch plugins and catalog.
+# Runs automatically when plugin code or library metadata changes, or via dispatch.
+
+on:
+  push:
+    paths:
+      - 'Examples/Plugins/**'
+      - 'src/XNotch.PluginSdk/**'
+      - 'src/XNotch/Assets/example-library.json'
+      - '.github/workflows/manage-plugins.yml'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'Examples/Plugins/**'
+      - 'src/XNotch.PluginSdk/**'
+      - 'src/XNotch/Assets/example-library.json'
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-package-plugins:
+    name: Validate & Package Plugins
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Validate Plugin Library JSONs
+        shell: pwsh
+        run: |
+          $catalogs = @(
+            "src/XNotch/Assets/example-library.json",
+            "Examples/Plugins/example-library.json"
+          )
+          foreach ($cat in $catalogs) {
+            Write-Host "Validating catalog: $cat..."
+            if (-not (Test-Path $cat)) { throw "Catalog file missing: $cat" }
+            $json = Get-Content $cat -Raw | ConvertFrom-Json
+            if (-not $json.plugins -or $json.plugins.Count -eq 0) {
+              throw "No plugins defined in $cat"
+            }
+            foreach ($p in $json.plugins) {
+              if ([string]::IsNullOrWhiteSpace($p.id)) { throw "Plugin missing id in $cat" }
+              if ([string]::IsNullOrWhiteSpace($p.name)) { throw "Plugin missing name for $($p.id) in $cat" }
+              if ([string]::IsNullOrWhiteSpace($p.version)) { throw "Plugin missing version for $($p.id) in $cat" }
+              Write-Host "  ✓ Validated catalog entry: $($p.id) (v$($p.version))"
+            }
+          }
+
+      - name: Build Plugin SDK
+        run: dotnet build src/XNotch.PluginSdk/XNotch.PluginSdk.csproj -c Release
+
+      - name: Build and Package Each Plugin
+        shell: pwsh
+        run: |
+          $pluginDirs = Get-ChildItem -Path "Examples/Plugins" -Directory | Where-Object {
+            Test-Path (Join-Path $_.FullName "$($_.Name).csproj")
+          }
+
+          $distDir = "artifacts/plugins"
+          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
+
+          $catalogJson = Get-Content "src/XNotch/Assets/example-library.json" -Raw | ConvertFrom-Json
+
+          foreach ($dir in $pluginDirs) {
+            $projFile = Join-Path $dir.FullName "$($dir.Name).csproj"
+            $manifestFile = Join-Path $dir.FullName "manifest.json"
+
+            Write-Host "Processing plugin project: $($dir.Name)..."
+            $outDir = "artifacts/built/$($dir.Name)"
+            dotnet build $projFile -c Release -o $outDir
+
+            if (Test-Path $manifestFile) {
+              Copy-Item $manifestFile $outDir -Force
+            }
+
+            $zipName = "$($dir.Name).zip"
+            $zipPath = Join-Path $distDir $zipName
+            Compress-Archive -Path "$outDir/*" -DestinationPath $zipPath -Force
+            Write-Host "  ✓ Packaged $zipName"
+          }
+
+      - name: Upload Packaged Plugins Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xnotch-plugins-dist
+          path: artifacts/plugins/*.zip

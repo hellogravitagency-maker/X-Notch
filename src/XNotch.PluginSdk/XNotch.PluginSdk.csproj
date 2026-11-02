@@ -10,7 +10,7 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <PackageId>XNotch.PluginSdk</PackageId>
     <PackageTitle>X-Notch Plugin SDK</PackageTitle>
-    <Version>0.7.0</Version>
+    <Version>0.8.0</Version>
     <Authors>Gravit</Authors>
     <Company>Gravit</Company>
     <Description>Compile-time SDK for building X-Notch plugins against the official X-Notch plugin interfaces and runtime assembly.</Description>

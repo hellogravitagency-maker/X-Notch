@@ -5,7 +5,7 @@
 ; Version can be overridden by the build (e.g. ISCC /DMyAppVersion=1.2.3).
 ; The fallback below is used by local build.bat runs; keep it synced with X-Notch.csproj.
 #ifndef MyAppVersion
-  #define MyAppVersion "0.6.2"
+  #define MyAppVersion "0.8.0"
 #endif
 #define MyAppPublisher "Gravit"
 #define MyAppURL "https://github.com/hellogravitagency-maker/X-Notch"
