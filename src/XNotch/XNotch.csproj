@@ -24,7 +24,7 @@
     <Copyright>Copyright © Gravit. All rights reserved.</Copyright>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);1591</NoWarn>
+    <NoWarn>$(NoWarn);1591;WFAC010</NoWarn>
 
     <!-- Publish settings (applied only via: dotnet publish -c Release) -->
     <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>

@@ -11,16 +11,6 @@ namespace XNotch.Tests;
 public class IntelligenceTests
 {
     [Fact]
-    public void CodingAgentMonitor_Catalog_ContainsExpectedAgents()
-    {
-        var catalog = CodingAgentMonitor.Catalog;
-        Assert.Contains(catalog, a => a.Id == "claude");
-        Assert.Contains(catalog, a => a.Id == "codex");
-        Assert.Contains(catalog, a => a.Id == "antigravity");
-        Assert.Contains(catalog, a => a.Id == "opencode");
-    }
-
-    [Fact]
     public void ContextSanitizer_RedactsOpenAiAndGitHubTokens()
     {
         string sample = "Connecting with sk-1234567890abcdef1234567890 and ghp_abcdefghijklmnopqrstuvwx";

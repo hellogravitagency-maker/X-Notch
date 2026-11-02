@@ -9,7 +9,7 @@ using Xunit;
 
 namespace XNotch.Tests;
 
-public class CommandCenterAndSpotlightTests
+public class SpotlightAndTaskTests
 {
     [Fact]
     public void SpotlightItem_FilteringMatchesCorrectly()
@@ -28,14 +28,6 @@ public class CommandCenterAndSpotlightTests
         Assert.Single(matches);
         Assert.Equal("X-Notch", matches[0].Title);
         Assert.Equal("Project", matches[0].Category);
-    }
-
-    [Fact]
-    public void ApprovalService_SubmitDecision_ReturnsFalseForUnknownPrompt()
-    {
-        using var approvalService = new ApprovalService();
-        bool result = approvalService.SubmitDecision("unknown-id-1234", ApprovalDecision.Allow);
-        Assert.False(result);
     }
 
     [Fact]

@@ -44,3 +44,6 @@ Desktop.ini
 
 # Research repositories
 research/reference_repos/
+
+# Obsidian
+.obsidian/

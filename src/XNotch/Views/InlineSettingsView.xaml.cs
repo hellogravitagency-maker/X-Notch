@@ -88,20 +88,10 @@ public partial class InlineSettingsView : System.Windows.Controls.UserControl
 
         if (settings.Theme == AppTheme.LiquidGlass || settings.UseLiquidGlassTheme)
             ThemeGlassRadio.IsChecked = true;
-        else if (settings.Theme == AppTheme.White)
-            ThemeWhiteRadio.IsChecked = true;
-        else if (settings.Theme == AppTheme.Custom)
-            ThemeCustomRadio.IsChecked = true;
         else if (settings.GetManualTheme() == AppTheme.Light)
             ThemeLightRadio.IsChecked = true;
         else
             ThemeDarkRadio.IsChecked = true;
-
-        AccentHexInput.Text = settings.CustomAccentColor;
-        BgHexInput.Text = settings.CustomBackgroundColor;
-        AccentPreviewBox.Background = new System.Windows.Media.SolidColorBrush(ColorHelper.ParseColor(settings.CustomAccentColor, System.Windows.Media.Color.FromRgb(0x00, 0x7A, 0xFF)));
-        BgPreviewBox.Background = new System.Windows.Media.SolidColorBrush(ColorHelper.ParseColor(settings.CustomBackgroundColor, System.Windows.Media.Color.FromRgb(0x0F, 0x17, 0x2A)));
-        CustomThemeSettingsPanel.Visibility = settings.Theme == AppTheme.Custom ? Visibility.Visible : Visibility.Collapsed;
 
         RefreshWorkspaceRoots();
 
@@ -184,16 +174,6 @@ public partial class InlineSettingsView : System.Windows.Controls.UserControl
             _settings.Theme = AppTheme.LiquidGlass;
             _settings.UseLiquidGlassTheme = true;
         }
-        else if (ThemeWhiteRadio.IsChecked == true)
-        {
-            _settings.Theme = AppTheme.White;
-            _settings.UseLiquidGlassTheme = false;
-        }
-        else if (ThemeCustomRadio.IsChecked == true)
-        {
-            _settings.Theme = AppTheme.Custom;
-            _settings.UseLiquidGlassTheme = false;
-        }
         else if (ThemeLightRadio.IsChecked == true)
         {
             _settings.Theme = AppTheme.Light;
@@ -204,135 +184,6 @@ public partial class InlineSettingsView : System.Windows.Controls.UserControl
             _settings.Theme = AppTheme.Dark;
             _settings.UseLiquidGlassTheme = false;
         }
-
-        CustomThemeSettingsPanel.Visibility = _settings.Theme == AppTheme.Custom ? Visibility.Visible : Visibility.Collapsed;
-
-        _settings.Save();
-        ThemeChangeRequested?.Invoke(_settings);
-    }
-
-    private void OnAccentColorPresetClick(object sender, RoutedEventArgs e)
-    {
-        if (_isLoading || _settings == null || sender is not System.Windows.Controls.Button btn || btn.Tag is not string hex) return;
-        _settings.CustomAccentColor = hex;
-        _isLoading = true;
-        AccentHexInput.Text = hex;
-        AccentPreviewBox.Background = new System.Windows.Media.SolidColorBrush(ColorHelper.ParseColor(hex, System.Windows.Media.Color.FromRgb(0x00, 0x7A, 0xFF)));
-        _isLoading = false;
-
-        _settings.AdaptToWindowsTheme = false;
-        AdaptToWindowsThemeCheck.IsChecked = false;
-        _settings.Save();
-        ThemeChangeRequested?.Invoke(_settings);
-    }
-
-    private void OnAccentHexChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-    {
-        if (_isLoading || _settings == null) return;
-        string hex = AccentHexInput.Text.Trim();
-        if (hex.Length is >= 4 and <= 9)
-        {
-            var parsed = ColorHelper.ParseColor(hex, System.Windows.Media.Colors.Transparent);
-            if (parsed != System.Windows.Media.Colors.Transparent)
-            {
-                AccentPreviewBox.Background = new System.Windows.Media.SolidColorBrush(parsed);
-                _settings.CustomAccentColor = hex;
-                _settings.AdaptToWindowsTheme = false;
-                AdaptToWindowsThemeCheck.IsChecked = false;
-                _settings.Save();
-                ThemeChangeRequested?.Invoke(_settings);
-            }
-        }
-    }
-
-    private void OnBgColorPresetClick(object sender, RoutedEventArgs e)
-    {
-        if (_isLoading || _settings == null || sender is not System.Windows.Controls.Button btn || btn.Tag is not string hex) return;
-        _settings.CustomBackgroundColor = hex;
-        _isLoading = true;
-        BgHexInput.Text = hex;
-        BgPreviewBox.Background = new System.Windows.Media.SolidColorBrush(ColorHelper.ParseColor(hex, System.Windows.Media.Color.FromRgb(0x0F, 0x17, 0x2A)));
-        _settings.Theme = AppTheme.Custom;
-        ThemeCustomRadio.IsChecked = true;
-        CustomThemeSettingsPanel.Visibility = Visibility.Visible;
-        _isLoading = false;
-
-        _settings.AdaptToWindowsTheme = false;
-        AdaptToWindowsThemeCheck.IsChecked = false;
-        _settings.Save();
-        ThemeChangeRequested?.Invoke(_settings);
-    }
-
-    private void OnBgHexChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-    {
-        if (_isLoading || _settings == null) return;
-        string hex = BgHexInput.Text.Trim();
-        if (hex.Length is >= 4 and <= 9)
-        {
-            var parsed = ColorHelper.ParseColor(hex, System.Windows.Media.Colors.Transparent);
-            if (parsed != System.Windows.Media.Colors.Transparent)
-            {
-                BgPreviewBox.Background = new System.Windows.Media.SolidColorBrush(parsed);
-                _settings.CustomBackgroundColor = hex;
-                _settings.Theme = AppTheme.Custom;
-                ThemeCustomRadio.IsChecked = true;
-                CustomThemeSettingsPanel.Visibility = Visibility.Visible;
-                _settings.AdaptToWindowsTheme = false;
-                AdaptToWindowsThemeCheck.IsChecked = false;
-                _settings.Save();
-                ThemeChangeRequested?.Invoke(_settings);
-            }
-        }
-    }
-
-    private void OnQuickPresetClick(object sender, RoutedEventArgs e)
-    {
-        if (_isLoading || _settings == null || sender is not System.Windows.Controls.Button btn || btn.Tag is not string preset) return;
-
-        string bg;
-        string accent;
-        switch (preset)
-        {
-            case "Cyberpunk":
-                bg = "#180D2B";
-                accent = "#06B6D4";
-                break;
-            case "PureSnow":
-                bg = "#FFFFFF";
-                accent = "#007AFF";
-                break;
-            case "Emerald":
-                bg = "#0A1F14";
-                accent = "#10B981";
-                break;
-            case "Velvet":
-                bg = "#250914";
-                accent = "#EC4899";
-                break;
-            case "Amber":
-                bg = "#141416";
-                accent = "#F59E0B";
-                break;
-            default:
-                bg = "#0F172A";
-                accent = "#007AFF";
-                break;
-        }
-
-        _settings.CustomBackgroundColor = bg;
-        _settings.CustomAccentColor = accent;
-        _settings.Theme = AppTheme.Custom;
-        _settings.AdaptToWindowsTheme = false;
-
-        _isLoading = true;
-        ThemeCustomRadio.IsChecked = true;
-        CustomThemeSettingsPanel.Visibility = Visibility.Visible;
-        AdaptToWindowsThemeCheck.IsChecked = false;
-        AccentHexInput.Text = accent;
-        BgHexInput.Text = bg;
-        AccentPreviewBox.Background = new System.Windows.Media.SolidColorBrush(ColorHelper.ParseColor(accent, System.Windows.Media.Colors.Blue));
-        BgPreviewBox.Background = new System.Windows.Media.SolidColorBrush(ColorHelper.ParseColor(bg, System.Windows.Media.Colors.Black));
-        _isLoading = false;
 
         _settings.Save();
         ThemeChangeRequested?.Invoke(_settings);
@@ -410,7 +261,7 @@ public partial class InlineSettingsView : System.Windows.Controls.UserControl
         if (_settings == null) return;
         var dlg = new Microsoft.Win32.OpenFolderDialog
         {
-            Title = "Select Workspace Folder to Scan for Projects & Agents"
+            Title = "Select Workspace Folder to Scan for Projects"
         };
         if (dlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(dlg.FolderName))
         {

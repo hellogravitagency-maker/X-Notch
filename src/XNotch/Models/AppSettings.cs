@@ -22,9 +22,7 @@ public enum AppTheme
 {
     Dark,
     Light,
-    White,
     LiquidGlass,
-    Custom,
     Auto
 }
 
@@ -77,9 +75,6 @@ public class AppSettings
     public bool AdaptToWindowsTheme { get; set; } = true;
     public double CornerRadiusScale { get; set; } = 1.0;
     public bool ShowShadow { get; set; } = false;
-    public string CustomAccentColor { get; set; } = "#007AFF";
-    public string CustomBackgroundColor { get; set; } = "#0F172A";
-    public string CustomTextColor { get; set; } = "";
 
     // Music
     public bool ShowMusicControls { get; set; } = true;
@@ -107,7 +102,6 @@ public class AppSettings
     public bool ShowTasksCard { get; set; } = true;
     public bool ShowVitalsCard { get; set; } = true;
     public bool ShowNotificationsCard { get; set; } = true;
-    public bool ShowCommandCenterCard { get; set; } = true;
 
     // Workspace Roots for Project and Task Discovery
     public List<string> WorkspaceRoots { get; set; } = [];
@@ -144,6 +138,10 @@ public class AppSettings
             if (File.Exists(pathToRead))
             {
                 var json = File.ReadAllText(pathToRead);
+                if (json.Contains("\"White\"") || json.Contains("\"Custom\""))
+                {
+                    json = json.Replace("\"White\"", "\"Light\"").Replace("\"Custom\"", "\"Dark\"");
+                }
                 var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
 
                 using var document = JsonDocument.Parse(json);
@@ -202,9 +200,7 @@ public class AppSettings
         return Theme switch
         {
             AppTheme.Light => AppTheme.Light,
-            AppTheme.White => AppTheme.White,
             AppTheme.LiquidGlass => AppTheme.LiquidGlass,
-            AppTheme.Custom => AppTheme.Custom,
             _ => AppTheme.Dark
         };
     }

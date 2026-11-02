@@ -79,18 +79,6 @@ public sealed class XNotchDatabase : IDisposable
                     is_dismissed INTEGER,
                     project_path TEXT
                 );
-
-                CREATE TABLE IF NOT EXISTS agent_history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    agent_id TEXT NOT NULL,
-                    display_name TEXT,
-                    pid INTEGER,
-                    project_path TEXT,
-                    git_branch TEXT,
-                    phase INTEGER,
-                    started_at TEXT,
-                    duration_sec REAL
-                );
             ";
             cmd.ExecuteNonQuery();
         }
@@ -178,28 +166,6 @@ public sealed class XNotchDatabase : IDisposable
         cmd.Parameters.AddWithValue("@disc", task.DiscoveredAt.ToString("o"));
         cmd.Parameters.AddWithValue("@due", task.DueDate.HasValue ? task.DueDate.Value.ToString("o") : DBNull.Value);
         cmd.Parameters.AddWithValue("@act", (object?)task.SuggestedNextAction ?? DBNull.Value);
-
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task RecordAgentSessionAsync(AgentSession session)
-    {
-        using var conn = new SqliteConnection(_connectionString);
-        await conn.OpenAsync();
-
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            INSERT INTO agent_history (agent_id, display_name, pid, project_path, git_branch, phase, started_at, duration_sec)
-            VALUES (@agent, @name, @pid, @path, @branch, @phase, @start, @dur);
-        ";
-        cmd.Parameters.AddWithValue("@agent", session.AgentId);
-        cmd.Parameters.AddWithValue("@name", session.DisplayName);
-        cmd.Parameters.AddWithValue("@pid", session.ProcessId);
-        cmd.Parameters.AddWithValue("@path", session.ProjectPath);
-        cmd.Parameters.AddWithValue("@branch", session.GitBranch);
-        cmd.Parameters.AddWithValue("@phase", (int)session.Phase);
-        cmd.Parameters.AddWithValue("@start", session.StartedAt.ToString("o"));
-        cmd.Parameters.AddWithValue("@dur", session.ElapsedDuration.TotalSeconds);
 
         await cmd.ExecuteNonQueryAsync();
     }

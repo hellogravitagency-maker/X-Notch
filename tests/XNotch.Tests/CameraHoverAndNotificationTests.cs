@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.IO;
-using System.IO.Pipes;
 using System.Text.Json;
 using System.Threading.Tasks;
 using XNotch.Helpers;
@@ -102,82 +101,6 @@ public class CameraHoverAndNotificationTests
         Assert.Equal("Build succeeded for commit ff36e30", item.Body);
         Assert.Equal(timestamp, item.Timestamp);
         Assert.Equal("Slack.App", item.AppUserModelId);
-    }
-
-    [Fact]
-    public void ApprovalRequest_RecordProperties_AreCorrect()
-    {
-        var receivedAt = DateTime.UtcNow;
-        var request = new ApprovalRequest(
-            PromptId: "prompt-999",
-            AgentId: "Claude",
-            ToolName: "Bash",
-            Command: "git push origin main",
-            WorkingDirectory: @"P:\X-Notch",
-            TimeoutSeconds: 30,
-            ReceivedAt: receivedAt
-        );
-
-        Assert.Equal("prompt-999", request.PromptId);
-        Assert.Equal("Claude", request.AgentId);
-        Assert.Equal("Bash", request.ToolName);
-        Assert.Equal("git push origin main", request.Command);
-        Assert.Equal(@"P:\X-Notch", request.WorkingDirectory);
-        Assert.Equal(30, request.TimeoutSeconds);
-        Assert.Equal(receivedAt, request.ReceivedAt);
-    }
-
-    [Fact]
-    public async Task ApprovalService_NamedPipeIPC_TransmitsPromptAndSubmitsDecision()
-    {
-        string testPipe = "XNotch-AgentHooks-Test-" + Guid.NewGuid().ToString("N")[..8];
-        using var approvalService = new ApprovalService(testPipe);
-        approvalService.Start();
-        await Task.Delay(150); // Give server loop a moment to initialize the secure pipe
-
-        ApprovalRequest? arrivedRequest = null;
-        approvalService.ApprovalPromptArrived += req =>
-        {
-            arrivedRequest = req;
-            // Simulate user clicking "Allow" on the capsule
-            approvalService.SubmitDecision(req.PromptId, ApprovalDecision.Allow);
-        };
-
-        // Connect a test client via NamedPipe
-        using var client = new NamedPipeClientStream(".", testPipe, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await client.ConnectAsync(3000);
-
-        using var reader = new StreamReader(client);
-        using var writer = new StreamWriter(client) { AutoFlush = true };
-
-        string promptId = "test-pipe-" + Guid.NewGuid().ToString("N")[..8];
-        var requestPayload = new
-        {
-            type = "approval_prompt",
-            promptId,
-            agentId = "Codex",
-            tool = "WriteFile",
-            command = "update file.txt",
-            workingDir = @"C:\Workspace",
-            timeoutSeconds = 5
-        };
-
-        await writer.WriteLineAsync(JsonSerializer.Serialize(requestPayload));
-
-        string? responseJson = await reader.ReadLineAsync();
-        Assert.NotNull(responseJson);
-
-        using var doc = JsonDocument.Parse(responseJson);
-        var root = doc.RootElement;
-
-        Assert.True(root.GetProperty("ok").GetBoolean());
-        Assert.Equal("approval_reply", root.GetProperty("type").GetString());
-        Assert.Equal(promptId, root.GetProperty("promptId").GetString());
-        Assert.Equal("allow", root.GetProperty("decision").GetString());
-
-        Assert.NotNull(arrivedRequest);
-        Assert.Equal("Codex", arrivedRequest.AgentId);
-        Assert.Equal("WriteFile", arrivedRequest.ToolName);
     }
 
     [Fact]

@@ -12,69 +12,6 @@
                 <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-                        <Style x:Key="ColorSwatchButton" TargetType="Button">
-                <Setter Property="Width" Value="22"/>
-                <Setter Property="Height" Value="22"/>
-                <Setter Property="Margin" Value="0,0,6,5"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="BorderThickness" Value="1.5"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="SwatchBorder" Background="{TemplateBinding Background}"
-                                    CornerRadius="11"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    RenderTransformOrigin="0.5,0.5">
-                                <Border.RenderTransform>
-                                    <ScaleTransform x:Name="SwatchScale" ScaleX="1.0" ScaleY="1.0"/>
-                                </Border.RenderTransform>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="SwatchBorder" Property="BorderThickness" Value="2.2"/>
-                                    <Setter TargetName="SwatchBorder" Property="RenderTransform">
-                                        <Setter.Value>
-                                            <ScaleTransform ScaleX="1.18" ScaleY="1.18"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="PresetThemeButton" TargetType="Button">
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Margin" Value="0,0,5,5"/>
-                <Setter Property="Padding" Value="7,3.5"/>
-                <Setter Property="Background" Value="{DynamicResource SegmentedBgBrush}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                <Setter Property="FontSize" Value="9.5"/>
-                <Setter Property="FontWeight" Value="Medium"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="PresetBorder" Background="{TemplateBinding Background}"
-                                    CornerRadius="7"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="PresetBorder" Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
             <Style x:Key="SectionHeader" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
                 <Setter Property="FontSize" Value="10"/>
@@ -181,13 +118,11 @@
                 <!-- Appearance -->
                 <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Theme selector (Dark, Light, White, Glass, Custom) -->
+                <!-- Theme selector (Dark, Light, Glass) -->
                 <TextBlock Text="Theme" Foreground="{DynamicResource TextSubtleBrush}" FontSize="10" Margin="0,4,0,2"/>
                 <Border Background="{DynamicResource SegmentedBgBrush}" CornerRadius="10" Padding="2" Height="30">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
@@ -198,91 +133,11 @@
                         <RadioButton x:Name="ThemeLightRadio" Content="Light"
                                      Grid.Column="1" Style="{StaticResource SegmentedRadio}"
                                      Checked="OnThemeChanged"/>
-                        <RadioButton x:Name="ThemeWhiteRadio" Content="White"
-                                     Grid.Column="2" Style="{StaticResource SegmentedRadio}"
-                                     Checked="OnThemeChanged"/>
                         <RadioButton x:Name="ThemeGlassRadio" Content="Glass"
-                                     Grid.Column="3" Style="{StaticResource SegmentedRadio}"
+                                     Grid.Column="2" Style="{StaticResource SegmentedRadio}"
                                      Checked="OnThemeChanged" ToolTip="Liquid Glass (Frosted Acrylic)"/>
-                        <RadioButton x:Name="ThemeCustomRadio" Content="Custom"
-                                     Grid.Column="4" Style="{StaticResource SegmentedRadio}"
-                                     Checked="OnThemeChanged"/>
                     </Grid>
                 </Border>
-
-                <!-- Custom Theme Color Changer Section -->
-                <TextBlock Text="THEME COLOR CHANGER" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Text="Accent highlight color:" Foreground="{DynamicResource TextSubtleBrush}" FontSize="10" Margin="0,2,0,3"/>
-
-                <!-- Accent Color Swatches -->
-                <WrapPanel Margin="0,0,0,4">
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#007AFF" Tag="#007AFF" Click="OnAccentColorPresetClick" ToolTip="Electric Blue"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#8B5CF6" Tag="#8B5CF6" Click="OnAccentColorPresetClick" ToolTip="Neon Violet"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#10B981" Tag="#10B981" Click="OnAccentColorPresetClick" ToolTip="Emerald Mint"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#F97316" Tag="#F97316" Click="OnAccentColorPresetClick" ToolTip="Sunset Orange"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#EF4444" Tag="#EF4444" Click="OnAccentColorPresetClick" ToolTip="Crimson Red"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#EC4899" Tag="#EC4899" Click="OnAccentColorPresetClick" ToolTip="Rose Pink"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#F59E0B" Tag="#F59E0B" Click="OnAccentColorPresetClick" ToolTip="Solar Gold"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#06B6D4" Tag="#06B6D4" Click="OnAccentColorPresetClick" ToolTip="Cyber Cyan"/>
-                    <Button Style="{StaticResource ColorSwatchButton}" Background="#64748B" Tag="#64748B" Click="OnAccentColorPresetClick" ToolTip="Slate Monochrome"/>
-                </WrapPanel>
-
-                <!-- Accent Color Hex Input Row -->
-                <Grid Height="28" Margin="0,0,0,6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Border x:Name="AccentPreviewBox" Width="20" Height="20" CornerRadius="4"
-                            Background="#007AFF" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
-                            Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <TextBox x:Name="AccentHexInput" Grid.Column="1" Text="#007AFF" FontSize="11"
-                             VerticalContentAlignment="Center" Padding="6,2" Height="26"
-                             Background="{DynamicResource SegmentedBgBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                             BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
-                             TextChanged="OnAccentHexChanged"/>
-                </Grid>
-
-                <!-- Custom Notch Background Panel (Active in Custom Mode) -->
-                <StackPanel x:Name="CustomThemeSettingsPanel" Visibility="Collapsed" Margin="0,0,0,4">
-                    <TextBlock Text="Notch background color:" Foreground="{DynamicResource TextSubtleBrush}" FontSize="10" Margin="0,4,0,3"/>
-                    <WrapPanel Margin="0,0,0,4">
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#0F172A" Tag="#0F172A" Click="OnBgColorPresetClick" ToolTip="Midnight Navy"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#180D2B" Tag="#180D2B" Click="OnBgColorPresetClick" ToolTip="Cyber Purple"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#0A1F14" Tag="#0A1F14" Click="OnBgColorPresetClick" ToolTip="Deep Forest"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#250914" Tag="#250914" Click="OnBgColorPresetClick" ToolTip="Velvet Wine"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#000000" Tag="#000000" Click="OnBgColorPresetClick" ToolTip="Obsidian Black"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#1E293B" Tag="#1E293B" Click="OnBgColorPresetClick" ToolTip="Slate Gray"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#FFFFFF" Tag="#FFFFFF" Click="OnBgColorPresetClick" ToolTip="Pure Snow"/>
-                        <Button Style="{StaticResource ColorSwatchButton}" Background="#F8F6F0" Tag="#F8F6F0" Click="OnBgColorPresetClick" ToolTip="Warm Ivory"/>
-                    </WrapPanel>
-
-                    <!-- Background Hex Input Row -->
-                    <Grid Height="28" Margin="0,0,0,6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border x:Name="BgPreviewBox" Width="20" Height="20" CornerRadius="4"
-                                Background="#0F172A" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
-                                Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="BgHexInput" Grid.Column="1" Text="#0F172A" FontSize="11"
-                                 VerticalContentAlignment="Center" Padding="6,2" Height="26"
-                                 Background="{DynamicResource SegmentedBgBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                                 BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
-                                 TextChanged="OnBgHexChanged"/>
-                    </Grid>
-                </StackPanel>
-
-                <!-- One-click Custom Theme Presets -->
-                <TextBlock Text="Instant theme presets:" Foreground="{DynamicResource TextFaintBrush}" FontSize="9" Margin="0,2,0,3"/>
-                <WrapPanel Margin="0,0,0,6">
-                    <Button Style="{StaticResource PresetThemeButton}" Content="🌌 Cyberpunk" Tag="Cyberpunk" Click="OnQuickPresetClick"/>
-                    <Button Style="{StaticResource PresetThemeButton}" Content="❄️ Pure Snow" Tag="PureSnow" Click="OnQuickPresetClick"/>
-                    <Button Style="{StaticResource PresetThemeButton}" Content="🌲 Emerald" Tag="Emerald" Click="OnQuickPresetClick"/>
-                    <Button Style="{StaticResource PresetThemeButton}" Content="🍷 Velvet" Tag="Velvet" Click="OnQuickPresetClick"/>
-                    <Button Style="{StaticResource PresetThemeButton}" Content="☀️ Amber" Tag="Amber" Click="OnQuickPresetClick"/>
-                </WrapPanel>
 
                 <Grid Height="28" Margin="0,2">
                     <TextBlock Text="Adapt to Windows theme" Style="{StaticResource SettingLabel}"/>
@@ -465,7 +320,7 @@
 
                 <!-- Developer & Workspaces -->
                 <TextBlock Text="DEVELOPER &amp; WORKSPACES" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Text="Workspace scan roots for coding agents &amp; git projects:"
+                <TextBlock Text="Workspace scan roots for git projects:"
                            Foreground="{DynamicResource TextFaintBrush}" FontSize="9" Margin="0,0,0,4"
                            TextWrapping="Wrap"/>
 

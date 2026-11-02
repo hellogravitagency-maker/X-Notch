@@ -20,9 +20,6 @@ public class ThemeService
     private bool _isTransitioning;
     private bool _useLiquidGlass;
     private bool _adaptToWindowsTheme;
-    private string _customAccentHex = "#007AFF";
-    private string _customBgHex = "#0F172A";
-    private string _customTextHex = "";
 
     public event Action? ThemeChanged;
 
@@ -32,65 +29,37 @@ public class ThemeService
 
     public void Apply(AppSettings settings)
     {
-        _customAccentHex = settings.CustomAccentColor;
-        _customBgHex = settings.CustomBackgroundColor;
-        _customTextHex = settings.CustomTextColor;
-
         bool isGlass = settings.Theme == AppTheme.LiquidGlass || settings.UseLiquidGlassTheme;
         ApplyInternal(
             settings.GetRequestedTheme(),
             settings.AdaptToWindowsTheme,
-            isGlass,
-            settings.CustomAccentColor,
-            settings.CustomBackgroundColor,
-            settings.CustomTextColor);
+            isGlass);
     }
 
-    public void Apply(AppTheme theme, bool useLiquidGlass = false, string? customAccent = null, string? customBg = null, string? customText = null)
+    public void Apply(AppTheme theme, bool useLiquidGlass = false)
     {
-        _customAccentHex = customAccent ?? _customAccentHex;
-        _customBgHex = customBg ?? _customBgHex;
-        _customTextHex = customText ?? _customTextHex;
-
         ApplyInternal(
             theme,
             theme == AppTheme.Auto,
-            useLiquidGlass,
-            _customAccentHex,
-            _customBgHex,
-            _customTextHex);
+            useLiquidGlass);
     }
 
     public async Task ApplyWithTransition(AppSettings settings, UIElement target)
     {
-        _customAccentHex = settings.CustomAccentColor;
-        _customBgHex = settings.CustomBackgroundColor;
-        _customTextHex = settings.CustomTextColor;
-
         await ApplyWithTransition(
             settings.GetRequestedTheme(),
             settings.AdaptToWindowsTheme,
             target,
-            settings.UseLiquidGlassTheme,
-            settings.CustomAccentColor,
-            settings.CustomBackgroundColor,
-            settings.CustomTextColor);
+            settings.UseLiquidGlassTheme);
     }
 
-    public async Task ApplyWithTransition(AppTheme theme, UIElement target, bool useLiquidGlass = false, string? customAccent = null, string? customBg = null, string? customText = null)
+    public async Task ApplyWithTransition(AppTheme theme, UIElement target, bool useLiquidGlass = false)
     {
-        _customAccentHex = customAccent ?? _customAccentHex;
-        _customBgHex = customBg ?? _customBgHex;
-        _customTextHex = customText ?? _customTextHex;
-
         await ApplyWithTransition(
             theme,
             theme == AppTheme.Auto,
             target,
-            useLiquidGlass,
-            _customAccentHex,
-            _customBgHex,
-            _customTextHex);
+            useLiquidGlass);
     }
 
     public void StartWatchingSystemTheme()
@@ -107,17 +76,14 @@ public class ThemeService
         AppTheme theme,
         bool adaptToWindowsTheme,
         UIElement target,
-        bool useLiquidGlass,
-        string customAccentHex,
-        string customBgHex,
-        string customTextHex)
+        bool useLiquidGlass)
     {
         if (_isTransitioning) return;
 
-        var previewPalette = BuildPalette(theme, useLiquidGlass, customAccentHex, customBgHex, customTextHex);
+        var previewPalette = BuildPalette(theme, useLiquidGlass);
         if (previewPalette.UseReducedMotion)
         {
-            ApplyInternal(theme, adaptToWindowsTheme, useLiquidGlass, customAccentHex, customBgHex, customTextHex, previewPalette);
+            ApplyInternal(theme, adaptToWindowsTheme, useLiquidGlass, previewPalette);
             return;
         }
 
@@ -132,7 +98,7 @@ public class ThemeService
         target.BeginAnimation(UIElement.OpacityProperty, fadeOut);
         await fadeOutCompletion.Task;
 
-        ApplyInternal(theme, adaptToWindowsTheme, useLiquidGlass, customAccentHex, customBgHex, customTextHex, previewPalette);
+        ApplyInternal(theme, adaptToWindowsTheme, useLiquidGlass, previewPalette);
 
         var fadeIn = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(FadeDurationMs))
         {
@@ -150,9 +116,6 @@ public class ThemeService
         AppTheme theme,
         bool adaptToWindowsTheme,
         bool useLiquidGlass,
-        string customAccentHex,
-        string customBgHex,
-        string customTextHex,
         ThemePalette? paletteOverride = null)
     {
         if (theme == AppTheme.LiquidGlass)
@@ -162,11 +125,8 @@ public class ThemeService
         _currentSetting = theme;
         _adaptToWindowsTheme = adaptToWindowsTheme;
         _useLiquidGlass = useLiquidGlass;
-        _customAccentHex = customAccentHex;
-        _customBgHex = customBgHex;
-        _customTextHex = customTextHex;
 
-        CurrentPalette = paletteOverride ?? BuildPalette(theme, useLiquidGlass, customAccentHex, customBgHex, customTextHex);
+        CurrentPalette = paletteOverride ?? BuildPalette(theme, useLiquidGlass);
         _isLightResolved = CurrentPalette.IsLight;
 
         SwapThemeDictionary();
@@ -176,30 +136,18 @@ public class ThemeService
 
     private ThemePalette BuildPalette(
         AppTheme theme,
-        bool useLiquidGlass,
-        string customAccentHex,
-        string customBgHex,
-        string customTextHex)
+        bool useLiquidGlass)
     {
-        Color? customAccent = string.IsNullOrWhiteSpace(customAccentHex)
-            ? null
-            : ColorHelper.ParseColor(customAccentHex, ThemePalette.DetectSystemAccentColor());
-
         if (useLiquidGlass || theme == AppTheme.LiquidGlass)
-            return ThemePalette.CreateLiquidGlass(customAccent);
+            return ThemePalette.CreateLiquidGlass();
 
         return theme switch
         {
-            AppTheme.White => ThemePalette.CreateWhite(customAccent),
-            AppTheme.Custom => ThemePalette.CreateCustom(
-                ColorHelper.ParseColor(customBgHex, Color.FromRgb(0x0F, 0x17, 0x2A)),
-                customAccent ?? Color.FromRgb(0x00, 0x7A, 0xFF),
-                string.IsNullOrWhiteSpace(customTextHex) ? null : ColorHelper.ParseColor(customTextHex, Colors.White)),
-            AppTheme.Light => ThemePalette.CreateLight(customAccent),
-            AppTheme.Dark => ThemePalette.CreateDark(customAccent),
+            AppTheme.Light => ThemePalette.CreateLight(),
+            AppTheme.Dark => ThemePalette.CreateDark(),
             _ => DetectWindowsThemeIsLight()
-                ? ThemePalette.CreateLight(customAccent)
-                : ThemePalette.CreateDark(customAccent)
+                ? ThemePalette.CreateLight()
+                : ThemePalette.CreateDark()
         };
     }
 
@@ -209,14 +157,6 @@ public class ThemeService
         if (_useLiquidGlass || _currentSetting == AppTheme.LiquidGlass)
         {
             themeFile = "LiquidGlassTheme.xaml";
-        }
-        else if (_currentSetting == AppTheme.White)
-        {
-            themeFile = "WhiteTheme.xaml";
-        }
-        else if (_currentSetting == AppTheme.Custom)
-        {
-            themeFile = _isLightResolved ? "WhiteTheme.xaml" : "DarkTheme.xaml";
         }
         else if (_isLightResolved)
         {
@@ -240,7 +180,6 @@ public class ThemeService
                 if (mergedDicts[i].Source != null &&
                     (mergedDicts[i].Source.OriginalString.Contains("DarkTheme") ||
                      mergedDicts[i].Source.OriginalString.Contains("LightTheme") ||
-                     mergedDicts[i].Source.OriginalString.Contains("WhiteTheme") ||
                      mergedDicts[i].Source.OriginalString.Contains("LiquidGlassTheme")))
                 {
                     mergedDicts.RemoveAt(i);
@@ -384,10 +323,7 @@ public class ThemeService
                 ApplyInternal(
                     _adaptToWindowsTheme ? AppTheme.Auto : _currentSetting,
                     _adaptToWindowsTheme,
-                    _useLiquidGlass,
-                    _customAccentHex,
-                    _customBgHex,
-                    _customTextHex)));
+                    _useLiquidGlass)));
         }
     }
 

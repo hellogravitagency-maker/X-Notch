@@ -69,20 +69,6 @@ public partial class SpotlightLauncher : Window
 
         _allItems.Add(new SpotlightItem
         {
-            Title = "Focus Active Coding Terminal",
-            Subtitle = "Bring the parent Windows Terminal or coding agent window to front",
-            Category = "Agent",
-            IconGlyph = "💻",
-            Action = () =>
-            {
-                var active = _services.AgentMonitor.ActiveSessions.FirstOrDefault();
-                if (active != null && active.ProcessId > 0)
-                    TerminalFocusHelper.FocusProcessWindow(active.ProcessId);
-            }
-        });
-
-        _allItems.Add(new SpotlightItem
-        {
             Title = "Play / Pause Media",
             Subtitle = $"{_services.Media.MediaInfo.Title} — {_services.Media.MediaInfo.Artist}",
             Category = "Media",

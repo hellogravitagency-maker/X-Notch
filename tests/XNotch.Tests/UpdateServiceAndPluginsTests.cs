@@ -3,7 +3,6 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using QuickNotesPlugin;
-using ThemeStudioPlugin;
 using XNotch.Helpers;
 using XNotch.Plugins;
 using XNotch.Services;
@@ -59,41 +58,6 @@ public class UpdateServiceAndPluginsTests
     }
 
     [Fact]
-    public void ThemeStudioPlugin_MetadataAndPresets_AreValid()
-    {
-        var plugin = new ThemeStudioPlugin.ThemeStudioPlugin();
-
-        Assert.Equal("com.xnotch.themestudio", plugin.Id);
-        Assert.Equal("Theme Studio", plugin.Name);
-        Assert.Equal("1.0.0", plugin.Version);
-        Assert.False(string.IsNullOrWhiteSpace(plugin.Description));
-        Assert.True(ThemeStudioPlugin.ThemeStudioPlugin.Presets.Count >= 5);
-
-        // Verify all presets have valid hex colors
-        foreach (var preset in ThemeStudioPlugin.ThemeStudioPlugin.Presets)
-        {
-            Assert.StartsWith("#", preset.AccentHex);
-            Assert.StartsWith("#", preset.BackgroundHex);
-            Assert.StartsWith("#", preset.TextHex);
-            Assert.False(string.IsNullOrWhiteSpace(preset.Name));
-            Assert.False(string.IsNullOrWhiteSpace(preset.Icon));
-        }
-    }
-
-    [Fact]
-    public void ThemeStudioPlugin_GetConfigurationDefinition_ReturnsValidDefinition()
-    {
-        var plugin = new ThemeStudioPlugin.ThemeStudioPlugin();
-        var config = plugin.GetConfigurationDefinition();
-
-        Assert.NotNull(config);
-        Assert.Equal("Theme Studio Configuration", config.Title);
-        Assert.NotEmpty(config.Sections);
-        Assert.NotEmpty(config.Sections[0].Fields);
-        Assert.Equal(ThemeStudioPlugin.ThemeStudioPlugin.Presets.Count, config.Sections[0].Fields[0].Options.Count);
-    }
-
-    [Fact]
     public void QuickNotesPlugin_Metadata_IsValid()
     {
         var plugin = new QuickNotesPlugin.QuickNotesPlugin();
@@ -137,15 +101,6 @@ public class UpdateServiceAndPluginsTests
     public void PluginManifest_NewPlugins_DeserializeProperly()
     {
         var repoRoot = FindRepoRoot();
-        var themeManifestJson = File.ReadAllText(
-            Path.Combine(repoRoot, "Examples", "Plugins", "ThemeStudioPlugin", "manifest.json"));
-        var themeManifest = JsonSerializer.Deserialize<PluginManifest>(themeManifestJson);
-
-        Assert.NotNull(themeManifest);
-        Assert.Equal("com.xnotch.themestudio", themeManifest.Id);
-        Assert.Equal(PluginCategory.Theme, themeManifest.Category);
-        Assert.Equal("0.7.0", themeManifest.MinimumXNotchVersion);
-
         var notesManifestJson = File.ReadAllText(
             Path.Combine(repoRoot, "Examples", "Plugins", "QuickNotesPlugin", "manifest.json"));
         var notesManifest = JsonSerializer.Deserialize<PluginManifest>(notesManifestJson);
@@ -166,7 +121,6 @@ public class UpdateServiceAndPluginsTests
 
         Assert.NotNull(library);
         Assert.NotNull(library.Plugins);
-        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.themestudio");
         Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.quicknotes");
         Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.betteranimation");
         Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.todopeek");
@@ -175,52 +129,12 @@ public class UpdateServiceAndPluginsTests
     [Fact]
     public void UIPluginLocation_Overlay_IsMarkedObsolete()
     {
+#pragma warning disable CS0618
         var member = typeof(UIPluginLocation).GetMember(nameof(UIPluginLocation.Overlay));
+#pragma warning restore CS0618
         Assert.NotEmpty(member);
         var obsoleteAttr = member[0].GetCustomAttributes(typeof(ObsoleteAttribute), false);
         Assert.NotEmpty(obsoleteAttr);
-    }
-
-    [Fact]
-    public void PluginLibraryService_LoadBundledLibraryJson_ReturnsValidCatalog()
-    {
-        var json = PluginLibraryService.LoadBundledLibraryJson();
-        Assert.False(string.IsNullOrWhiteSpace(json));
-
-        var library = JsonSerializer.Deserialize<PluginLibraryService.PluginLibrary>(json!);
-        Assert.NotNull(library);
-        Assert.NotNull(library.Plugins);
-        Assert.NotEmpty(library.Plugins);
-        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.themestudio");
-        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.quicknotes");
-    }
-
-    [Fact]
-    public async Task PluginLibraryService_RefreshLibraryAsync_FallsBackToBundledCatalog()
-    {
-        var service = new PluginLibraryService();
-        // Point to an invalid custom URL to force fallback
-        var success = await service.RefreshLibraryAsync("http://127.0.0.1:54321/nonexistent.json");
-
-        Assert.True(success);
-        Assert.NotEmpty(service.AvailablePlugins);
-        Assert.Contains(service.AvailablePlugins, p => p.Id == "com.xnotch.themestudio");
-        Assert.Contains(service.AvailablePlugins, p => p.Id == "com.xnotch.quicknotes");
-    }
-
-    [Fact]
-    public void PluginLibraryService_FindLocalPluginDll_LocatesBuiltPlugins()
-    {
-        var themeManifest = new PluginManifest
-        {
-            Id = "com.xnotch.themestudio",
-            Name = "Theme Studio",
-            DownloadUrl = "https://example.com/ThemeStudioPlugin.dll"
-        };
-
-        var localDll = PluginLibraryService.FindLocalPluginDll(themeManifest);
-        Assert.NotNull(localDll);
-        Assert.True(File.Exists(localDll));
     }
 
     private static string FindRepoRoot()

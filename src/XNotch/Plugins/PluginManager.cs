@@ -440,58 +440,35 @@ public class PluginManager : IDisposable
         try
         {
             var marker = Path.Combine(_pluginsDirectory, ".provisioned");
-            if (File.Exists(marker))
-                return;
-
-            var existingDlls = Directory.GetFiles(_pluginsDirectory, "*.dll", SearchOption.AllDirectories);
-            if (existingDlls.Length > 0)
+            if (!File.Exists(marker))
             {
                 File.WriteAllText(marker, "1");
-                return;
             }
 
-            var starterPlugins = new[]
+            // Remove legacy default quicknotes so it is never displayed in the notch
+            var legacyQuickNotesDir = Path.Combine(_pluginsDirectory, "com.xnotch.quicknotes");
+            if (Directory.Exists(legacyQuickNotesDir))
             {
-                new { Id = "com.xnotch.themestudio", Name = "Theme Studio", Dll = "ThemeStudioPlugin.dll" },
-                new { Id = "com.xnotch.quicknotes", Name = "Quick Notes", Dll = "QuickNotesPlugin.dll" }
-            };
-
-            foreach (var starter in starterPlugins)
-            {
-                var manifest = new PluginManifest
+                try
                 {
-                    Id = starter.Id,
-                    Name = starter.Name,
-                    Version = "1.0.0"
-                };
-
-                var localDll = PluginLibraryService.FindLocalPluginDll(manifest);
-                if (!string.IsNullOrWhiteSpace(localDll) && File.Exists(localDll))
+                    Directory.Delete(legacyQuickNotesDir, true);
+                    _context.Log("Removed default Quick Notes plugin from notch plugins directory.", PluginLogLevel.Info);
+                }
+                catch (Exception ex)
                 {
-                    var targetDir = Path.Combine(_pluginsDirectory, starter.Id);
-                    Directory.CreateDirectory(targetDir);
-                    var targetDll = Path.Combine(targetDir, starter.Dll);
-                    File.Copy(localDll, targetDll, true);
-
-                    var srcDir = Path.GetDirectoryName(localDll);
-                    var srcManifest = srcDir != null ? Path.Combine(srcDir, "manifest.json") : null;
-                    if (srcManifest != null && File.Exists(srcManifest))
-                    {
-                        File.Copy(srcManifest, Path.Combine(targetDir, "manifest.json"), true);
-                    }
-                    else
-                    {
-                        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(Path.Combine(targetDir, "manifest.json"), json);
-                    }
+                    _context.Log($"Could not delete default Quick Notes directory: {ex.Message}", PluginLogLevel.Warning);
                 }
             }
 
-            File.WriteAllText(marker, "1");
+            if (_pluginEnabledState.ContainsKey("com.xnotch.quicknotes"))
+            {
+                _pluginEnabledState.Remove("com.xnotch.quicknotes");
+                SavePluginStates();
+            }
         }
         catch (Exception ex)
         {
-            _context.Log($"Provisioning default plugins failed: {ex.Message}", PluginLogLevel.Warning);
+            _context.Log($"Default plugins check failed: {ex.Message}", PluginLogLevel.Warning);
         }
     }
 

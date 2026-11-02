@@ -4,7 +4,6 @@ using System.Windows;
 using XNotch.Models;
 using XNotch.Services;
 using XNotch.Views;
-using XNotch.Views.Panels;
 using Xunit;
 
 namespace XNotch.Tests;
@@ -129,9 +128,6 @@ public class XamlLoadTests
 
             var musicPlayer = new MusicPlayerView();
             Assert.NotNull(musicPlayer);
-
-            var commandCenter = new ExpandedCommandCenterView();
-            Assert.NotNull(commandCenter);
         });
     }
 }

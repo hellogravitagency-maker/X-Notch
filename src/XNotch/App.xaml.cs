@@ -28,6 +28,11 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Global exception handler for diagnostics
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+                LogCrash(ex);
+        };
         DispatcherUnhandledException += (_, args) =>
         {
             LogCrash(args.Exception);
@@ -40,6 +45,7 @@ public partial class App : Application
         const string mutexName = "XNotch_SingleInstance_Mutex";
         _mutex = new Mutex(true, mutexName, out bool createdNew);
         _ownsMutex = createdNew;
+        LogTrace($"OnStartup: createdNew={createdNew}, _ownsMutex={_ownsMutex}");
         if (!createdNew)
         {
             // The named mutex already exists. Normally that means another instance is
@@ -62,9 +68,11 @@ public partial class App : Application
             if (acquired)
             {
                 _ownsMutex = true;
+                LogTrace("OnStartup: Existing mutex acquired.");
             }
             else
             {
+                LogTrace("OnStartup: Mutex not acquired -> Shutdown()");
                 _mutex.Dispose();
                 _mutex = null;
                 Shutdown();
@@ -72,36 +80,46 @@ public partial class App : Application
             }
         }
 
-        // Load settings
-        _settings = AppSettings.Load();
+        try
+        {
+            // Load settings
+            _settings = AppSettings.Load();
+            LogTrace($"Settings loaded: Theme={_settings.Theme}, AutoHide={_settings.AutoHide}");
 
-        // Initialize theme
-        _themeService = new ThemeService();
-        _themeService.Apply(_settings);
-        _themeService.StartWatchingSystemTheme();
-        _themeService.ThemeChanged += ApplyTrayTheme;
+            // Initialize theme
+            _themeService = new ThemeService();
+            _themeService.Apply(_settings);
+            _themeService.StartWatchingSystemTheme();
+            _themeService.ThemeChanged += ApplyTrayTheme;
 
-        // System tray icon
-        SetupTrayIcon();
+            // System tray icon
+            SetupTrayIcon();
 
-        // Shared system services — one set for every island window
-        _services = new NotchServices();
+            // Shared system services — one set for every island window
+            _services = new NotchServices();
 
-        // Launch the primary island (on its remembered screen)
-        _notchWindow = new NotchWindow(_settings, _themeService, _services,
-            isPrimary: true, screenDevice: _settings.NotchScreenDevice);
-        WireIslandEvents(_notchWindow);
-        _notchWindow.Show();
+            // Launch the primary island (on its remembered screen)
+            _notchWindow = new NotchWindow(_settings, _themeService, _services,
+                isPrimary: true, screenDevice: _settings.NotchScreenDevice);
+            WireIslandEvents(_notchWindow);
+            _notchWindow.Show();
+            LogTrace("Primary island shown.");
 
-        // Optional islands on every other screen
-        RebuildSecondaryWindows();
+            // Optional islands on every other screen
+            RebuildSecondaryWindows();
 
-        // React to monitors being plugged/unplugged or rearranged
-        Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+            // React to monitors being plugged/unplugged or rearranged
+            Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
 
-        // Silent update check shortly after startup (network failures are ignored)
-        if (_settings.AutoCheckForUpdates)
-            _ = CheckForUpdatesSilentlyAsync();
+            // Silent update check shortly after startup (network failures are ignored)
+            if (_settings.AutoCheckForUpdates)
+                _ = CheckForUpdatesSilentlyAsync();
+        }
+        catch (Exception ex)
+        {
+            LogCrash(ex);
+            throw;
+        }
     }
 
     private void OnDisplaySettingsChanged(object? sender, EventArgs e)
@@ -227,6 +245,21 @@ public partial class App : Application
         }
     }
 
+    public static void LogTrace(string message)
+    {
+        try
+        {
+            var logDir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "X-Notch", "Logs");
+            System.IO.Directory.CreateDirectory(logDir);
+            System.IO.File.AppendAllText(
+                System.IO.Path.Combine(logDir, "app.log"),
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [PID {Environment.ProcessId}] {message}{Environment.NewLine}");
+        }
+        catch { }
+    }
+
     private static void LogCrash(Exception exception)
     {
         try
@@ -345,6 +378,7 @@ public partial class App : Application
 
     private void QuitApp()
     {
+        LogTrace("QuitApp called.");
         _themeService.ThemeChanged -= ApplyTrayTheme;
         _themeService?.StopWatchingSystemTheme();
         _trayIcon?.Dispose();
@@ -357,6 +391,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        LogTrace($"OnExit: ApplicationExitCode={e.ApplicationExitCode}");
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         if (_themeService != null)
             _themeService.ThemeChanged -= ApplyTrayTheme;

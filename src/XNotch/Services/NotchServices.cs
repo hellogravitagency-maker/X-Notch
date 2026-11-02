@@ -39,8 +39,6 @@ public sealed class NotchServices : IDisposable
     public ArmouryCrateService ArmouryCrate { get; } = new();
 
     // Developer Intelligence & Autonomous Productivity
-    public CodingAgentMonitor AgentMonitor { get; } = new();
-    public ApprovalService Approvals { get; } = new();
     public ProjectDiscoveryEngine ProjectDiscovery { get; } = new();
     public TaskDiscoveryEngine TaskDiscovery { get; } = new();
     public ProjectMemoryService ProjectMemory { get; } = new();
@@ -85,8 +83,6 @@ public sealed class NotchServices : IDisposable
         LockKeys.Start();
 
         // Start Intelligence Engines
-        AgentMonitor.Start();
-        Approvals.Start();
         Reminders.Start();
 
         // Wire Smart Reminders to Notification Service so alerts pop up on the Dynamic Island
@@ -160,8 +156,6 @@ public sealed class NotchServices : IDisposable
         LockKeys.Dispose();
         ArmouryCrate.Dispose();
 
-        AgentMonitor.Dispose();
-        Approvals.Dispose();
         ProjectDiscovery.Dispose();
         TaskDiscovery.Dispose();
         ProjectMemory.Dispose();

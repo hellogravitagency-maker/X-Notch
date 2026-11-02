@@ -11,7 +11,7 @@ using Xunit;
 namespace XNotch.Tests;
 
 [Collection("WpfSequential")]
-public class ThemeAndCustomColorTests
+public class ThemeTests
 {
     private static readonly object AppLock = new();
 
@@ -80,58 +80,62 @@ public class ThemeAndCustomColorTests
     }
 
     [Fact]
-    public void WhiteTheme_ProducesPureWhiteBackground_AndBlackText()
+    public void DarkTheme_ProducesStandardDarkBackground_AndReadableText()
     {
-        var palette = ThemePalette.CreateWhite();
+        var palette = ThemePalette.CreateDark();
+
+        Assert.False(palette.IsLight);
+        Assert.False(palette.UseLiquidGlass);
+        Assert.True(palette.Background.R <= 0x20 && palette.Background.G <= 0x20 && palette.Background.B <= 0x20);
+        Assert.True(palette.TextPrimary.R >= 0xE0);
+    }
+
+    [Fact]
+    public void LightTheme_ProducesLightBackground_AndDarkText()
+    {
+        var palette = ThemePalette.CreateLight();
 
         Assert.True(palette.IsLight);
         Assert.False(palette.UseLiquidGlass);
-        Assert.Equal(Colors.White, palette.Background);
-        Assert.Equal(Colors.Black, palette.TextPrimary);
-        Assert.Equal(Colors.White, palette.SurfaceRaised);
-        Assert.Equal(Colors.Black, palette.VisualizerBar);
+        Assert.True(palette.Background.R >= 0xDC && palette.Background.G >= 0xDC && palette.Background.B >= 0xDC);
+        Assert.True(palette.TextPrimary.R <= 0x30);
     }
 
     [Fact]
-    public void CustomTheme_AutoContrastEngine_AdaptsTextAccordingToBackgroundLuminance()
+    public void AdaptiveTheme_GeneratesValidPalette_WithSystemAccent()
     {
-        // Dark Navy background should yield light/white text
-        var darkNavy = Color.FromRgb(0x0F, 0x17, 0x2A);
-        var darkPalette = ThemePalette.CreateCustom(darkNavy, Color.FromRgb(0x00, 0x7A, 0xFF));
-        Assert.False(darkPalette.IsLight);
-        Assert.True(darkPalette.TextPrimary.R >= 0xE0);
+        var palette = ThemePalette.Create(isLight: false, useLiquidGlass: false);
+        Assert.False(palette.IsLight);
+        Assert.NotEqual(Colors.Transparent, palette.Accent);
 
-        // Pure Snow White background should yield pure black text
-        var pureWhite = Colors.White;
-        var lightPalette = ThemePalette.CreateCustom(pureWhite, Color.FromRgb(0x00, 0x7A, 0xFF));
+        var lightPalette = ThemePalette.Create(isLight: true, useLiquidGlass: false);
         Assert.True(lightPalette.IsLight);
-        Assert.Equal(Colors.Black, lightPalette.TextPrimary);
+        Assert.NotEqual(Colors.Transparent, lightPalette.Accent);
     }
 
     [Fact]
-    public void ThemeService_ApplyWhiteTheme_AndLiquidGlass_SwapsAndAppliesResources()
+    public void ThemeService_ApplyThemes_AndLiquidGlass_SwapsAndAppliesResources()
     {
         RunOnSta(() =>
         {
             var themeService = new ThemeService();
             var settings = new AppSettings
             {
-                Theme = AppTheme.White,
+                Theme = AppTheme.Light,
                 AdaptToWindowsTheme = false,
-                UseLiquidGlassTheme = false,
-                CustomAccentColor = "#007AFF"
+                UseLiquidGlassTheme = false
             };
 
             themeService.Apply(settings);
 
             var textBrush = (SolidColorBrush)Application.Current.Resources["TextPrimaryBrush"];
             var fillBrush = (SolidColorBrush)Application.Current.Resources["NotchFillBrush"];
-            Assert.Equal(Colors.Black, textBrush.Color);
-            Assert.Equal(Colors.White, fillBrush.Color);
+            Assert.True(textBrush.Color.R <= 0x30);
+            Assert.True(fillBrush.Color.R >= 0xDC);
 
-            // Now switch to Liquid Glass via AppTheme.LiquidGlass
+            // Switch to Liquid Glass via AppTheme.LiquidGlass
             settings.Theme = AppTheme.LiquidGlass;
-            settings.UseLiquidGlassTheme = false; // Even if false, AppTheme.LiquidGlass activates glass
+            settings.UseLiquidGlassTheme = false;
             themeService.Apply(settings);
 
             var glassTextBrush = (SolidColorBrush)Application.Current.Resources["TextPrimaryBrush"];
@@ -140,52 +144,48 @@ public class ThemeAndCustomColorTests
             Assert.Equal(0x75, glassFillBrush.Color.A);
             Assert.Equal(Colors.Black, (Color)Application.Current.Resources["VisualizerBarColor"]);
 
-            // Now test Custom Theme
-            settings.Theme = AppTheme.Custom;
+            // Switch to Dark Theme
+            settings.Theme = AppTheme.Dark;
             settings.UseLiquidGlassTheme = false;
-            settings.CustomBackgroundColor = "#180D2B";
-            settings.CustomAccentColor = "#06B6D4";
             themeService.Apply(settings);
 
-            var customFillBrush = (SolidColorBrush)Application.Current.Resources["NotchFillBrush"];
-            var customAccentBrush = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
-            Assert.Equal(0x18, customFillBrush.Color.R);
-            Assert.Equal(0x0D, customFillBrush.Color.G);
-            Assert.Equal(0x2B, customFillBrush.Color.B);
-            Assert.Equal(0x06, customAccentBrush.Color.R);
-            Assert.Equal(0xB6, customAccentBrush.Color.G);
-            Assert.Equal(0xD4, customAccentBrush.Color.B);
+            var darkFillBrush = (SolidColorBrush)Application.Current.Resources["NotchFillBrush"];
+            var darkTextBrush = (SolidColorBrush)Application.Current.Resources["TextPrimaryBrush"];
+            Assert.True(darkFillBrush.Color.R <= 0x20);
+            Assert.True(darkTextBrush.Color.R >= 0xDC);
         });
     }
 
     [Fact]
-    public void InlineSettingsView_LoadAndChangeTheme_HandlesWhiteAndCustomAndGlass()
+    public void InlineSettingsView_LoadAndChangeTheme_HandlesLightDarkAndGlass()
     {
         RunOnSta(() =>
         {
             var settingsView = new InlineSettingsView();
             var settings = new AppSettings
             {
-                Theme = AppTheme.White,
-                CustomAccentColor = "#10B981",
-                CustomBackgroundColor = "#0A1F14"
+                Theme = AppTheme.Light,
+                AdaptToWindowsTheme = false
             };
 
             settingsView.LoadSettings(settings);
-            Assert.True(settingsView.ThemeWhiteRadio.IsChecked);
-            Assert.Equal("#10B981", settingsView.AccentHexInput.Text);
+            Assert.True(settingsView.ThemeLightRadio.IsChecked);
+            Assert.False(settingsView.AdaptToWindowsThemeCheck.IsChecked);
 
             // Change to Liquid Glass
             settings.Theme = AppTheme.LiquidGlass;
             settingsView.LoadSettings(settings);
             Assert.True(settingsView.ThemeGlassRadio.IsChecked);
 
-            // Change to Custom Theme
-            settings.Theme = AppTheme.Custom;
+            // Change to Dark Theme
+            settings.Theme = AppTheme.Dark;
             settingsView.LoadSettings(settings);
-            Assert.True(settingsView.ThemeCustomRadio.IsChecked);
-            Assert.Equal(Visibility.Visible, settingsView.CustomThemeSettingsPanel.Visibility);
-            Assert.Equal("#0A1F14", settingsView.BgHexInput.Text);
+            Assert.True(settingsView.ThemeDarkRadio.IsChecked);
+
+            // Change to Adaptive
+            settings.AdaptToWindowsTheme = true;
+            settingsView.LoadSettings(settings);
+            Assert.True(settingsView.AdaptToWindowsThemeCheck.IsChecked);
         });
     }
 }

@@ -10,7 +10,6 @@ using XNotch.Plugins;
 using XNotch.Services;
 using System.Linq;
 using System.Windows.Interop;
-using XNotch.Views.Panels;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using MouseButton = System.Windows.Input.MouseButton;
@@ -34,16 +33,11 @@ public partial class NotchWindow : Window
     private readonly SpringAnimator _contentScaleSpring;
     private readonly SpringAnimator _auraOpacitySpring;
 
-    // Apple Dynamic Island notification & approval spring physics animators
+    // Apple Dynamic Island notification spring physics animators
     private readonly SpringAnimator _notificationScaleSpring = new(0.34, 0.72);
     private readonly SpringAnimator _notificationTranslateSpring = new(0.32, 0.75);
     private readonly SpringAnimator _notificationOpacitySpring = new(0.24, 0.88);
     private readonly SpringAnimator _notificationIconScaleSpring = new(0.28, 0.65);
-
-    private readonly SpringAnimator _approvalScaleSpring = new(0.34, 0.72);
-    private readonly SpringAnimator _approvalTranslateSpring = new(0.32, 0.75);
-    private readonly SpringAnimator _approvalOpacitySpring = new(0.24, 0.88);
-    private readonly SpringAnimator _approvalIconScaleSpring = new(0.28, 0.65);
 
     // Dynamic Island hardware & peripheral alerts (Power Surge, Lock State, USB)
     private readonly SpringAnimator _powerSurgeScaleSpring = new(0.34, 0.72);
@@ -72,11 +66,6 @@ public partial class NotchWindow : Window
     private double _currentNotificationTranslate = -3.0;
     private double _currentNotificationOpacity = 0.0;
     private double _currentNotificationIconScale = 1.0;
-
-    private double _currentApprovalScale = 0.88;
-    private double _currentApprovalTranslate = -3.0;
-    private double _currentApprovalOpacity = 0.0;
-    private double _currentApprovalIconScale = 1.0;
 
     private double _currentPowerSurgeScale = 0.88;
     private double _currentPowerSurgeTranslate = -3.0;
@@ -118,10 +107,9 @@ public partial class NotchWindow : Window
     private bool _isSettingsExpanded;
     private bool _isContextMenuOpen;
 
-    // Notifications, Approvals & Intelligence
+    // Notifications & Intelligence
     private NotificationItem? _activeNotification;
     private DispatcherTimer? _notificationDismissTimer;
-    private ApprovalRequest? _activeApproval;
     private SpotlightLauncher? _spotlightLauncher;
 
     // Camera under-bezel hover pop-up
@@ -477,8 +465,6 @@ public partial class NotchWindow : Window
         }
         // Intelligence & Notification monitors
         _services.Notifications.NotificationArrived += item => Dispatcher.Invoke(() => ShowNotification(item));
-        _services.Approvals.ApprovalPromptArrived += req => Dispatcher.Invoke(() => ShowApprovalPrompt(req));
-        _services.Approvals.ApprovalPromptSettled += _ => Dispatcher.Invoke(DismissApprovalPrompt);
 
         // Hardware Privacy Indicators (Camera & Microphone glowing dots)
         _services.Privacy.CameraStateChanged += (active, app) => Dispatcher.Invoke(() => UpdateCameraPrivacy(active, app));
@@ -511,11 +497,6 @@ public partial class NotchWindow : Window
         // Bind Spotlight Launcher
         _spotlightLauncher = new SpotlightLauncher();
         _spotlightLauncher.Bind(_services);
-
-        // Bind Expanded Command Center
-        CommandCenterPanel.Bind(_services);
-        CommandCenterPanel.CloseRequested += CollapseCommandCenter;
-        CommandCenterPanel.SpotlightRequested += OpenSpotlight;
 
         // Bind Tasks Widget with Auto-Tasks
         TasksWidget.Bind(_services);
@@ -743,10 +724,6 @@ public partial class NotchWindow : Window
         {
             CollapseSettings();
         }
-        if (_isCommandCenterExpanded)
-        {
-            CollapseCommandCenter();
-        }
         TransitionToClose();
 
         // If a plugin manager instance is already open, activate and focus it instead of stacking multiple windows
@@ -909,63 +886,6 @@ public partial class NotchWindow : Window
         ExpandSettings();
     }
 
-    private bool _isCommandCenterExpanded;
-
-    public void OnCommandCenterButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (_vm.NotchState != NotchState.Open)
-            TransitionToOpen();
-
-        if (_isCommandCenterExpanded)
-            CollapseCommandCenter();
-        else
-            ExpandCommandCenter();
-    }
-
-    private void ExpandCommandCenter()
-    {
-        if (_isSettingsExpanded)
-            CollapseSettings();
-
-        _isCommandCenterExpanded = true;
-
-        if (_dock == NotchDock.Top)
-        {
-            CommandCenterPanel.Visibility = Visibility.Visible;
-
-            double targetH = GetTopCommandCenterHeight();
-            _heightSpring.Response = 0.42;
-            _heightSpring.DampingFraction = 0.80;
-            _heightSpring.AnimateTo(targetH, _currentHeight);
-            _widthSpring.AnimateTo(GetOpenWidth(), _currentWidth);
-        }
-    }
-
-    private void CollapseCommandCenter()
-    {
-        _isCommandCenterExpanded = false;
-
-        if (_dock == NotchDock.Top)
-        {
-            CommandCenterPanel.Visibility = Visibility.Collapsed;
-
-            double targetH = GetTopOpenHeight();
-            _heightSpring.Response = 0.42;
-            _heightSpring.DampingFraction = 0.80;
-            _heightSpring.AnimateTo(targetH, _currentHeight);
-            _widthSpring.AnimateTo(GetOpenWidth(), _currentWidth);
-        }
-    }
-
-    private double GetTopCommandCenterHeight()
-    {
-        double baseHeight = ShouldReserveShelfSpace()
-            ? 520
-            : 440;
-
-        return baseHeight + GetMeasuredPanelHeight(PluginOpenPanel, Math.Max(220, GetOpenWidth() - 48));
-    }
-
     private void OnSettingsGearClick(object sender, RoutedEventArgs e)
     {
         if (_isSettingsExpanded)
@@ -976,9 +896,6 @@ public partial class NotchWindow : Window
 
     private void ExpandSettings()
     {
-        if (_isCommandCenterExpanded)
-            CollapseCommandCenter();
-
         _isSettingsExpanded = true;
 
         if (_dock == NotchDock.Top)
@@ -1089,7 +1006,7 @@ public partial class NotchWindow : Window
         double maxTopOpenWidth = maxBaseTopOpenWidth
             + GetMeasuredPanelWidth(PluginAccessoryPanel, NotchConstants.OpenHeight);
 
-        double maxTopHeight = Math.Max(Math.Max(GetTopOpenHeight(), GetTopSettingsHeight()), GetTopCommandCenterHeight());
+        double maxTopHeight = Math.Max(GetTopOpenHeight(), GetTopSettingsHeight());
         double sideExpandedWidth = NotchConstants.SideOpenWidth + 280 + NotchConstants.OpenTopRadius;
         double maxShortAxis = Math.Max(maxTopHeight, sideExpandedWidth);
         double maxTallAxis = Math.Max(maxTopOpenWidth, GetSideOpenHeight());
@@ -1116,9 +1033,7 @@ public partial class NotchWindow : Window
 
             var targetHeight = _isSettingsExpanded
                 ? GetTopSettingsHeight()
-                : _isCommandCenterExpanded
-                    ? GetTopCommandCenterHeight()
-                    : GetTopOpenHeight();
+                : GetTopOpenHeight();
 
             _heightSpring.AnimateTo(targetHeight, _currentHeight);
             return;
@@ -1134,9 +1049,6 @@ public partial class NotchWindow : Window
 
     private double GetTopOpenHeight()
     {
-        if (_isCommandCenterExpanded)
-            return GetTopCommandCenterHeight();
-
         double baseHeight = ShouldReserveShelfSpace()
             ? NotchConstants.OpenHeightWithShelf
             : NotchConstants.OpenHeight;
@@ -1243,23 +1155,6 @@ public partial class NotchWindow : Window
             NotificationCapsule.Opacity = _currentNotificationOpacity;
             NotificationIconScale.ScaleX = _currentNotificationIconScale;
             NotificationIconScale.ScaleY = _currentNotificationIconScale;
-            anyAnimating = true;
-        }
-
-        if (_approvalScaleSpring.IsAnimating || _approvalTranslateSpring.IsAnimating ||
-            _approvalOpacitySpring.IsAnimating || _approvalIconScaleSpring.IsAnimating)
-        {
-            _currentApprovalScale = _approvalScaleSpring.Tick();
-            _currentApprovalTranslate = _approvalTranslateSpring.Tick();
-            _currentApprovalOpacity = _approvalOpacitySpring.Tick();
-            _currentApprovalIconScale = _approvalIconScaleSpring.Tick();
-
-            AgentApprovalScale.ScaleX = _currentApprovalScale;
-            AgentApprovalScale.ScaleY = _currentApprovalScale;
-            AgentApprovalTranslate.Y = _currentApprovalTranslate;
-            AgentApprovalCapsule.Opacity = _currentApprovalOpacity;
-            AgentApprovalIconScale.ScaleX = _currentApprovalIconScale;
-            AgentApprovalIconScale.ScaleY = _currentApprovalIconScale;
             anyAnimating = true;
         }
 
@@ -1488,22 +1383,19 @@ public partial class NotchWindow : Window
         CameraTriggerZone.Height = cameraZoneH;
         CameraTriggerZone.IsHitTestVisible = (_dock == NotchDock.Top && _vm.NotchState != NotchState.Open);
 
-        // Dynamic Island Alerts (Approvals, Notifications, Power Surge, Lock State, USB, Operating Mode)
-        bool showApproval = (_activeApproval != null || _approvalOpacitySpring.IsAnimating || _currentApprovalOpacity > 0.01) && _vm.NotchState != NotchState.Open;
-        bool showNotification = (_activeNotification != null || _notificationOpacitySpring.IsAnimating || _currentNotificationOpacity > 0.01) && !showApproval && _vm.NotchState != NotchState.Open;
-        bool showPowerSurge = (_powerSurgeActive || _powerSurgeOpacitySpring.IsAnimating || _currentPowerSurgeOpacity > 0.01) && !showApproval && !showNotification && _vm.NotchState != NotchState.Open;
-        bool showLockState = (_lockStateActive || _lockStateOpacitySpring.IsAnimating || _currentLockStateOpacity > 0.01) && !showApproval && !showNotification && !showPowerSurge && _vm.NotchState != NotchState.Open;
-        bool showUsbDrive = (_usbDriveActive || _usbDriveOpacitySpring.IsAnimating || _currentUsbDriveOpacity > 0.01) && !showApproval && !showNotification && !showPowerSurge && !showLockState && _vm.NotchState != NotchState.Open;
-        bool showOperatingMode = (_operatingModeActive || _operatingModeOpacitySpring.IsAnimating || _currentOperatingModeOpacity > 0.01) && !showApproval && !showNotification && !showPowerSurge && !showLockState && !showUsbDrive && _vm.NotchState != NotchState.Open;
+        // Dynamic Island Alerts (Notifications, Power Surge, Lock State, USB, Operating Mode)
+        bool showNotification = (_activeNotification != null || _notificationOpacitySpring.IsAnimating || _currentNotificationOpacity > 0.01) && _vm.NotchState != NotchState.Open;
+        bool showPowerSurge = (_powerSurgeActive || _powerSurgeOpacitySpring.IsAnimating || _currentPowerSurgeOpacity > 0.01) && !showNotification && _vm.NotchState != NotchState.Open;
+        bool showLockState = (_lockStateActive || _lockStateOpacitySpring.IsAnimating || _currentLockStateOpacity > 0.01) && !showNotification && !showPowerSurge && _vm.NotchState != NotchState.Open;
+        bool showUsbDrive = (_usbDriveActive || _usbDriveOpacitySpring.IsAnimating || _currentUsbDriveOpacity > 0.01) && !showNotification && !showPowerSurge && !showLockState && _vm.NotchState != NotchState.Open;
+        bool showOperatingMode = (_operatingModeActive || _operatingModeOpacitySpring.IsAnimating || _currentOperatingModeOpacity > 0.01) && !showNotification && !showPowerSurge && !showLockState && !showUsbDrive && _vm.NotchState != NotchState.Open;
 
-        AgentApprovalCapsule.Visibility = showApproval ? Visibility.Visible : Visibility.Collapsed;
         NotificationCapsule.Visibility = showNotification ? Visibility.Visible : Visibility.Collapsed;
         PowerSurgeCapsule.Visibility = showPowerSurge ? Visibility.Visible : Visibility.Collapsed;
         LockStateCapsule.Visibility = showLockState ? Visibility.Visible : Visibility.Collapsed;
         UsbDriveCapsule.Visibility = showUsbDrive ? Visibility.Visible : Visibility.Collapsed;
         OperatingModeCapsule.Visibility = showOperatingMode ? Visibility.Visible : Visibility.Collapsed;
 
-        AgentApprovalCapsule.IsHitTestVisible = showApproval && _currentApprovalOpacity > 0.5;
         NotificationCapsule.IsHitTestVisible = showNotification && _currentNotificationOpacity > 0.5;
         PowerSurgeCapsule.IsHitTestVisible = showPowerSurge && _currentPowerSurgeOpacity > 0.5;
         LockStateCapsule.IsHitTestVisible = showLockState && _currentLockStateOpacity > 0.5;
@@ -1511,10 +1403,9 @@ public partial class NotchWindow : Window
         OperatingModeCapsule.IsHitTestVisible = showOperatingMode && _currentOperatingModeOpacity > 0.5;
 
         double maxCapsuleOpacity = Math.Max(_currentNotificationOpacity,
-            Math.Max(_currentApprovalOpacity,
             Math.Max(_currentPowerSurgeOpacity,
             Math.Max(_currentLockStateOpacity,
-            Math.Max(_currentUsbDriveOpacity, _currentOperatingModeOpacity)))));
+            Math.Max(_currentUsbDriveOpacity, _currentOperatingModeOpacity))));
 
         if (maxCapsuleOpacity > 0.01)
         {
@@ -1641,17 +1532,12 @@ public partial class NotchWindow : Window
         if (!_applyingSyncedState)
             UserStateChanged?.Invoke(NotchState.Closed);
 
-        // Collapse settings & command center if open
+        // Collapse settings if open
         if (_isSettingsExpanded)
         {
             _isSettingsExpanded = false;
             InlineSettings.Visibility = Visibility.Collapsed;
             VerticalSettingsPanel.Visibility = Visibility.Collapsed;
-        }
-        if (_isCommandCenterExpanded)
-        {
-            _isCommandCenterExpanded = false;
-            CommandCenterPanel.Visibility = Visibility.Collapsed;
         }
 
         _vm.Close();
@@ -1896,9 +1782,7 @@ public partial class NotchWindow : Window
         {
             _vm.Close();
             _isSettingsExpanded = false;
-            _isCommandCenterExpanded = false;
             InlineSettings.Visibility = Visibility.Collapsed;
-            CommandCenterPanel.Visibility = Visibility.Collapsed;
         }
 
         // Animate to compact drag pill size
@@ -2354,9 +2238,6 @@ public partial class NotchWindow : Window
             baseWidth = NotchConstants.OpenWidthWithCalendar;
         else if (cam)
             baseWidth = NotchConstants.OpenWidthWithWebcam;
-
-        if (_isCommandCenterExpanded)
-            baseWidth = Math.Max(baseWidth, 580);
 
         return baseWidth + accessoryWidth;
     }
@@ -2873,7 +2754,7 @@ public partial class NotchWindow : Window
 
     #endregion
 
-    #region Coding Agent & Notification Handlers
+    #region Notification Handlers
 
     private void OnShelfBadgeClick(object sender, RoutedEventArgs e)
     {
@@ -3039,115 +2920,6 @@ public partial class NotchWindow : Window
                 break;
             }
         }
-    }
-
-    public void ShowApprovalPrompt(ApprovalRequest request)
-    {
-        _activeApproval = request;
-        AgentPromptTitle.Text = $"{request.AgentId} — {request.ToolName}";
-        AgentPromptCommand.Text = request.Command;
-
-        // Keep notch border completely clean and borderless during alert pop-ups
-        _auraOpacitySpring.AnimateTo(0.0, _currentAuraOpacity);
-        AmbientAuraPath.Opacity = 0.0;
-
-        AgentApprovalCapsule.Visibility = Visibility.Visible;
-        AgentApprovalCapsule.IsHitTestVisible = true;
-
-        if (_vm.NotchState != NotchState.Open)
-        {
-            _widthSpring.SetPhysics(0.36, 0.72);
-            _heightSpring.SetPhysics(0.34, 0.76);
-            _topRadiusSpring.SetPhysics(0.36, 0.82);
-            _bottomRadiusSpring.SetPhysics(0.36, 0.82);
-
-            _widthSpring.AnimateTo(385, _currentWidth);
-            _heightSpring.AnimateTo(44, _currentHeight);
-            _bottomRadiusSpring.AnimateTo(22, _currentBottomRadius);
-        }
-
-        // Zoom-and-bloom spring physics
-        _approvalScaleSpring.AnimateTo(1.0, 0.86);
-        _approvalTranslateSpring.AnimateTo(0.0, -4.0);
-        _approvalIconScaleSpring.AnimateTo(1.0, 0.55);
-        _approvalOpacitySpring.AnimateTo(1.0, 0.0);
-
-        UpdateNotchVisuals();
-        Focus();
-    }
-
-    protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
-    {
-        base.OnPreviewKeyDown(e);
-
-        if (_activeApproval != null)
-        {
-            if (e.Key == System.Windows.Input.Key.Enter)
-            {
-                OnApproveAgentClick(this, new RoutedEventArgs());
-                e.Handled = true;
-                return;
-            }
-            if (e.Key == System.Windows.Input.Key.Escape)
-            {
-                OnDenyAgentClick(this, new RoutedEventArgs());
-                e.Handled = true;
-                return;
-            }
-        }
-    }
-
-    private void DismissApprovalPrompt()
-    {
-        // Graceful exit spring animation
-        _approvalScaleSpring.AnimateTo(0.88, _currentApprovalScale);
-        _approvalTranslateSpring.AnimateTo(-3.0, _currentApprovalTranslate);
-        _approvalOpacitySpring.AnimateTo(0.0, _currentApprovalOpacity);
-        _auraOpacitySpring.AnimateTo(0.0, _currentAuraOpacity);
-
-        if (_vm.NotchState != NotchState.Open)
-        {
-            _widthSpring.SetPhysics(0.32, 0.85);
-            _heightSpring.SetPhysics(0.30, 0.85);
-            _widthSpring.AnimateTo(NotchConstants.ClosedWidth, _currentWidth);
-            _heightSpring.AnimateTo(NotchConstants.ClosedHeight, _currentHeight);
-            _bottomRadiusSpring.AnimateTo(NotchConstants.ClosedBottomRadius, _currentBottomRadius);
-        }
-
-        var exitTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(220) };
-        exitTimer.Tick += (_, _) =>
-        {
-            exitTimer.Stop();
-            if (_activeApproval != null && _currentApprovalOpacity < 0.1)
-            {
-                AgentApprovalCapsule.Visibility = Visibility.Collapsed;
-                AgentApprovalCapsule.IsHitTestVisible = false;
-                _activeApproval = null;
-                        UpdateClosedContentVisibility();
-                UpdateNotchVisuals();
-            }
-        };
-        exitTimer.Start();
-
-        UpdateNotchVisuals();
-    }
-
-    private void OnApproveAgentClick(object sender, RoutedEventArgs e)
-    {
-        if (_activeApproval != null)
-        {
-            _services.Approvals.SubmitDecision(_activeApproval.PromptId, ApprovalDecision.Allow);
-        }
-        DismissApprovalPrompt();
-    }
-
-    private void OnDenyAgentClick(object sender, RoutedEventArgs e)
-    {
-        if (_activeApproval != null)
-        {
-            _services.Approvals.SubmitDecision(_activeApproval.PromptId, ApprovalDecision.Deny);
-        }
-        DismissApprovalPrompt();
     }
 
     #endregion

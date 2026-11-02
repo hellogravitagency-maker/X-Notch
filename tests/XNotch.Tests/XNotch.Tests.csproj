@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\XNotch\XNotch.csproj" />
-    <ProjectReference Include="..\..\Examples\Plugins\ThemeStudioPlugin\ThemeStudioPlugin.csproj" />
     <ProjectReference Include="..\..\Examples\Plugins\QuickNotesPlugin\QuickNotesPlugin.csproj" />
   </ItemGroup>
 

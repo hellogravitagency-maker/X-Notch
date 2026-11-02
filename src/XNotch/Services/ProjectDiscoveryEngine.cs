@@ -118,7 +118,7 @@ public sealed class ProjectDiscoveryEngine : IDisposable
             if (IsProjectRoot(path, out string stack))
             {
                 string name = Path.GetFileName(path);
-                string branch = CodingAgentMonitor.ResolveGitBranch(path);
+                string branch = ResolveGitBranch(path);
                 bool hasUncommitted = CheckGitUncommitted(path);
                 var lastMod = Directory.GetLastWriteTimeUtc(path);
                 string? desc = ReadReadmeSummary(path);
@@ -220,6 +220,34 @@ public sealed class ProjectDiscoveryEngine : IDisposable
         }
         catch { }
         return null;
+    }
+
+    private static string ResolveGitBranch(string directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+            return string.Empty;
+
+        try
+        {
+            var dir = new DirectoryInfo(directory);
+            while (dir != null)
+            {
+                string headFile = Path.Combine(dir.FullName, ".git", "HEAD");
+                if (File.Exists(headFile))
+                {
+                    string content = File.ReadAllText(headFile).Trim();
+                    if (content.StartsWith("ref: refs/heads/"))
+                    {
+                        return content["ref: refs/heads/".Length..];
+                    }
+                    return content[..Math.Min(7, content.Length)];
+                }
+                dir = dir.Parent;
+            }
+        }
+        catch { }
+
+        return string.Empty;
     }
 
     public void Dispose()

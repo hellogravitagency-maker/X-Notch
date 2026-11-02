@@ -56,74 +56,31 @@ public sealed class ThemePalette
             : CreateStandard(isLight, useLiquidGlass, accent, reduceMotion);
     }
 
-    public static ThemePalette CreateDark(Color? customAccent = null)
+    public static ThemePalette CreateDark()
     {
         var isHighContrast = SystemParameters.HighContrast;
         var reduceMotion = isHighContrast || !SystemParameters.ClientAreaAnimation;
-        var accent = customAccent ?? DetectSystemAccentColor();
+        var accent = DetectSystemAccentColor();
 
         return isHighContrast
             ? CreateHighContrast(false, false, accent, reduceMotion)
             : CreateStandard(false, false, accent, reduceMotion);
     }
 
-    public static ThemePalette CreateLight(Color? customAccent = null)
+    public static ThemePalette CreateLight()
     {
         var isHighContrast = SystemParameters.HighContrast;
         var reduceMotion = isHighContrast || !SystemParameters.ClientAreaAnimation;
-        var accent = customAccent ?? DetectSystemAccentColor();
+        var accent = DetectSystemAccentColor();
 
         return isHighContrast
             ? CreateHighContrast(true, false, accent, reduceMotion)
             : CreateStandard(true, false, accent, reduceMotion);
     }
 
-    public static ThemePalette CreateWhite(Color? customAccent = null)
+    public static ThemePalette CreateLiquidGlass()
     {
-        var accentSeed = customAccent ?? Color.FromRgb(0x00, 0x7A, 0xFF);
-        var accent = EnsureContrast(accentSeed, Colors.White, MinimumAccentContrast);
-
-        return new ThemePalette
-        {
-            IsLight = true,
-            IsHighContrast = false,
-            UseReducedMotion = false,
-            UseLiquidGlass = false,
-            Background = Colors.White,
-            Surface = Color.FromRgb(0xF4, 0xF4, 0xF7),
-            SurfaceRaised = Colors.White,
-            TextPrimary = Colors.Black,
-            TextSecondary = Color.FromRgb(0x22, 0x22, 0x24),
-            TextTertiary = Color.FromRgb(0x40, 0x40, 0x44),
-            TextMuted = Color.FromRgb(0x60, 0x60, 0x66),
-            TextDim = Color.FromRgb(0x78, 0x78, 0x80),
-            TextSubtle = Color.FromRgb(0x8E, 0x8E, 0x93),
-            TextFaint = Color.FromRgb(0xAA, 0xAA, 0xB0),
-            TextFaintest = Color.FromRgb(0xC4, 0xC4, 0xCA),
-            Border = Color.FromRgb(0xE2, 0xE2, 0xE8),
-            Accent = accent,
-            AccentPressed = Mix(accent, Colors.Black, 0.15),
-            AccentSoft = WithAlpha(accent, 0x20),
-            AccentText = PickReadableForeground(accent, MinimumTextContrast),
-            Success = Color.FromRgb(0x10, 0xB9, 0x81),
-            Warning = Color.FromRgb(0xD9, 0x77, 0x06),
-            Danger = Color.FromRgb(0xEF, 0x44, 0x44),
-            FocusRing = accent,
-            DisabledBackground = Color.FromRgb(0xEE, 0xEE, 0xF2),
-            DisabledText = Color.FromRgb(0x9E, 0x9E, 0xA5),
-            HoverOverlay = Color.FromArgb(0x10, 0x00, 0x00, 0x00),
-            PressedOverlay = Color.FromArgb(0x20, 0x00, 0x00, 0x00),
-            ScrollThumb = Color.FromArgb(0x35, 0x00, 0x00, 0x00),
-            ScrollThumbHover = Color.FromArgb(0x55, 0x00, 0x00, 0x00),
-            ScrollThumbDrag = Color.FromArgb(0x75, 0x00, 0x00, 0x00),
-            Shadow = Color.FromArgb(0x28, 0x00, 0x00, 0x00),
-            VisualizerBar = Colors.Black
-        };
-    }
-
-    public static ThemePalette CreateLiquidGlass(Color? customAccent = null)
-    {
-        var accentSeed = customAccent ?? Color.FromRgb(0x00, 0x7A, 0xFF);
+        var accentSeed = Color.FromRgb(0x00, 0x7A, 0xFF);
         var accent = EnsureContrast(accentSeed, Color.FromRgb(0xF0, 0xF0, 0xF5), MinimumAccentContrast);
 
         return new ThemePalette
@@ -164,68 +121,10 @@ public sealed class ThemePalette
         };
     }
 
-    public static ThemePalette CreateCustom(Color background, Color accent, Color? textColorOverride = null)
-    {
-        bool isLight = RelativeLuminance(background) > 0.45;
-        Color baseText = textColorOverride ?? (isLight ? Colors.Black : Colors.White);
-        Color textPrimary = EnsureContrast(baseText, background, 7.0);
-
-        Color surface = Mix(background, textPrimary, isLight ? 0.05 : 0.10);
-        Color surfaceRaised = Mix(background, textPrimary, isLight ? 0.09 : 0.16);
-        Color border = Mix(background, textPrimary, isLight ? 0.18 : 0.24);
-
-        Color textSecondary = EnsureContrast(Mix(textPrimary, background, isLight ? 0.55 : 0.35), background, MinimumTextContrast);
-        Color textTertiary = EnsureContrast(Mix(textPrimary, background, isLight ? 0.65 : 0.45), background, MinimumTextContrast);
-        Color textMuted = EnsureContrast(Mix(textPrimary, background, isLight ? 0.75 : 0.55), background, 3.5);
-        Color textDim = EnsureContrast(Mix(textPrimary, background, isLight ? 0.80 : 0.62), background, 3.0);
-        Color textSubtle = EnsureContrast(Mix(textPrimary, background, isLight ? 0.85 : 0.70), background, 2.7);
-        Color textFaint = EnsureContrast(Mix(textPrimary, background, isLight ? 0.90 : 0.78), background, 2.4);
-        Color textFaintest = EnsureContrast(Mix(textPrimary, background, isLight ? 0.94 : 0.84), background, 2.0);
-
-        Color safeAccent = EnsureContrast(accent, background, MinimumAccentContrast);
-
-        return new ThemePalette
-        {
-            IsLight = isLight,
-            IsHighContrast = false,
-            UseReducedMotion = false,
-            UseLiquidGlass = false,
-            Background = background,
-            Surface = surface,
-            SurfaceRaised = surfaceRaised,
-            TextPrimary = textPrimary,
-            TextSecondary = textSecondary,
-            TextTertiary = textTertiary,
-            TextMuted = textMuted,
-            TextDim = textDim,
-            TextSubtle = textSubtle,
-            TextFaint = textFaint,
-            TextFaintest = textFaintest,
-            Border = border,
-            Accent = safeAccent,
-            AccentPressed = Mix(safeAccent, isLight ? Colors.Black : Colors.White, 0.16),
-            AccentSoft = WithAlpha(safeAccent, (byte)(isLight ? 0x22 : 0x36)),
-            AccentText = PickReadableForeground(safeAccent, MinimumTextContrast),
-            Success = EnsureContrast(Color.FromRgb(0x10, 0xB9, 0x81), background, MinimumAccentContrast),
-            Warning = EnsureContrast(Color.FromRgb(0xD9, 0x77, 0x06), background, MinimumAccentContrast),
-            Danger = EnsureContrast(Color.FromRgb(0xEF, 0x44, 0x44), background, MinimumAccentContrast),
-            FocusRing = safeAccent,
-            DisabledBackground = Mix(surfaceRaised, textPrimary, isLight ? 0.06 : 0.12),
-            DisabledText = EnsureContrast(Mix(textPrimary, background, isLight ? 0.88 : 0.76), background, 2.5),
-            HoverOverlay = WithAlpha(textPrimary, (byte)(isLight ? 0x12 : 0x1F)),
-            PressedOverlay = WithAlpha(textPrimary, (byte)(isLight ? 0x20 : 0x32)),
-            ScrollThumb = WithAlpha(textPrimary, (byte)(isLight ? 0x38 : 0x50)),
-            ScrollThumbHover = WithAlpha(textPrimary, (byte)(isLight ? 0x58 : 0x70)),
-            ScrollThumbDrag = WithAlpha(textPrimary, (byte)(isLight ? 0x78 : 0x90)),
-            Shadow = WithAlpha(Colors.Black, (byte)(isLight ? 0x38 : 0x55)),
-            VisualizerBar = safeAccent
-        };
-    }
-
     private static ThemePalette CreateStandard(bool isLight, bool useLiquidGlass, Color accentSeed, bool reduceMotion)
     {
         if (useLiquidGlass)
-            return CreateLiquidGlass(accentSeed);
+            return CreateLiquidGlass();
 
         var readabilityBackground = isLight
             ? Color.FromRgb(0xF6, 0xF8, 0xFB)

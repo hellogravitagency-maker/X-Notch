@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -85,61 +84,6 @@ public class DailyBriefingAndPhaseTests
         Assert.False(report.IsAiGenerated);
         Assert.Contains("clean", report.Summary, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(report.KeyActionItems, item => item.Contains("clean"));
-    }
-
-    [Fact]
-    public async Task ApprovalService_EndToEnd_DispatchesDecisionToClient()
-    {
-        string testPipe = $"XNotch-Test-{Guid.NewGuid():N}";
-        using var service = new ApprovalService(testPipe);
-        service.Start();
-
-        var promptReceivedTcs = new TaskCompletionSource<ApprovalRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var promptSettledTcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        service.ApprovalPromptArrived += req => promptReceivedTcs.TrySetResult(req);
-        service.ApprovalPromptSettled += id => promptSettledTcs.TrySetResult(id);
-
-        // Connect client
-        using var client = new NamedPipeClientStream(".", testPipe, PipeDirection.InOut, PipeOptions.Asynchronous);
-        await client.ConnectAsync(3000);
-        Assert.True(client.IsConnected);
-
-        using var reader = new StreamReader(client, Encoding.UTF8, false, 4096, true);
-        using var writer = new StreamWriter(client, new UTF8Encoding(false), 4096, true) { AutoFlush = true };
-
-        string promptId = $"prompt-{Guid.NewGuid():N}";
-        var payload = new
-        {
-            type = "approval_prompt",
-            promptId = promptId,
-            agentId = "Claude-Code",
-            tool = "TerminalExecute",
-            command = "git push origin main",
-            workingDir = @"C:\repos\X-Notch",
-            timeoutSeconds = 5
-        };
-
-        await writer.WriteLineAsync(JsonSerializer.Serialize(payload));
-
-        var receivedReq = await promptReceivedTcs.Task.WaitAsync(TimeSpan.FromSeconds(3));
-        Assert.Equal(promptId, receivedReq.PromptId);
-        Assert.Equal("Claude-Code", receivedReq.AgentId);
-        Assert.Equal("git push origin main", receivedReq.Command);
-
-        // Server user clicks "Allow"
-        bool submitted = service.SubmitDecision(promptId, ApprovalDecision.Allow);
-        Assert.True(submitted);
-
-        string? responseLine = await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(3));
-        Assert.NotNull(responseLine);
-
-        using var doc = JsonDocument.Parse(responseLine);
-        string decision = doc.RootElement.GetProperty("decision").GetString()!;
-        Assert.Equal("allow", decision);
-
-        string settledId = await promptSettledTcs.Task.WaitAsync(TimeSpan.FromSeconds(3));
-        Assert.Equal(promptId, settledId);
     }
 
     [Fact]
