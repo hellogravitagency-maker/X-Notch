@@ -211,6 +211,8 @@ public class ThemeService
         UpdateBrush("BackgroundBrush", palette.Background);
         UpdateBrush("SurfaceBrush", palette.Surface);
         UpdateBrush("SurfaceRaisedBrush", palette.SurfaceRaised);
+        UpdateBrush("SurfaceElevatedBrush", palette.SurfaceRaised);
+        UpdateBrush("SurfaceSecondaryBrush", palette.Surface);
         UpdateBrush("TextPrimaryBrush", palette.TextPrimary);
         UpdateBrush("TextSecondaryBrush", palette.TextSecondary);
         UpdateBrush("TextTertiaryBrush", palette.TextTertiary);
@@ -221,6 +223,11 @@ public class ThemeService
         UpdateBrush("TextFaintestBrush", palette.TextFaintest);
         UpdateBrush("BorderBrush", palette.Border);
         UpdateBrush("AccentBrush", palette.Accent);
+        UpdateBrush("AccentPrimaryBrush", palette.Accent);
+        UpdateBrush("AccentCyanBrush", palette.IsLight ? Color.FromRgb(0x32, 0xAD, 0xE6) : Color.FromRgb(0x64, 0xD2, 0xFF));
+        UpdateBrush("AccentSuccessBrush", palette.Success);
+        UpdateBrush("AccentWarningBrush", palette.Warning);
+        UpdateBrush("AccentErrorBrush", palette.Danger);
         UpdateBrush("AccentPressedBrush", palette.AccentPressed);
         UpdateBrush("AccentSoftBrush", palette.AccentSoft);
         UpdateBrush("AccentTextBrush", palette.AccentText);

@@ -4,6 +4,21 @@
     <!-- ═══ Liquid Glass Theme — Apple macOS / iOS Inspired Frosted Acrylic ═══ -->
     <!-- Crisp 100% black and high-contrast typography over silky frosted translucent glass -->
 
+    <!-- Base Semantic Surfaces -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#75FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#22000000"/>
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#38000000"/>
+    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="#38000000"/>
+    <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#1E000000"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#25000000"/>
+
+    <!-- Accents -->
+    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="#007AFF"/>
+    <SolidColorBrush x:Key="AccentCyanBrush" Color="#32ADE6"/>
+    <SolidColorBrush x:Key="AccentSuccessBrush" Color="#34C759"/>
+    <SolidColorBrush x:Key="AccentWarningBrush" Color="#FF9500"/>
+    <SolidColorBrush x:Key="AccentErrorBrush" Color="#FF3B30"/>
+
     <!-- Notch: Silky frosted glass tint with clear border & shadow -->
     <SolidColorBrush x:Key="NotchFillBrush" Color="#75FFFFFF"/>
     <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
@@ -25,10 +40,6 @@
     <SolidColorBrush x:Key="BatteryTextBrush" Color="#FF000000"/>
 
     <!-- Surfaces — layered translucent glass with refined depth -->
-    <SolidColorBrush x:Key="BackgroundBrush" Color="#75FFFFFF"/>
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#22000000"/>
-    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#38000000"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="#25000000"/>
     <SolidColorBrush x:Key="SeparatorBrush" Color="#25000000"/>
     <SolidColorBrush x:Key="ProgressTrackBrush" Color="#28000000"/>
     <SolidColorBrush x:Key="ProgressFillBrush" Color="#FF000000"/>
@@ -65,6 +76,6 @@
     <SolidColorBrush x:Key="HudSliderFillBrush" Color="#FF000000"/>
 
     <!-- Audio visualizer -->
-    <Color x:Key="VisualizerBarColor">#FF000000</Color>
+    <Color x:Key="VisualizerBarColor">Black</Color>
 
 </ResourceDictionary>

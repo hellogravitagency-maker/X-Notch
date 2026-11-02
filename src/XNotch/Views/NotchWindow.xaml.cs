@@ -106,6 +106,7 @@ public partial class NotchWindow : Window
     private bool _isMouseOverNotch;
     private bool _isSettingsExpanded;
     private bool _isContextMenuOpen;
+    private bool _isCommandCenterActive;
 
     // Notifications & Intelligence
     private NotificationItem? _activeNotification;
@@ -402,6 +403,16 @@ public partial class NotchWindow : Window
         SleepWidget.Bind(_settings);
         VitalsWidget.Bind(_services.Hardware, _batteryService, _services.ArmouryCrate);
         NotificationHistoryWidget.Bind(_services.Notifications);
+        AiIntelligenceWidget.Bind(_services);
+        EmbeddedCommandCenter.Bind(_services, _settings);
+        EmbeddedCommandCenter.CloseRequested += () => DismissCommandCenter();
+        EmbeddedCommandCenter.SettingsChanged += s =>
+        {
+            ApplySettings(s);
+            SettingsUpdatedByUser?.Invoke(s);
+        };
+        EmbeddedCommandCenter.OpenSettingsRequested += () => OpenSettings();
+        EmbeddedCommandCenter.OpenPluginsRequested += () => OpenPluginManager();
         UpdateCarouselCards();
 
         // Inline settings
@@ -1049,6 +1060,9 @@ public partial class NotchWindow : Window
 
     private double GetTopOpenHeight()
     {
+        if (_isCommandCenterActive)
+            return NotchConstants.CommandHeight;
+
         double baseHeight = ShouldReserveShelfSpace()
             ? NotchConstants.OpenHeightWithShelf
             : NotchConstants.OpenHeight;
@@ -1624,8 +1638,8 @@ public partial class NotchWindow : Window
         _isMouseOverNotch = false;
         _hoverOpenTimer?.Stop();
 
-        // Don't close while a context menu is open or user is actively typing with keyboard focus within
-        if (_isContextMenuOpen || IsKeyboardFocusWithin) return;
+        // Don't close while a context menu is open, user is actively typing, pinned in Focus mode, or Command Center active
+        if (_isContextMenuOpen || IsKeyboardFocusWithin || _vm.IsPinned || _isCommandCenterActive) return;
 
         if (_vm.NotchState == NotchState.Open || _vm.NotchState == NotchState.Peeking)
         {
@@ -1638,7 +1652,7 @@ public partial class NotchWindow : Window
             _hoverCloseTimer.Tick += (_, _) =>
             {
                 _hoverCloseTimer!.Stop();
-                if (!_isMouseOverNotch && !_isContextMenuOpen && !IsKeyboardFocusWithin)
+                if (!_isMouseOverNotch && !_isContextMenuOpen && !IsKeyboardFocusWithin && !_vm.IsPinned && !_isCommandCenterActive)
                     TransitionToClose();
             };
             _hoverCloseTimer.Start();
@@ -1980,13 +1994,60 @@ public partial class NotchWindow : Window
     {
         var menu = CreateStyledContextMenu();
 
-        var settingsItem = new System.Windows.Controls.MenuItem { Header = "Settings" };
-        settingsItem.Click += (_, _) => OpenSettings();
-        menu.Items.Add(settingsItem);
+        var cmdItem = new System.Windows.Controls.MenuItem { Header = "🔍 Command Center (Ctrl+Space)" };
+        cmdItem.Click += (_, _) => OpenCommandCenter();
+        menu.Items.Add(cmdItem);
+
+        var pinItem = new System.Windows.Controls.MenuItem { Header = _vm.IsPinned ? "📌 Unpin Focus Mode" : "📌 Pin Focus Mode (Ctrl+P)" };
+        pinItem.Click += (_, _) => ToggleFocusMode();
+        menu.Items.Add(pinItem);
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        var quitItem = new System.Windows.Controls.MenuItem { Header = "Quit" };
+        var musicItem = new System.Windows.Controls.MenuItem { Header = "🎵 Media Player" };
+        musicItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(MusicPlayer); };
+        menu.Items.Add(musicItem);
+
+        var tasksItem = new System.Windows.Controls.MenuItem { Header = "✓ Tasks & Focus" };
+        tasksItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(TasksWidget); };
+        menu.Items.Add(tasksItem);
+
+        var vitalsItem = new System.Windows.Controls.MenuItem { Header = "⚡ System Vitals" };
+        vitalsItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(VitalsWidget); };
+        menu.Items.Add(vitalsItem);
+
+        var aiItem = new System.Windows.Controls.MenuItem { Header = "🤖 AI Assistant" };
+        aiItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(AiIntelligenceWidget); };
+        menu.Items.Add(aiItem);
+
+        var shelfItem = new System.Windows.Controls.MenuItem { Header = "📁 File Shelf" };
+        shelfItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); ToggleShelf(); };
+        menu.Items.Add(shelfItem);
+
+        menu.Items.Add(new System.Windows.Controls.Separator());
+
+        var themeItem = new System.Windows.Controls.MenuItem { Header = "🎨 Toggle Theme" };
+        themeItem.Click += (_, _) =>
+        {
+            _settings.Theme = _settings.Theme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
+            _settings.AdaptToWindowsTheme = false;
+            _themeService.Apply(_settings);
+            _settings.Save();
+            SettingsUpdatedByUser?.Invoke(_settings);
+        };
+        menu.Items.Add(themeItem);
+
+        var settingsItem = new System.Windows.Controls.MenuItem { Header = "⚙ Settings" };
+        settingsItem.Click += (_, _) => OpenSettings();
+        menu.Items.Add(settingsItem);
+
+        var pluginsItem = new System.Windows.Controls.MenuItem { Header = "🧩 Plugin Manager" };
+        pluginsItem.Click += (_, _) => OpenPluginManager();
+        menu.Items.Add(pluginsItem);
+
+        menu.Items.Add(new System.Windows.Controls.Separator());
+
+        var quitItem = new System.Windows.Controls.MenuItem { Header = "✕ Quit X-Notch" };
         quitItem.Click += (_, _) => Application.Current.Shutdown();
         menu.Items.Add(quitItem);
 
@@ -2026,7 +2087,7 @@ public partial class NotchWindow : Window
                 _hoverCloseTimer.Tick += (_, _) =>
                 {
                     _hoverCloseTimer!.Stop();
-                    if (!_isMouseOverNotch && !_isContextMenuOpen)
+                    if (!_isMouseOverNotch && !_isContextMenuOpen && !_vm.IsPinned && !_isCommandCenterActive)
                         TransitionToClose();
                 };
                 _hoverCloseTimer.Start();
@@ -2227,6 +2288,9 @@ public partial class NotchWindow : Window
 
     private double GetOpenWidth()
     {
+        if (_isCommandCenterActive)
+            return NotchConstants.CommandWidth;
+
         double accessoryWidth = GetMeasuredPanelWidth(PluginAccessoryPanel, NotchConstants.OpenHeight);
         bool cal = _settings.ShowCalendar;
         bool cam = _settings.ShowWebcam;
@@ -2265,6 +2329,7 @@ public partial class NotchWindow : Window
             _enabledCards.Add((VitalsWidget, "⚡ Vitals"));
         if (_settings.ShowNotificationsCard)
             _enabledCards.Add((NotificationHistoryWidget, "🔔 Alerts"));
+        _enabledCards.Add((AiIntelligenceWidget, "🤖 AI"));
 
         // If none enabled, fallback to MusicPlayer
         if (_enabledCards.Count == 0)
@@ -3526,6 +3591,153 @@ public partial class NotchWindow : Window
             e.Handled = true;
         }
     }
+
+    #endregion
+
+    #region Master Header, Command Center & Focus Mode
+
+    protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            if (_isCommandCenterActive)
+            {
+                DismissCommandCenter();
+                e.Handled = true;
+            }
+            else if (_isSettingsExpanded)
+            {
+                CollapseSettings();
+                e.Handled = true;
+            }
+            else if (_vm.NotchState == NotchState.Open && !_vm.IsPinned)
+            {
+                TransitionToClose();
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == System.Windows.Input.Key.Space && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            ToggleCommandCenter();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.P && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            ToggleFocusMode();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.OemComma && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            OpenSettings();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Left && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            NavigateCarousel(-1);
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Right && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            NavigateCarousel(1);
+            e.Handled = true;
+        }
+    }
+
+    private void OnNavActivitiesClick(object sender, RoutedEventArgs e) => NavigateToCard(MusicPlayer);
+    private void OnNavTasksClick(object sender, RoutedEventArgs e) => NavigateToCard(TasksWidget);
+    private void OnNavVitalsClick(object sender, RoutedEventArgs e) => NavigateToCard(VitalsWidget);
+    private void OnNavAiClick(object sender, RoutedEventArgs e) => NavigateToCard(AiIntelligenceWidget);
+    private void OnNavShelfClick(object sender, RoutedEventArgs e) => ToggleShelf();
+
+    private void OnCommandSearchClick(object sender, RoutedEventArgs e) => ToggleCommandCenter();
+    private void OnFocusPinClick(object sender, RoutedEventArgs e) => ToggleFocusMode();
+
+    public void ToggleShelf()
+    {
+        if (ShelfPanel.Visibility == Visibility.Visible)
+        {
+            ShelfPanel.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            ShelfPanel.Visibility = Visibility.Visible;
+        }
+
+        if (_dock == NotchDock.Top)
+        {
+            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
+        }
+    }
+
+    public void ToggleFocusMode()
+    {
+        _vm.TogglePin();
+        bool pinned = _vm.IsPinned;
+        FocusModeBadge.Visibility = pinned ? Visibility.Visible : Visibility.Collapsed;
+        FocusPinIcon.Foreground = pinned
+            ? (System.Windows.Media.Brush)FindResource("AccentPrimaryBrush")
+            : (System.Windows.Media.Brush)FindResource("TextMutedBrush");
+
+        if (pinned && _vm.NotchState != NotchState.Open)
+        {
+            TransitionToOpen();
+        }
+    }
+
+    public void OpenCommandCenter()
+    {
+        if (_vm.NotchState != NotchState.Open)
+            TransitionToOpen();
+
+        _isCommandCenterActive = true;
+        _vm.Command();
+        MainOpenContent.Visibility = Visibility.Collapsed;
+        EmbeddedCommandCenter.Visibility = Visibility.Visible;
+        EmbeddedCommandCenter.FocusInput();
+
+        if (_dock == NotchDock.Top)
+        {
+            _widthSpring.AnimateTo(Math.Max(GetOpenWidth(), NotchConstants.CommandWidth), _currentWidth);
+            _heightSpring.AnimateTo(Math.Max(GetTopOpenHeight(), NotchConstants.CommandHeight), _currentHeight);
+        }
+    }
+
+    public void DismissCommandCenter()
+    {
+        if (!_isCommandCenterActive) return;
+        _isCommandCenterActive = false;
+        EmbeddedCommandCenter.Visibility = Visibility.Collapsed;
+        MainOpenContent.Visibility = Visibility.Visible;
+        _vm.Open();
+
+        if (_dock == NotchDock.Top)
+        {
+            _widthSpring.AnimateTo(GetOpenWidth(), _currentWidth);
+            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
+        }
+    }
+
+    public void ToggleCommandCenter()
+    {
+        if (_isCommandCenterActive)
+            DismissCommandCenter();
+        else
+            OpenCommandCenter();
+    }
+
+    public void TransitionToCommand() => OpenCommandCenter();
+    public void TransitionToFocus() => ToggleFocusMode();
+    public void TransitionToWorkspace()
+    {
+        if (_vm.NotchState != NotchState.Open)
+            TransitionToOpen();
+        _vm.Workspace();
+        NavigateToCard(TasksWidget);
+    }
+    public void TransitionToDormant() => TransitionToClose();
+    public void TransitionToAmbient() => TransitionToClose();
 
     #endregion
 

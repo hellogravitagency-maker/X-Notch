@@ -36,10 +36,31 @@
 
 ## ✨ Key Features
 
-### 🌊 Fluid Physics & Dynamic Geometry
-- **Damped Spring Physics:** Smooth, organic Apple-style spring animations for expanding, contracting, and peeking states.
-- **Continuous G2 Curvature:** Native continuous corner curvature calculated in real time.
-- **Ambient Desktop Glow (Aura):** Optional ambient lighting effect that smoothly pulses with active notifications and media accents.
+### 🌊 Fluid Physics & Dynamic Island Architecture (S0–S7)
+- **Centralized Shape-Shifting State Engine:** Full deterministic state machine spanning 8 distinct states:
+  - **S0 Dormant:** Invisible, zero-CPU resting state at screen edge.
+  - **S1 Ambient:** Ultra-compact pill (180×36 px) displaying subtle media, audio visualizer, or hardware activity.
+  - **S2 Peek:** Responsive hover preview (280×72 px) revealing quick glanceable information.
+  - **S3 Expanded:** Full interactive multi-card workspace (420×240 px) with responsive spring physics.
+  - **S4 Focus (Pinned):** Dedicated pinned overlay (`Ctrl+P`) with visual amber badge, suppressing mouse-leave auto-collapse for sustained workflow monitoring.
+  - **S5 Notification:** Transient banner expansion (380×64 px) delivering real-time desktop alerts and hardware events.
+  - **S6 Command Center:** Embedded keyboard-first command palette (`Ctrl+Space`) with real-time fuzzy search.
+  - **S7 Workspace:** Panoramic multi-column view (520×380 px) for multi-tasking and AI intelligence.
+- **Continuous G2 Curvature:** Native continuous corner curvature calculated in real time without harsh transitions.
+- **Liquid Glass Design Tokens:** Unified semantic palette across Dark, Light, and Liquid Glass themes (`#08090D`, `#111319`, `#191C25`, `#222631`, `#0A84FF`).
+- **Original Vector Brand Identity:** Smooth vector aperture mark with G2 curved ribbons integrated directly into the Dynamic Island header.
+
+### ⚡ Embedded Command Center (`Ctrl+Space`)
+- **Raycast-Inspired Command Palette:** Instant keyboard-driven overlay built right into the Dynamic Island.
+- **Fuzzy Search & Filtering:** Filter commands across **Actions**, **Navigation**, **System**, and **AI Intelligence**.
+- **Keyboard Ergonomics:** Complete keyboard flow with `Up`/`Down` arrow navigation, `Enter` execution, and `Escape` dismissal.
+- **Direct System Controls:** Switch themes, toggle pinning, adjust volume, launch utilities, or trigger AI briefings without touching the mouse.
+
+### 🧠 AI Intelligence & Daily Executive Briefing
+- **Hybrid AI Architecture:** Auto-detects local Ollama LLMs (`http://localhost:11434`) and cloud OpenAI endpoints.
+- **Daily Executive Briefing:** Synthesizes system health, pending tasks, and recent notification history into an instant status brief.
+- **Workspace Project Scanner:** Deep-scans open repositories for active Git branches, uncommitted changes, and project vitality.
+- **Direct AI Interaction:** Interactive natural language prompt box for quick coding queries, summaries, and system commands.
 
 ### 🖥️ Multi-Monitor & Docking Flexibility
 - **Flexible Docking:** Dock at the **Top Center**, or snap vertically along the **Left** or **Right** screen edges.
@@ -180,7 +201,7 @@ The repository uses automated GitHub Actions workflows to guarantee code quality
 
 | Workflow | Trigger | Action & Output |
 | :--- | :--- | :--- |
-| [**CI**](.github/workflows/ci.yml) | Push & Pull Request on `main` | Restores, builds solution in Release mode, runs **all 84 unit/integration tests**, and verifies single-file publish output. |
+| [**CI**](.github/workflows/ci.yml) | Push & Pull Request on `main` | Restores, builds solution in Release mode, runs **all 94 unit/integration tests**, and verifies single-file publish output. |
 | [**Release**](.github/workflows/release.yml) | Push tag `v*` or manual dispatch | Compiles self-contained portable `X-Notch.exe`, builds Inno Setup `*-Setup.exe`, packages official plugins, computes SHA256 checksums, and publishes the GitHub Release with automated release notes. |
 | [**Manage Plugins**](.github/workflows/manage-plugins.yml) | Changes in `Examples/Plugins/**` | Validates `example-library.json` catalog integrity, compiles all plugin projects, packages plugins into individual zip distributions, and uploads distribution artifacts. |
 | [**Publish Plugin SDK**](.github/workflows/publish-plugin-sdk.yml) | Release published or manual dispatch | Packages `XNotch.PluginSdk` NuGet package and publishes it to GitHub Packages. |
@@ -191,13 +212,16 @@ The repository uses automated GitHub Actions workflows to guarantee code quality
 
 | Action | Shortcut / Gesture | Behavior |
 | :--- | :--- | :--- |
+| **Command Center Palette** | `Ctrl + Space` | Opens the embedded Raycast-style command center palette with fuzzy search. |
+| **Focus / Pin Mode** | `Ctrl + P` | Toggles Focus Mode pinning; prevents auto-collapse on mouse leave. |
 | **Toggle Island** | `Ctrl + Alt + N` | Toggles the Dynamic Island between open and closed states. |
-| **Spotlight Launcher** | `Ctrl + Space` | Opens the Spotlight quick search and application launcher. |
+| **Settings & Plugins** | `Ctrl + ,` | Opens the comprehensive settings and plugin manager. |
+| **Card Navigation** | `Ctrl + Left / Right` | Steps backward and forward through the widget carousel. |
+| **Dismiss / Collapse** | `Escape` or **Click Away** | Dismisses the Command Center or closes the expanded island. |
 | **Play / Pause** | **Middle-Click** (Closed Notch) | Toggles active media playback without expanding the island. |
 | **Volume Adjustment** | **Mouse Wheel** (Over Notch) | Increases or decreases system volume with animated HUD feedback. |
-| **Carousel Navigation** | **Scroll** or **Click Arrows** | Cycles through open notch cards (Tasks, Vitals, Water, Sleep, Notifications). |
+| **Carousel Navigation** | **Scroll** or **Click Arrows** | Cycles through open notch cards (Activity, Tasks, Vitals, AI, Shelf). |
 | **Move / Dock Island** | **Click & Drag Pill** | Drag the island to snap to Top, Left, or Right dock positions, or across multiple monitors. |
-| **Close Overlay** | **Click Away** or `Escape` | Gracefully closes the expanded island back to its resting state. |
 
 ---
 

@@ -13,20 +13,39 @@ public enum NotchDock
 
 public static class NotchConstants
 {
-    // Closed dimensions (before DPI scaling)
+    // Closed / S1 Ambient dimensions (before DPI scaling)
     public const double ClosedWidth = 200;
-    public const double ClosedHeight = 32;
+    public const double ClosedHeight = 34;
+    public const double AmbientWidth = 200;
+    public const double AmbientHeight = 34;
 
-    // Auto-hide tucked dimension (subtle sliver at screen edge)
+    // S0 Auto-hide tucked dimension (subtle sliver at screen edge)
     public const double AutoHideHeight = 4.0;
+    public const double DormantHeight = 4.0;
 
-    // Peek dimensions (slightly expanded on hover)
+    // S2 Peek dimensions (slightly expanded on hover)
     public const double PeekWidth = 220;
     public const double PeekHeight = 34;
 
     // Audio capsule peek (compact interactive media controls on hover)
     public const double AudioPeekWidth = 295;
     public const double AudioPeekHeight = 36;
+
+    // S4 Focus mode dimensions
+    public const double FocusWidth = 440;
+    public const double FocusHeight = 150;
+
+    // S5 Notification capsule dimensions
+    public const double NotificationWidth = 330;
+    public const double NotificationHeight = 42;
+
+    // S6 Command Center dimensions (Raycast-inspired)
+    public const double CommandWidth = 520;
+    public const double CommandHeight = 280;
+
+    // S7 Workspace dimensions (large multi-widget productivity)
+    public const double WorkspaceWidth = 560;
+    public const double WorkspaceHeight = 420;
 
     // Shelf drop capsule dimensions (elastic pull-down when dragging files over notch)
     public const double ShelfDropWidth = 320;
@@ -35,7 +54,7 @@ public static class NotchConstants
     // HUD dimensions (wider for volume/brightness slider)
     public const double HudWidth = 320;
 
-    // Open dimensions (sized to fit music player & carousel content comfortably)
+    // S3 Open dimensions (sized to fit music player & carousel content comfortably)
     public const double OpenWidth = 500;
     public const double OpenWidthWithCalendar = 735;
     public const double OpenWidthWithWebcam = 650;

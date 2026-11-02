@@ -64,6 +64,38 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <!-- macOS Segmented Capsule Navigation Button -->
+            <Style x:Key="MacSegmentButton" TargetType="Button">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="Padding" Value="7,1"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SegmentedHoverBgBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SegmentedCheckedBgBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -121,9 +153,11 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Plugin closed content -->
-                    <StackPanel x:Name="PluginClosedPanel" Grid.Column="0" Orientation="Horizontal"
-                                VerticalAlignment="Center" Margin="6,0,0,0"/>
+                    <!-- Dynamic Island Logo Anchor & Plugin closed content -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <comp:XNotchLogo Width="13" Height="13" Margin="0,0,3,0" VerticalAlignment="Center" Opacity="0.85"/>
+                        <StackPanel x:Name="PluginClosedPanel" Orientation="Horizontal" VerticalAlignment="Center"/>
+                    </StackPanel>
 
                     <views:MusicLiveActivity x:Name="LiveActivity"
                                              Grid.Column="1"
@@ -478,127 +512,207 @@
                 </Grid>
 
                 <!-- Open state content with Apple Dynamic Island zoom-and-bloom spring -->
-                <Grid x:Name="OpenContent" Opacity="0" Margin="16,8,16,12" RenderTransformOrigin="0.5,0.0">
+                <Grid x:Name="OpenContent" Opacity="0" Margin="14,6,14,10" RenderTransformOrigin="0.5,0.0">
                     <Grid.RenderTransform>
                         <ScaleTransform x:Name="OpenContentScale" ScaleX="0.92" ScaleY="0.92"/>
                     </Grid.RenderTransform>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/> <!-- Row 0: Island Master Header -->
+                        <RowDefinition Height="*"/>    <!-- Row 1: Main Content or Command Center -->
+                        <RowDefinition Height="Auto"/> <!-- Row 2: File Shelf -->
+                        <RowDefinition Height="Auto"/> <!-- Row 3: Plugin Open Panel -->
+                        <RowDefinition Height="Auto"/> <!-- Row 4: Inline Settings -->
                     </Grid.RowDefinitions>
 
-                    <!-- Main content (music + calendar) -->
-                    <Grid x:Name="MainOpenContent" Grid.Row="0" VerticalAlignment="Center">
+                    <!-- Master Island Header Bar (X-Identity, Segmented Navigation, Quick Actions) -->
+                    <Grid x:Name="IslandHeaderBar" Grid.Row="0" Margin="2,0,2,6">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Open Notch Widget Carousel with Apple Dynamic Island Static Navigation Arrows -->
-                        <Grid x:Name="CarouselContainer" Grid.Column="0" VerticalAlignment="Center" MouseWheel="OnCarouselMouseWheel">
+                        <!-- Left: X-Notch Identity Mark & Mode Status -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <comp:XNotchLogo Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="X-NOTCH" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Border x:Name="FocusModeBadge" Background="#220A84FF" BorderBrush="#350A84FF" BorderThickness="0.8"
+                                    CornerRadius="4" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="Collapsed">
+                                <TextBlock Text="PINNED" FontSize="8" FontWeight="Bold" Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Center: Segmented Navigation Pills -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border Background="{DynamicResource SegmentedBgBrush}" CornerRadius="9" Padding="2"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0.6">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="NavActivitiesTab" Content="Activity" Click="OnNavActivitiesClick"
+                                            Style="{StaticResource MacSegmentButton}" FontSize="9.5" FontWeight="SemiBold"/>
+                                    <Button x:Name="NavTasksTab" Content="Tasks" Click="OnNavTasksClick"
+                                            Style="{StaticResource MacSegmentButton}" FontSize="9.5" FontWeight="SemiBold"/>
+                                    <Button x:Name="NavVitalsTab" Content="Vitals" Click="OnNavVitalsClick"
+                                            Style="{StaticResource MacSegmentButton}" FontSize="9.5" FontWeight="SemiBold"/>
+                                    <Button x:Name="NavAiTab" Content="AI" Click="OnNavAiClick"
+                                            Style="{StaticResource MacSegmentButton}" FontSize="9.5" FontWeight="SemiBold"/>
+                                    <Button x:Name="NavShelfTab" Content="Shelf" Click="OnNavShelfClick"
+                                            Style="{StaticResource MacSegmentButton}" FontSize="9.5" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Right: Quick Actions (Command Search, Focus Pin, Settings Gear) -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Command Palette Search Button -->
+                            <Button x:Name="CommandSearchButton" Click="OnCommandSearchClick"
+                                    Style="{StaticResource IconButton}" Width="24" Height="24" Margin="0,0,2,0"
+                                    ToolTip="Command Center (Ctrl+Space)">
+                                <TextBlock Text="🔍" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </Button>
+
+                            <!-- Focus Mode Pin Toggle Button -->
+                            <Button x:Name="FocusPinButton" Click="OnFocusPinClick"
+                                    Style="{StaticResource IconButton}" Width="24" Height="24" Margin="0,0,2,0"
+                                    ToolTip="Pin Focus Mode (Ctrl+P)">
+                                <TextBlock x:Name="FocusPinIcon" Text="📌" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Button>
+
+                            <!-- Settings Gear Button -->
+                            <Button x:Name="SettingsGearButton" Click="OnSettingsGearClick"
+                                    Style="{StaticResource IconButton}" Width="24" Height="24"
+                                    ToolTip="Settings (Ctrl+,)">
+                                <TextBlock Text="⚙" FontSize="12.5" Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Content Container (Holds Carousel & Embedded Command Center) -->
+                    <Grid Grid.Row="1">
+                        <!-- Embedded Raycast-Style Command Center Panel -->
+                        <views:CommandCenterView x:Name="EmbeddedCommandCenter"
+                                                 Visibility="Collapsed"
+                                                 Height="130"
+                                                 VerticalAlignment="Stretch"/>
+
+                        <!-- Main content (music + calendar) -->
+                        <Grid x:Name="MainOpenContent" VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Left Side Navigation Arrow (Static, non-moving) -->
-                            <Button x:Name="CarouselPrevArrow"
-                                    Grid.Column="0"
-                                    Click="OnCarouselPrevClick"
-                                    MouseWheel="OnCarouselArrowMouseWheel"
-                                    Style="{StaticResource CarouselArrowButton}"
-                                    Margin="0,0,6,0"
-                                    VerticalAlignment="Center"
-                                    ToolTip="Previous Card (←)">
-                                <TextBlock Text="‹" FontSize="20" FontWeight="Bold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,1,0"/>
-                            </Button>
+                            <!-- Open Notch Widget Carousel with Apple Dynamic Island Static Navigation Arrows -->
+                            <Grid x:Name="CarouselContainer" Grid.Column="0" VerticalAlignment="Center" MouseWheel="OnCarouselMouseWheel">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <!-- Carousel Cards Host with Hardware-Accelerated Smooth Transforms & Apple Page Dots -->
-                            <Grid Grid.Column="1" VerticalAlignment="Center">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
+                                <!-- Left Side Navigation Arrow (Static, non-moving) -->
+                                <Button x:Name="CarouselPrevArrow"
+                                        Grid.Column="0"
+                                        Click="OnCarouselPrevClick"
+                                        MouseWheel="OnCarouselArrowMouseWheel"
+                                        Style="{StaticResource CarouselArrowButton}"
+                                        Margin="0,0,6,0"
+                                        VerticalAlignment="Center"
+                                        ToolTip="Previous Card (←)">
+                                    <TextBlock Text="‹" FontSize="20" FontWeight="Bold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,1,0"/>
+                                </Button>
 
-                                <Grid x:Name="CarouselCardHost" Grid.Row="0" Height="130" ClipToBounds="True">
-                                    <views:MusicPlayerView x:Name="MusicPlayer" Visibility="Visible" RenderTransformOrigin="0.5,0.5">
-                                        <views:MusicPlayerView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:MusicPlayerView.RenderTransform>
-                                    </views:MusicPlayerView>
+                                <!-- Carousel Cards Host with Hardware-Accelerated Smooth Transforms & Apple Page Dots -->
+                                <Grid Grid.Column="1" VerticalAlignment="Center">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                                    <views:StopwatchWidgetView x:Name="StopwatchWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
-                                        <views:StopwatchWidgetView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:StopwatchWidgetView.RenderTransform>
-                                    </views:StopwatchWidgetView>
+                                    <Grid x:Name="CarouselCardHost" Grid.Row="0" Height="130" ClipToBounds="True">
+                                        <views:MusicPlayerView x:Name="MusicPlayer" Visibility="Visible" RenderTransformOrigin="0.5,0.5">
+                                            <views:MusicPlayerView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:MusicPlayerView.RenderTransform>
+                                        </views:MusicPlayerView>
 
-                                    <views:WaterTrackerWidgetView x:Name="WaterWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
-                                        <views:WaterTrackerWidgetView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:WaterTrackerWidgetView.RenderTransform>
-                                    </views:WaterTrackerWidgetView>
+                                        <views:StopwatchWidgetView x:Name="StopwatchWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:StopwatchWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:StopwatchWidgetView.RenderTransform>
+                                        </views:StopwatchWidgetView>
 
-                                    <views:SleepTrackerWidgetView x:Name="SleepWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
-                                        <views:SleepTrackerWidgetView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:SleepTrackerWidgetView.RenderTransform>
-                                    </views:SleepTrackerWidgetView>
+                                        <views:WaterTrackerWidgetView x:Name="WaterWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:WaterTrackerWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:WaterTrackerWidgetView.RenderTransform>
+                                        </views:WaterTrackerWidgetView>
 
-                                    <views:TasksWidgetView x:Name="TasksWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
-                                        <views:TasksWidgetView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:TasksWidgetView.RenderTransform>
-                                    </views:TasksWidgetView>
+                                        <views:SleepTrackerWidgetView x:Name="SleepWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:SleepTrackerWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:SleepTrackerWidgetView.RenderTransform>
+                                        </views:SleepTrackerWidgetView>
 
-                                    <views:SystemVitalsWidgetView x:Name="VitalsWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
-                                        <views:SystemVitalsWidgetView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:SystemVitalsWidgetView.RenderTransform>
-                                    </views:SystemVitalsWidgetView>
+                                        <views:TasksWidgetView x:Name="TasksWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:TasksWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:TasksWidgetView.RenderTransform>
+                                        </views:TasksWidgetView>
 
-                                    <views:NotificationHistoryWidgetView x:Name="NotificationHistoryWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
-                                        <views:NotificationHistoryWidgetView.RenderTransform>
-                                            <TransformGroup>
-                                                <TranslateTransform X="0" Y="0"/>
-                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            </TransformGroup>
-                                        </views:NotificationHistoryWidgetView.RenderTransform>
-                                    </views:NotificationHistoryWidgetView>
+                                        <views:SystemVitalsWidgetView x:Name="VitalsWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:SystemVitalsWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:SystemVitalsWidgetView.RenderTransform>
+                                        </views:SystemVitalsWidgetView>
+
+                                        <views:NotificationHistoryWidgetView x:Name="NotificationHistoryWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:NotificationHistoryWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:NotificationHistoryWidgetView.RenderTransform>
+                                        </views:NotificationHistoryWidgetView>
+
+                                        <views:AIIntelligenceWidgetView x:Name="AiIntelligenceWidget" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <views:AIIntelligenceWidgetView.RenderTransform>
+                                                <TransformGroup>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                </TransformGroup>
+                                            </views:AIIntelligenceWidgetView.RenderTransform>
+                                        </views:AIIntelligenceWidgetView>
+                                    </Grid>
+
+                                    <!-- Dynamic Island Carousel Page Dots Indicator -->
+                                    <StackPanel x:Name="CarouselDotsPanel" Grid.Row="1"
+                                                Orientation="Horizontal"
+                                                HorizontalAlignment="Center"
+                                                Margin="0,4,0,0"/>
                                 </Grid>
-
-                                <!-- Dynamic Island Carousel Page Dots Indicator -->
-                                <StackPanel x:Name="CarouselDotsPanel" Grid.Row="1"
-                                            Orientation="Horizontal"
-                                            HorizontalAlignment="Center"
-                                            Margin="0,4,0,0"/>
-                            </Grid>
 
                                 <!-- Right Side Navigation Arrow (Static, non-moving) -->
                                 <Button x:Name="CarouselNextArrow"
@@ -615,48 +729,38 @@
                                 </Button>
                             </Grid>
 
-                        <!-- Calendar panel -->
-                        <StackPanel x:Name="CalendarPanel" Grid.Column="1" Orientation="Horizontal">
-                            <Border Width="1" Background="{DynamicResource SeparatorBrush}" Margin="8,4,8,4"/>
-                            <views:CalendarView x:Name="CalendarPanel_View"/>
-                        </StackPanel>
+                            <!-- Calendar panel -->
+                            <StackPanel x:Name="CalendarPanel" Grid.Column="1" Orientation="Horizontal">
+                                <Border Width="1" Background="{DynamicResource SeparatorBrush}" Margin="8,4,8,4"/>
+                                <views:CalendarView x:Name="CalendarPanel_View"/>
+                            </StackPanel>
 
-                        <!-- Plugin accessory content -->
-                        <StackPanel x:Name="PluginAccessoryPanel" Grid.Column="2" Orientation="Horizontal"
-                                    Visibility="Collapsed"/>
+                            <!-- Plugin accessory content -->
+                            <StackPanel x:Name="PluginAccessoryPanel" Grid.Column="2" Orientation="Horizontal"
+                                        Visibility="Collapsed"/>
 
-                        <!-- Webcam mirror -->
-                        <StackPanel x:Name="WebcamPanel" Grid.Column="3" Orientation="Horizontal"
-                                    Visibility="Collapsed">
-                            <Border Width="1" Background="{DynamicResource SeparatorBrush}" Margin="8,4,8,4"/>
-                            <views:WebcamView x:Name="WebcamMirror"/>
-                        </StackPanel>
-
-                        <!-- Top right actions (Settings) -->
-                        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Top" Margin="4,0,0,0">
-                            <Button x:Name="SettingsGearButton"
-                                    Click="OnSettingsGearClick"
-                                    Style="{StaticResource IconButton}"
-                                    Width="24" Height="24"
-                                    ToolTip="Settings">
-                                <TextBlock Text="⚙" FontSize="13" Foreground="{DynamicResource TextSubtleBrush}"/>
-                            </Button>
-                        </StackPanel>
+                            <!-- Webcam mirror -->
+                            <StackPanel x:Name="WebcamPanel" Grid.Column="3" Orientation="Horizontal"
+                                        Visibility="Collapsed">
+                                <Border Width="1" Background="{DynamicResource SeparatorBrush}" Margin="8,4,8,4"/>
+                                <views:WebcamView x:Name="WebcamMirror"/>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
 
                     <!-- File shelf (visible when files are shelved) -->
                     <views:ShelfView x:Name="ShelfPanel"
-                                     Grid.Row="1"
+                                     Grid.Row="2"
                                      Visibility="Collapsed"
                                      Margin="0,4,0,0"/>
 
                     <!-- Plugin open content -->
-                    <StackPanel x:Name="PluginOpenPanel" Grid.Row="2"
+                    <StackPanel x:Name="PluginOpenPanel" Grid.Row="3"
                                 Margin="0,4,0,0"/>
 
                     <!-- Inline settings (hidden by default, shown when gear clicked) - slides down in top mode -->
                     <views:InlineSettingsView x:Name="InlineSettings"
-                                              Grid.Row="3"
+                                              Grid.Row="4"
                                               Visibility="Collapsed"
                                               MaxHeight="232"
                                               Margin="0,6,0,0"/>
