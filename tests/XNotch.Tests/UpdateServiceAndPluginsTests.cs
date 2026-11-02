@@ -172,6 +172,57 @@ public class UpdateServiceAndPluginsTests
         Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.todopeek");
     }
 
+    [Fact]
+    public void UIPluginLocation_Overlay_IsMarkedObsolete()
+    {
+        var member = typeof(UIPluginLocation).GetMember(nameof(UIPluginLocation.Overlay));
+        Assert.NotEmpty(member);
+        var obsoleteAttr = member[0].GetCustomAttributes(typeof(ObsoleteAttribute), false);
+        Assert.NotEmpty(obsoleteAttr);
+    }
+
+    [Fact]
+    public void PluginLibraryService_LoadBundledLibraryJson_ReturnsValidCatalog()
+    {
+        var json = PluginLibraryService.LoadBundledLibraryJson();
+        Assert.False(string.IsNullOrWhiteSpace(json));
+
+        var library = JsonSerializer.Deserialize<PluginLibraryService.PluginLibrary>(json!);
+        Assert.NotNull(library);
+        Assert.NotNull(library.Plugins);
+        Assert.NotEmpty(library.Plugins);
+        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.themestudio");
+        Assert.Contains(library.Plugins, p => p.Id == "com.xnotch.quicknotes");
+    }
+
+    [Fact]
+    public async Task PluginLibraryService_RefreshLibraryAsync_FallsBackToBundledCatalog()
+    {
+        var service = new PluginLibraryService();
+        // Point to an invalid custom URL to force fallback
+        var success = await service.RefreshLibraryAsync("http://127.0.0.1:54321/nonexistent.json");
+
+        Assert.True(success);
+        Assert.NotEmpty(service.AvailablePlugins);
+        Assert.Contains(service.AvailablePlugins, p => p.Id == "com.xnotch.themestudio");
+        Assert.Contains(service.AvailablePlugins, p => p.Id == "com.xnotch.quicknotes");
+    }
+
+    [Fact]
+    public void PluginLibraryService_FindLocalPluginDll_LocatesBuiltPlugins()
+    {
+        var themeManifest = new PluginManifest
+        {
+            Id = "com.xnotch.themestudio",
+            Name = "Theme Studio",
+            DownloadUrl = "https://example.com/ThemeStudioPlugin.dll"
+        };
+
+        var localDll = PluginLibraryService.FindLocalPluginDll(themeManifest);
+        Assert.NotNull(localDll);
+        Assert.True(File.Exists(localDll));
+    }
+
     private static string FindRepoRoot()
     {
         var dir = AppDomain.CurrentDomain.BaseDirectory;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -23,6 +24,8 @@ public partial class PluginManagerView : UserControl
     private bool _initialConfigurationHandled;
     private IConfigurablePlugin? _activeConfigurablePlugin;
     private PluginConfigurationDefinition? _activeConfiguration;
+    private string _selectedCategory = "All";
+    private readonly string[] _categories = new[] { "All", "Productivity", "Theme", "Animation", "Integration", "System Utility", "Widget" };
 
     public PluginManagerView()
     {
@@ -39,8 +42,12 @@ public partial class PluginManagerView : UserControl
         CloseConfigurationButton.Click += (_, _) => CloseConfigurationPanel();
         ApplyConfigurationButton.Click += async (_, _) => await ApplyConfigurationAsync();
         RefreshLibraryButton.Click += async (_, _) => await RefreshLibrary();
-        BrowsePluginsButton.Click += (_, _) => BrowsePlugins();
+        InstalledBrowseButton.Click += (_, _) => { if (TabBrowse != null) TabBrowse.IsChecked = true; };
         OpenPluginsFolderButton.Click += (_, _) => OpenPluginsFolder();
+
+        SearchBox.TextChanged += (_, _) => ApplyBrowseFilter();
+        SearchBox.KeyDown += (_, e) => { if (e.Key == Key.Enter) ApplyBrowseFilter(); };
+
         Loaded += async (_, _) => await EnsureLibraryLoadedAsync();
 
         LoadPlugins();
@@ -71,8 +78,10 @@ public partial class PluginManagerView : UserControl
         {
             PluginListPanel.Children.Add(CreateEmptyState(
                 "No plugins installed yet.",
-                "Browse the library to start building your notch setup."));
+                "Browse our catalog to add widgets, themes, and tools to your notch."));
         }
+
+        UpdateTabCounters();
 
         if (!_initialConfigurationHandled && !string.IsNullOrWhiteSpace(_initialPluginId))
         {
@@ -343,12 +352,26 @@ public partial class PluginManagerView : UserControl
         stack.Children.Add(new TextBlock
         {
             Text = body,
+            Margin = new Thickness(0, 8, 0, 16),
             FontSize = 12,
-            Margin = new Thickness(0, 8, 0, 0),
             Foreground = GetSecondaryBrush(),
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center
         });
+
+        var browseButton = new Button
+        {
+            Content = "Browse Available Plugins",
+            Style = TryGetStyle("PluginPrimaryButton"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MinWidth = 180
+        };
+        browseButton.Click += (_, _) =>
+        {
+            if (TabBrowse != null)
+                TabBrowse.IsChecked = true;
+        };
+        stack.Children.Add(browseButton);
 
         card.Child = stack;
         return card;
@@ -361,6 +384,9 @@ public partial class PluginManagerView : UserControl
 
         if (!forceRefresh && (_hasTriedLibraryRefresh || _libraryService.AvailablePlugins.Count > 0))
         {
+            InitCategoryFilters();
+            ApplyBrowseFilter();
+            UpdateTabCounters();
             LoadPlugins();
             return _libraryService.AvailablePlugins.Count > 0;
         }
@@ -374,11 +400,12 @@ public partial class PluginManagerView : UserControl
         try
         {
             var success = await _libraryService.RefreshLibraryAsync();
-            if (success)
-            {
-                LoadPlugins();
-            }
-            else if (showErrors)
+            InitCategoryFilters();
+            ApplyBrowseFilter();
+            UpdateTabCounters();
+            LoadPlugins();
+
+            if (!success && showErrors)
             {
                 var detail = _libraryService.LastError ?? "Unknown error";
                 MessageBox.Show($"Failed to refresh plugin library.\n\n{detail}", "Plugin Manager", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -434,15 +461,412 @@ public partial class PluginManagerView : UserControl
 
     private void BrowsePlugins()
     {
-        if (_libraryService == null)
+        if (TabBrowse != null)
+        {
+            TabBrowse.IsChecked = true;
+        }
+    }
+
+    private void OnTabSelectionChanged(object sender, RoutedEventArgs e)
+    {
+        bool isInstalled = TabInstalled?.IsChecked == true;
+        if (InstalledSubheader != null)
+            InstalledSubheader.Visibility = isInstalled ? Visibility.Visible : Visibility.Collapsed;
+        if (InstalledContentGrid != null)
+            InstalledContentGrid.Visibility = isInstalled ? Visibility.Visible : Visibility.Collapsed;
+        if (BrowseSubheader != null)
+            BrowseSubheader.Visibility = !isInstalled ? Visibility.Visible : Visibility.Collapsed;
+        if (BrowseContentGrid != null)
+            BrowseContentGrid.Visibility = !isInstalled ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!isInstalled)
+        {
+            ApplyBrowseFilter();
+        }
+    }
+
+    private void UpdateTabCounters()
+    {
+        int installedCount = _pluginManager?.LoadedPlugins.Count ?? 0;
+        int availableCount = _libraryService?.AvailablePlugins.Count ?? 0;
+
+        if (TabInstalled != null)
+            TabInstalled.Content = $"Installed ({installedCount})";
+        if (TabBrowse != null)
+            TabBrowse.Content = $"Browse Catalog ({availableCount})";
+    }
+
+    private void InitCategoryFilters()
+    {
+        if (CategoryFilterPanel == null)
             return;
 
-        var browseWindow = new PluginBrowserWindow(_libraryService, _pluginManager)
+        CategoryFilterPanel.Children.Clear();
+
+        foreach (var category in _categories)
         {
-            Owner = Window.GetWindow(this)
+            var isSelected = string.Equals(_selectedCategory, category, StringComparison.OrdinalIgnoreCase);
+
+            var button = new Button
+            {
+                Content = category,
+                Margin = new Thickness(0, 0, 8, 0),
+                Padding = new Thickness(14, 5, 14, 5),
+                FontSize = 11,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Background = isSelected ? GetAccentSoftBrush() : GetSurfaceBrush(),
+                Foreground = isSelected ? GetAccentBrush() : GetSecondaryBrush(),
+                BorderThickness = new Thickness(0),
+                Tag = category
+            };
+
+            var style = new Style(typeof(Button));
+            var template = new ControlTemplate(typeof(Button));
+            var borderFactory = new FrameworkElementFactory(typeof(Border));
+            borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(14));
+            borderFactory.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding("Background") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+            borderFactory.SetBinding(Border.PaddingProperty, new System.Windows.Data.Binding("Padding") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+
+            var contentPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+            contentPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            contentPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+            borderFactory.AppendChild(contentPresenter);
+
+            template.VisualTree = borderFactory;
+            style.Setters.Add(new Setter(Button.TemplateProperty, template));
+            button.Style = style;
+
+            button.Click += (_, _) =>
+            {
+                _selectedCategory = category;
+                InitCategoryFilters();
+                ApplyBrowseFilter();
+            };
+
+            CategoryFilterPanel.Children.Add(button);
+        }
+    }
+
+    private void ApplyBrowseFilter()
+    {
+        if (_libraryService == null || BrowseGridPanel == null)
+            return;
+
+        var query = SearchBox?.Text?.Trim().ToLowerInvariant() ?? string.Empty;
+        var plugins = _libraryService.AvailablePlugins.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(_selectedCategory) && !_selectedCategory.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            var normalizedSelected = _selectedCategory.Replace(" ", "").ToLowerInvariant();
+            plugins = plugins.Where(p =>
+                p.Category.ToString().ToLowerInvariant().Contains(normalizedSelected));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            plugins = plugins.Where(p =>
+                (p.Name != null && p.Name.ToLowerInvariant().Contains(query)) ||
+                (p.Description != null && p.Description.ToLowerInvariant().Contains(query)) ||
+                (p.Author != null && p.Author.ToLowerInvariant().Contains(query)) ||
+                p.Category.ToString().ToLowerInvariant().Contains(query));
+        }
+
+        var list = plugins
+            .OrderByDescending(p => p.IsVerified)
+            .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        BrowseGridPanel.Children.Clear();
+
+        if (ResultsText != null)
+        {
+            ResultsText.Text = list.Count == 0
+                ? "No matching plugins"
+                : $"{list.Count} plugin{(list.Count == 1 ? string.Empty : "s")} available";
+        }
+
+        if (list.Count == 0)
+        {
+            if (BrowseEmptyStatePanel != null)
+            {
+                BrowseEmptyTitleText.Text = _libraryService.AvailablePlugins.Count == 0
+                    ? "Plugin library is empty or offline."
+                    : "No plugins match your filter.";
+                BrowseEmptyBodyText.Text = _libraryService.AvailablePlugins.Count == 0
+                    ? "Click 'Refresh' to re-fetch the library catalog."
+                    : "Try a different search keyword or switch the category filter.";
+                BrowseEmptyStatePanel.Visibility = Visibility.Visible;
+            }
+        }
+        else
+        {
+            if (BrowseEmptyStatePanel != null)
+                BrowseEmptyStatePanel.Visibility = Visibility.Collapsed;
+
+            foreach (var manifest in list)
+            {
+                BrowseGridPanel.Children.Add(CreateBrowseCard(manifest));
+            }
+        }
+    }
+
+    private Border CreateBrowseCard(PluginManifest manifest)
+    {
+        var isInstalled = IsPluginInstalled(manifest.Id);
+
+        var card = new Border
+        {
+            Width = 285,
+            Margin = new Thickness(0, 0, 14, 14),
+            Padding = new Thickness(16),
+            CornerRadius = new CornerRadius(20),
+            Background = GetSurfaceBrush()
         };
-        browseWindow.ShowDialog();
-        LoadPlugins();
+
+        var layout = new Grid();
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        // Header: Name & Verified badge
+        var header = new Grid();
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var title = new TextBlock
+        {
+            Text = manifest.Name,
+            FontSize = 15,
+            FontWeight = FontWeights.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = GetPrimaryBrush()
+        };
+        Grid.SetColumn(title, 0);
+        header.Children.Add(title);
+
+        if (manifest.IsVerified)
+        {
+            var verifiedTag = CreateTag("Verified", GetAccentSoftBrush(), GetAccentBrush());
+            Grid.SetColumn(verifiedTag, 1);
+            header.Children.Add(verifiedTag);
+        }
+
+        Grid.SetRow(header, 0);
+        layout.Children.Add(header);
+
+        // Subtitle: Version and author
+        var meta = new TextBlock
+        {
+            Text = $"v{manifest.Version} • by {manifest.Author}",
+            FontSize = 11,
+            Margin = new Thickness(0, 4, 0, 0),
+            Foreground = GetMutedBrush()
+        };
+        Grid.SetRow(meta, 1);
+        layout.Children.Add(meta);
+
+        // Description
+        var description = new TextBlock
+        {
+            Text = manifest.Description,
+            FontSize = 11.5,
+            Margin = new Thickness(0, 8, 0, 0),
+            TextWrapping = TextWrapping.Wrap,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxHeight = 44,
+            Foreground = GetSecondaryBrush()
+        };
+        Grid.SetRow(description, 2);
+        layout.Children.Add(description);
+
+        // Tags: Category and Min version
+        var tags = new WrapPanel { Margin = new Thickness(0, 10, 0, 0) };
+        tags.Children.Add(CreateTag(manifest.Category.ToString(), GetTagBrush(), GetSecondaryBrush()));
+        if (!string.IsNullOrWhiteSpace(manifest.MinimumXNotchVersion))
+        {
+            tags.Children.Add(CreateTag($"Min v{manifest.MinimumXNotchVersion}", GetTagBrush(), GetMutedBrush()));
+        }
+        Grid.SetRow(tags, 3);
+        layout.Children.Add(tags);
+
+        // Actions: Install or Installed / Configure
+        var actions = new Grid { Margin = new Thickness(0, 12, 0, 0) };
+        actions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        actions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var installButton = new Button
+        {
+            MinWidth = 88,
+            Height = 32
+        };
+
+        if (isInstalled)
+        {
+            installButton.Content = "Installed";
+            installButton.Style = TryGetStyle("PluginSecondaryButton");
+            installButton.IsEnabled = false;
+        }
+        else
+        {
+            installButton.Content = "Install";
+            installButton.Style = TryGetStyle("PluginPrimaryButton");
+            installButton.Click += async (_, _) => await InstallPluginAsync(manifest, installButton);
+        }
+
+        Grid.SetColumn(installButton, 0);
+        actions.Children.Add(installButton);
+
+        // View/Details or Configure button
+        if (isInstalled)
+        {
+            var configurable = _pluginManager?.LoadedPlugins
+                .OfType<IConfigurablePlugin>()
+                .FirstOrDefault(p => string.Equals(p.Id, manifest.Id, StringComparison.OrdinalIgnoreCase));
+
+            if (configurable != null)
+            {
+                var configBtn = new Button
+                {
+                    Content = "Configure",
+                    MinWidth = 76,
+                    Height = 32,
+                    Margin = new Thickness(8, 0, 0, 0),
+                    Style = TryGetStyle("PluginGhostButton")
+                };
+                configBtn.Click += (_, _) =>
+                {
+                    if (TabInstalled != null)
+                        TabInstalled.IsChecked = true;
+                    OpenConfigurationForPlugin(manifest.Id);
+                };
+                Grid.SetColumn(configBtn, 1);
+                actions.Children.Add(configBtn);
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(manifest.Homepage))
+        {
+            var openPageButton = new Button
+            {
+                Content = "Details",
+                MinWidth = 68,
+                Height = 32,
+                Margin = new Thickness(8, 0, 0, 0),
+                Style = TryGetStyle("PluginGhostButton")
+            };
+            openPageButton.Click += (_, _) => OpenExternal(manifest.Homepage);
+            Grid.SetColumn(openPageButton, 1);
+            actions.Children.Add(openPageButton);
+        }
+
+        Grid.SetRow(actions, 4);
+        layout.Children.Add(actions);
+
+        card.Child = layout;
+        return card;
+    }
+
+    private static Border CreateTag(string text, Brush background, Brush foreground)
+    {
+        var pill = new Border
+        {
+            Background = background,
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(8, 3, 8, 3),
+            Margin = new Thickness(0, 0, 6, 6)
+        };
+        pill.Child = new TextBlock
+        {
+            Text = text,
+            FontSize = 10,
+            Foreground = foreground
+        };
+        return pill;
+    }
+
+    private async System.Threading.Tasks.Task InstallPluginAsync(PluginManifest manifest, Button button)
+    {
+        button.IsEnabled = false;
+        button.Content = "Installing...";
+
+        try
+        {
+            var targetDir = _pluginManager?.GetPluginsDirectory();
+            if (targetDir == null || _libraryService == null)
+            {
+                MessageBox.Show("Plugin manager is not available.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                button.IsEnabled = true;
+                button.Content = "Install";
+                return;
+            }
+
+            var progress = new Progress<double>(value =>
+            {
+                button.Content = $"{Math.Round(value):0}%";
+            });
+
+            var filePath = await _libraryService.DownloadPluginAsync(manifest.Id, targetDir, progress);
+            if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+            {
+                if (_pluginManager != null)
+                {
+                    try
+                    {
+                        await _pluginManager.LoadPluginFromFileAsync(filePath);
+                    }
+                    catch { }
+                }
+
+                button.Content = "Installed";
+                button.Style = TryGetStyle("PluginSecondaryButton");
+                button.IsEnabled = false;
+
+                LoadPlugins();
+                UpdateTabCounters();
+                ApplyBrowseFilter();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to install plugin: {ex.Message}", "Install Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            button.IsEnabled = true;
+            button.Content = "Install";
+            button.Style = TryGetStyle("PluginPrimaryButton");
+        }
+    }
+
+    private bool IsPluginInstalled(string pluginId)
+    {
+        if (_pluginManager?.LoadedPlugins.Any(p => string.Equals(p.Id, pluginId, StringComparison.OrdinalIgnoreCase)) == true)
+            return true;
+
+        var dir = _pluginManager?.GetPluginsDirectory();
+        if (!string.IsNullOrWhiteSpace(dir))
+        {
+            var pluginDir = Path.Combine(dir, pluginId);
+            if (Directory.Exists(pluginDir))
+            {
+                return File.Exists(Path.Combine(pluginDir, "manifest.json"))
+                    || Directory.EnumerateFiles(pluginDir, "*.dll", SearchOption.TopDirectoryOnly).Any()
+                    || Directory.EnumerateFiles(pluginDir, "*.pending", SearchOption.TopDirectoryOnly).Any();
+            }
+        }
+
+        return false;
+    }
+
+    private static void OpenExternal(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch { }
     }
 
     private void OpenPluginsFolder()
@@ -457,10 +881,15 @@ public partial class PluginManagerView : UserControl
         });
     }
 
-    private void OpenConfigurationForPlugin(string pluginId)
+    public void OpenConfigurationForPlugin(string pluginId)
     {
         if (_pluginManager == null)
             return;
+
+        if (TabInstalled != null && TabInstalled.IsChecked != true)
+        {
+            TabInstalled.IsChecked = true;
+        }
 
         var plugin = _pluginManager.LoadedPlugins
             .OfType<IConfigurablePlugin>()

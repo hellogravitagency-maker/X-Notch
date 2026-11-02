@@ -93,7 +93,13 @@ public class PluginLibraryService
 
             if (string.IsNullOrWhiteSpace(json))
             {
-                LastError = "Unable to fetch plugin library from configured endpoints.";
+                // Fall back to bundled offline library catalog
+                json = LoadBundledLibraryJson();
+            }
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                LastError = "Unable to fetch plugin library from configured endpoints or local catalog.";
                 return false;
             }
 
@@ -127,11 +133,6 @@ public class PluginLibraryService
             throw new InvalidOperationException($"Plugin {pluginId} not found in library");
         }
 
-        if (string.IsNullOrEmpty(manifest.DownloadUrl))
-        {
-            throw new InvalidOperationException($"Plugin {pluginId} has no download URL");
-        }
-
         try
         {
             // Create plugin-specific directory
@@ -142,31 +143,47 @@ public class PluginLibraryService
             var targetPath = Path.Combine(pluginDir, fileName);
             var tempPath = targetPath + ".tmp";
 
-            // Download the plugin DLL to a temp file first
-            using var response = await _httpClient.GetAsync(manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-
-            var totalBytes = response.Content.Headers.ContentLength ?? 0;
-            var downloadedBytes = 0L;
-
-            using var contentStream = await response.Content.ReadAsStreamAsync();
-            using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-            var buffer = new byte[8192];
-            int bytesRead;
-
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            // Check for local plugin DLL first (bundled / local build)
+            var localDll = FindLocalPluginDll(manifest);
+            if (!string.IsNullOrWhiteSpace(localDll) && File.Exists(localDll))
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead);
-                downloadedBytes += bytesRead;
-
-                if (totalBytes > 0)
-                {
-                    progress?.Report((double)downloadedBytes / totalBytes * 100);
-                }
+                progress?.Report(50);
+                File.Copy(localDll, tempPath, true);
+                progress?.Report(100);
             }
+            else
+            {
+                if (string.IsNullOrEmpty(manifest.DownloadUrl))
+                {
+                    throw new InvalidOperationException($"Plugin {pluginId} has no download URL or local binary");
+                }
 
-            fileStream.Close();
+                // Download the plugin DLL to a temp file first
+                using var response = await _httpClient.GetAsync(manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+
+                var totalBytes = response.Content.Headers.ContentLength ?? 0;
+                var downloadedBytes = 0L;
+
+                using var contentStream = await response.Content.ReadAsStreamAsync();
+                using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+                var buffer = new byte[8192];
+                int bytesRead;
+
+                while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                    downloadedBytes += bytesRead;
+
+                    if (totalBytes > 0)
+                    {
+                        progress?.Report((double)downloadedBytes / totalBytes * 100);
+                    }
+                }
+
+                fileStream.Close();
+            }
 
             // Verify SHA256 if provided
             if (!string.IsNullOrEmpty(manifest.Sha256))
@@ -280,6 +297,135 @@ public class PluginLibraryService
         using var stream = File.OpenRead(filePath);
         var hash = await Task.Run(() => sha256.ComputeHash(stream));
         return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+    }
+
+    public static string? LoadBundledLibraryJson()
+    {
+        try
+        {
+            var assembly = typeof(PluginLibraryService).Assembly;
+            var resourceName = assembly.GetManifestResourceNames()
+                .FirstOrDefault(n => n.EndsWith("example-library.json", StringComparison.OrdinalIgnoreCase));
+            if (resourceName != null)
+            {
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    using var reader = new StreamReader(stream);
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+        catch { }
+
+        try
+        {
+            var baseDir = AppContext.BaseDirectory;
+            var candidates = new List<string>
+            {
+                Path.Combine(baseDir, "Assets", "example-library.json"),
+                Path.Combine(baseDir, "example-library.json")
+            };
+
+            var current = new DirectoryInfo(baseDir);
+            for (int i = 0; i < 6 && current != null; i++)
+            {
+                var repoPath = Path.Combine(current.FullName, "Examples", "Plugins", "example-library.json");
+                if (File.Exists(repoPath))
+                {
+                    candidates.Add(repoPath);
+                    break;
+                }
+                var assetsPath = Path.Combine(current.FullName, "src", "XNotch", "Assets", "example-library.json");
+                if (File.Exists(assetsPath))
+                {
+                    candidates.Add(assetsPath);
+                    break;
+                }
+                current = current.Parent;
+            }
+
+            foreach (var path in candidates)
+            {
+                if (File.Exists(path))
+                {
+                    return File.ReadAllText(path);
+                }
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    public static string? FindLocalPluginDll(PluginManifest manifest)
+    {
+        var possibleFileNames = new List<string>();
+        if (!string.IsNullOrEmpty(manifest.DownloadUrl))
+        {
+            try
+            {
+                var uri = new Uri(manifest.DownloadUrl);
+                possibleFileNames.Add(Path.GetFileName(uri.LocalPath));
+            }
+            catch { }
+        }
+
+        var baseName = SanitizeFileName(manifest.Name).Replace(" ", "").Replace("-", "");
+        possibleFileNames.Add($"{baseName}.dll");
+        possibleFileNames.Add($"{baseName}Plugin.dll");
+        possibleFileNames.Add($"{SanitizeFileName(manifest.Name)}.dll");
+
+        var searchDirs = new List<string>();
+        var baseDir = AppContext.BaseDirectory;
+        if (!string.IsNullOrWhiteSpace(baseDir) && Directory.Exists(baseDir))
+        {
+            searchDirs.Add(baseDir);
+            searchDirs.Add(Path.Combine(baseDir, "BundledPlugins"));
+            searchDirs.Add(Path.Combine(baseDir, "Plugins"));
+
+            var current = new DirectoryInfo(baseDir);
+            for (int i = 0; i < 6 && current != null; i++)
+            {
+                var examplesPath = Path.Combine(current.FullName, "Examples", "Plugins");
+                if (Directory.Exists(examplesPath))
+                {
+                    searchDirs.Add(examplesPath);
+                    break;
+                }
+                current = current.Parent;
+            }
+        }
+
+        var appDomainDir = AppDomain.CurrentDomain.BaseDirectory;
+        if (!string.IsNullOrWhiteSpace(appDomainDir) && Directory.Exists(appDomainDir) && !searchDirs.Contains(appDomainDir))
+        {
+            searchDirs.Add(appDomainDir);
+        }
+
+        foreach (var dir in searchDirs)
+        {
+            if (!Directory.Exists(dir)) continue;
+
+            foreach (var name in possibleFileNames.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var directPath = Path.Combine(dir, name);
+                if (File.Exists(directPath)) return directPath;
+
+                try
+                {
+                    var matches = Directory.GetFiles(dir, name, SearchOption.AllDirectories);
+                    if (matches.Length > 0)
+                    {
+                        var releaseMatch = matches.FirstOrDefault(m => m.Contains("Release", StringComparison.OrdinalIgnoreCase));
+                        return releaseMatch ?? matches[0];
+                    }
+                }
+                catch { }
+            }
+        }
+
+        return null;
     }
 
     private static string SanitizeFileName(string name)

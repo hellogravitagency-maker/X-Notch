@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <Resource Include="Assets\**\*" />
+    <EmbeddedResource Include="Assets\example-library.json" />
   </ItemGroup>
 
   <ItemGroup>

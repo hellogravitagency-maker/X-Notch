@@ -4,12 +4,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="620" d:DesignWidth="760"
+             d:DesignHeight="680" d:DesignWidth="980"
              Background="Transparent">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Components/PluginSurfaceStyles.xaml"/>
+                <ResourceDictionary Source="Components/SegmentedRadioStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <DropShadowEffect x:Key="PluginWindowShadow"
@@ -34,162 +35,263 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,18" MouseLeftButtonDown="OnHeaderMouseDown">
+                <!-- Row 0: Title, Tabs Switcher, and Close Button -->
+                <Grid Grid.Row="0" Margin="0,0,0,16" MouseLeftButtonDown="OnHeaderMouseDown">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock Text="Plugin Manager"
-                                   FontSize="26"
+                                   FontSize="24"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Enable, disable, and organize what lives inside X-Notch."
-                                   Margin="0,6,0,0"
-                                   FontSize="12"
+                        <TextBlock Text="Manage installed plugins and discover new notch capabilities."
+                                   Margin="0,4,0,0"
+                                   FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </StackPanel>
 
+                    <!-- Segmented Tab Bar -->
+                    <Border Grid.Column="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="#18FFFFFF"
+                            CornerRadius="14"
+                            Padding="3">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="TabInstalled"
+                                         Content="Installed (0)"
+                                         GroupName="PluginManagerTabs"
+                                         IsChecked="True"
+                                         Style="{StaticResource SegmentedRadio}"
+                                         Padding="16,6"
+                                         Checked="OnTabSelectionChanged"/>
+                            <RadioButton x:Name="TabBrowse"
+                                         Content="Browse Catalog (0)"
+                                         GroupName="PluginManagerTabs"
+                                         Margin="4,0,0,0"
+                                         Style="{StaticResource SegmentedRadio}"
+                                         Padding="16,6"
+                                         Checked="OnTabSelectionChanged"/>
+                        </StackPanel>
+                    </Border>
+
                     <Button x:Name="CloseButton"
-                            Grid.Column="1"
+                            Grid.Column="2"
                             Width="32"
                             Height="32"
-                            Content="X"
+                            Content="✕"
                             Style="{StaticResource PluginTitlebarButton}"/>
                 </Grid>
 
-                <Grid Grid.Row="1" Margin="0,0,0,16">
+                <!-- Row 1: Subheaders for Installed vs Browse -->
+                <!-- Installed Tab Subheader -->
+                <Grid x:Name="InstalledSubheader" Grid.Row="1" Margin="0,0,0,14">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel>
+                    <StackPanel VerticalAlignment="Center">
                         <TextBlock x:Name="InstalledCountText"
                                    FontSize="13"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Installed plugins can be toggled, updated, and configured from here."
-                                   Margin="0,4,0,0"
+                        <TextBlock Text="Installed plugins can be toggled, updated, and configured live."
+                                   Margin="0,3,0,0"
                                    FontSize="11"
                                    Foreground="{DynamicResource TextMutedBrush}"/>
                     </StackPanel>
 
-                    <Button x:Name="RefreshLibraryButton"
+                    <Button x:Name="InstalledBrowseButton"
                             Grid.Column="1"
-                            MinWidth="128"
-                            Margin="12,0,0,0"
-                            Content="Refresh Library"
-                            Style="{StaticResource PluginSecondaryButton}"/>
-
-                    <Button x:Name="BrowsePluginsButton"
-                            Grid.Column="2"
-                            MinWidth="118"
-                            Margin="10,0,0,0"
-                            Content="Browse Plugins"
+                            MinWidth="130"
+                            Content="+ Browse Catalog"
                             Style="{StaticResource PluginPrimaryButton}"/>
                 </Grid>
 
-                <Grid Grid.Row="2">
+                <!-- Browse Tab Subheader -->
+                <Grid x:Name="BrowseSubheader" Grid.Row="1" Margin="0,0,0,14" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition x:Name="ConfigurationColumn" Width="0"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0"
-                            Background="{DynamicResource SegmentedBgBrush}"
-                            CornerRadius="24"
-                            Padding="16,16,10,16">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled"
-                                      Style="{StaticResource RoundedScrollViewer}">
-                            <StackPanel x:Name="PluginListPanel"/>
-                        </ScrollViewer>
-                    </Border>
+                    <TextBox x:Name="SearchBox"
+                             Height="38"
+                             VerticalContentAlignment="Center"
+                             Style="{StaticResource PluginSearchTextBox}"/>
 
-                    <Border x:Name="ConfigurationPanelBorder"
-                            Grid.Column="1"
-                            Margin="16,0,0,0"
-                            Padding="18"
-                            Background="{DynamicResource SegmentedBgBrush}"
-                            CornerRadius="24"
-                            Visibility="Collapsed">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                    <TextBlock x:Name="ResultsText"
+                               Grid.Column="1"
+                               Margin="14,0,0,0"
+                               VerticalAlignment="Center"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
 
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                    <Button x:Name="RefreshLibraryButton"
+                            Grid.Column="2"
+                            MinWidth="110"
+                            Margin="10,0,0,0"
+                            Content="Refresh"
+                            Style="{StaticResource PluginSecondaryButton}"/>
+                </Grid>
 
-                                <StackPanel>
-                                    <TextBlock x:Name="ConfigurationTitleText"
-                                               FontSize="18"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    <TextBlock x:Name="ConfigurationBodyText"
-                                               Margin="0,6,0,0"
+                <!-- Row 2: Main Views -->
+                <Grid Grid.Row="2">
+                    <!-- Installed Tab Content -->
+                    <Grid x:Name="InstalledContentGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition x:Name="ConfigurationColumn" Width="0"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Background="{DynamicResource SegmentedBgBrush}"
+                                CornerRadius="24"
+                                Padding="16,16,10,16">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          Style="{StaticResource RoundedScrollViewer}">
+                                <StackPanel x:Name="PluginListPanel"/>
+                            </ScrollViewer>
+                        </Border>
+
+                        <Border x:Name="ConfigurationPanelBorder"
+                                Grid.Column="1"
+                                Margin="16,0,0,0"
+                                Padding="18"
+                                Background="{DynamicResource SegmentedBgBrush}"
+                                CornerRadius="24"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <TextBlock x:Name="ConfigurationTitleText"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock x:Name="ConfigurationBodyText"
+                                                   Margin="0,6,0,0"
+                                                   FontSize="11"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </StackPanel>
+
+                                    <Button x:Name="CloseConfigurationButton"
+                                            Grid.Column="1"
+                                            Width="28"
+                                            Height="28"
+                                            Content="✕"
+                                            Style="{StaticResource PluginTitlebarButton}"/>
+                                </Grid>
+
+                                <Border Grid.Row="1"
+                                        Margin="0,14,0,0"
+                                        Padding="12"
+                                        Background="{DynamicResource NotchFillBrush}"
+                                        CornerRadius="18">
+                                    <TextBlock x:Name="ConfigurationStatusText"
                                                FontSize="11"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                </StackPanel>
+                                </Border>
 
-                                <Button x:Name="CloseConfigurationButton"
-                                        Grid.Column="1"
-                                        Width="28"
-                                        Height="28"
-                                        Content="X"
-                                        Style="{StaticResource PluginTitlebarButton}"/>
-                            </Grid>
-
-                            <Border Grid.Row="1"
-                                    Margin="0,14,0,0"
-                                    Padding="12"
-                                    Background="{DynamicResource NotchFillBrush}"
-                                    CornerRadius="18">
-                                <TextBlock x:Name="ConfigurationStatusText"
+                                <TextBlock x:Name="ConfigurationApplyResultText"
+                                           Grid.Row="2"
+                                           Margin="0,12,0,0"
                                            FontSize="11"
                                            TextWrapping="Wrap"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            </Border>
+                                           Visibility="Collapsed"
+                                           Foreground="{StaticResource PluginPositiveBrush}"/>
 
-                            <TextBlock x:Name="ConfigurationApplyResultText"
-                                       Grid.Row="2"
-                                       Margin="0,12,0,0"
-                                       FontSize="11"
-                                       TextWrapping="Wrap"
-                                       Visibility="Collapsed"
-                                       Foreground="{StaticResource PluginPositiveBrush}"/>
+                                <ScrollViewer Grid.Row="3"
+                                              Margin="0,14,0,0"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Style="{StaticResource RoundedScrollViewer}">
+                                    <StackPanel x:Name="ConfigurationFieldHost"/>
+                                </ScrollViewer>
 
-                            <ScrollViewer Grid.Row="3"
-                                          Margin="0,14,0,0"
-                                          VerticalScrollBarVisibility="Auto"
+                                <Button x:Name="ApplyConfigurationButton"
+                                        Grid.Row="4"
+                                        Margin="0,16,0,0"
+                                        MinWidth="140"
+                                        HorizontalAlignment="Left"
+                                        Content="Apply Configuration"
+                                        Style="{StaticResource PluginPrimaryButton}"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- Browse Tab Content -->
+                    <Grid x:Name="BrowseContentGrid" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Category Filter Pills -->
+                        <Border Grid.Row="0" Margin="0,0,0,12" Background="Transparent">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled"
+                                          Style="{StaticResource RoundedScrollViewer}">
+                                <StackPanel x:Name="CategoryFilterPanel" Orientation="Horizontal"/>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- Cards Grid View -->
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource SegmentedBgBrush}"
+                                CornerRadius="24"
+                                Padding="16,16,10,16">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
                                           HorizontalScrollBarVisibility="Disabled"
                                           Style="{StaticResource RoundedScrollViewer}">
-                                <StackPanel x:Name="ConfigurationFieldHost"/>
-                            </ScrollViewer>
+                                <Grid>
+                                    <WrapPanel x:Name="BrowseGridPanel"/>
 
-                            <Button x:Name="ApplyConfigurationButton"
-                                    Grid.Row="4"
-                                    Margin="0,16,0,0"
-                                    MinWidth="140"
-                                    HorizontalAlignment="Left"
-                                    Content="Apply Configuration"
-                                    Style="{StaticResource PluginPrimaryButton}"/>
-                        </Grid>
-                    </Border>
+                                    <StackPanel x:Name="BrowseEmptyStatePanel"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Margin="32"
+                                                Visibility="Collapsed">
+                                        <TextBlock x:Name="BrowseEmptyTitleText"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   TextAlignment="Center"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <TextBlock x:Name="BrowseEmptyBodyText"
+                                                   Margin="0,8,0,0"
+                                                   FontSize="12"
+                                                   TextAlignment="Center"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
                 </Grid>
 
-                <Grid Grid.Row="3" Margin="0,18,0,0">
+                <!-- Row 3: Footer -->
+                <Grid Grid.Row="3" Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -206,7 +308,7 @@
                                VerticalAlignment="Center"
                                FontSize="11"
                                Foreground="{DynamicResource TextMutedBrush}"
-                               Text="Changes apply after restart when needed."/>
+                               Text="Plugins run in isolated sandboxes. Changes apply live or after restart."/>
                 </Grid>
             </Grid>
         </Border>

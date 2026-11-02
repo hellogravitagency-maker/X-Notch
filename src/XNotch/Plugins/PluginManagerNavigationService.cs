@@ -17,7 +17,7 @@ public sealed class PluginManagerNavigationService
 
     public void OpenPluginManager(string? pluginId = null)
     {
-        if (Application.Current?.Dispatcher == null)
+        if (Application.Current?.Dispatcher == null || Application.Current.Dispatcher.CheckAccess())
         {
             _openPluginManager(pluginId);
             return;

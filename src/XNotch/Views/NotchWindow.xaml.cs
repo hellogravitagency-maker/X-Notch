@@ -196,6 +196,7 @@ public partial class NotchWindow : Window
     private PluginManager? _pluginManager;
     private PluginLibraryService? _pluginLibraryService;
     private PluginContext? _pluginContext;
+    private Window? _pluginManagerWindow;
 
     /// <summary>
     /// The primary island hosts the plugin system, the global hotkey, and persists
@@ -568,6 +569,7 @@ public partial class NotchWindow : Window
             {
                 LiveActivity.Visibility = Visibility.Collapsed;
                 ClockWidget.Visibility = Visibility.Collapsed;
+                PluginClosedPanel.Visibility = Visibility.Collapsed;
                 BatteryIndicator.Suppressed = true;
                 _widthSpring.SetPhysics(0.32, 0.74);
                 _widthSpring.AnimateTo(NotchConstants.HudWidth, _currentWidth);
@@ -590,12 +592,14 @@ public partial class NotchWindow : Window
             if (_vm.NotchState != NotchState.Open)
             {
                 SideTimeSmall.Visibility = Visibility.Collapsed;
+                VerticalPluginClosedPanel.Visibility = Visibility.Collapsed;
                 _heightSpring.AnimateTo(NotchConstants.HudWidth, _currentHeight);
             }
         });
         VerticalHudOverlay.HudDismissed += () => Dispatcher.Invoke(() =>
         {
             SideTimeSmall.Visibility = Visibility.Visible;
+            VerticalPluginClosedPanel.Visibility = Visibility.Visible;
             if (_vm.NotchState != NotchState.Open)
             {
                 _heightSpring.AnimateTo(NotchConstants.ClosedWidth, _currentHeight);
@@ -734,6 +738,35 @@ public partial class NotchWindow : Window
     {
         if (_pluginManager == null || _pluginLibraryService == null) return;
 
+        // Dismiss notch overlay so it does not cover or block the plugin manager window
+        if (_isSettingsExpanded)
+        {
+            CollapseSettings();
+        }
+        if (_isCommandCenterExpanded)
+        {
+            CollapseCommandCenter();
+        }
+        TransitionToClose();
+
+        // If a plugin manager instance is already open, activate and focus it instead of stacking multiple windows
+        if (_pluginManagerWindow != null && _pluginManagerWindow.IsLoaded)
+        {
+            if (_pluginManagerWindow.WindowState == WindowState.Minimized)
+            {
+                _pluginManagerWindow.WindowState = WindowState.Normal;
+            }
+
+            if (!string.IsNullOrWhiteSpace(focusPluginId) && _pluginManagerWindow.Content is PluginManagerView existingView)
+            {
+                existingView.OpenConfigurationForPlugin(focusPluginId);
+            }
+
+            _pluginManagerWindow.Activate();
+            _pluginManagerWindow.Focus();
+            return;
+        }
+
         var pluginView = new PluginManagerView(_pluginManager, _pluginLibraryService, focusPluginId);
         var window = new Window
         {
@@ -745,13 +778,16 @@ public partial class NotchWindow : Window
             WindowStyle = WindowStyle.None,
             AllowsTransparency = true,
             ResizeMode = ResizeMode.NoResize,
-            ShowInTaskbar = false,
-            Content = pluginView,
-            Topmost = true
+            ShowInTaskbar = true,
+            Content = pluginView
         };
+
+        window.Closed += (_, _) => _pluginManagerWindow = null;
+        _pluginManagerWindow = window;
+
         window.Show();
         window.Activate();
-        window.Topmost = false;
+        window.Focus();
     }
 
     // A resting shadow keeps the island visible on same-color wallpapers
@@ -766,6 +802,7 @@ public partial class NotchWindow : Window
         bool hasMusic = _settings.ShowMusicControls && info.HasMedia && info.IsPlaying;
         LiveActivity.Visibility = hasMusic ? Visibility.Visible : Visibility.Collapsed;
         ClockWidget.Visibility = hasMusic ? Visibility.Collapsed : Visibility.Visible;
+        PluginClosedPanel.Visibility = Visibility.Visible;
     }
 
     #region Vertical Side Content
@@ -2227,6 +2264,8 @@ public partial class NotchWindow : Window
         StopwatchWidget?.Dispose();
         VitalsWidget?.Dispose();
         _appBar.Dispose();
+        _pluginManagerWindow?.Close();
+        _pluginManagerWindow = null;
         _pluginManager?.Dispose();
         _globalHotkey?.Dispose();
         base.OnClosed(e);

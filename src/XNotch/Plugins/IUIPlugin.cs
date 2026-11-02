@@ -42,6 +42,7 @@ public enum UIPluginLocation
     /// <summary>Settings panel for the plugin.</summary>
     Settings,
 
-    /// <summary>Custom overlay layer (highest priority).</summary>
+    /// <summary>Deprecated overlay layer (unsupported; overlays removed from notch layout).</summary>
+    [System.Obsolete("Overlay location is unsupported and removed from notch display.")]
     Overlay
 }

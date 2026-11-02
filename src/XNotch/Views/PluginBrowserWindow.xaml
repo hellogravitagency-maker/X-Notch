@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Browse Plugins"
-        Width="900"
+        Width="980"
         Height="680"
         Background="Transparent"
         WindowStyle="None"

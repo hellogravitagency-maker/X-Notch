@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using XNotch.Helpers;
@@ -56,6 +57,9 @@ public class PluginManager : IDisposable
         // (both were blocked by file locks while the previous instance ran)
         ApplyQueuedUninstalls();
         ApplyPendingUpdates();
+
+        // Ensure starter plugins are available if plugins directory is empty
+        EnsureDefaultPluginsProvisioned();
 
         var pluginFiles = Directory.GetFiles(_pluginsDirectory, "*.dll", SearchOption.AllDirectories);
 
@@ -428,6 +432,66 @@ public class PluginManager : IDisposable
         catch (Exception ex)
         {
             _context.Log($"Failed to scan for pending updates: {ex.Message}", PluginLogLevel.Warning);
+        }
+    }
+
+    private void EnsureDefaultPluginsProvisioned()
+    {
+        try
+        {
+            var marker = Path.Combine(_pluginsDirectory, ".provisioned");
+            if (File.Exists(marker))
+                return;
+
+            var existingDlls = Directory.GetFiles(_pluginsDirectory, "*.dll", SearchOption.AllDirectories);
+            if (existingDlls.Length > 0)
+            {
+                File.WriteAllText(marker, "1");
+                return;
+            }
+
+            var starterPlugins = new[]
+            {
+                new { Id = "com.xnotch.themestudio", Name = "Theme Studio", Dll = "ThemeStudioPlugin.dll" },
+                new { Id = "com.xnotch.quicknotes", Name = "Quick Notes", Dll = "QuickNotesPlugin.dll" }
+            };
+
+            foreach (var starter in starterPlugins)
+            {
+                var manifest = new PluginManifest
+                {
+                    Id = starter.Id,
+                    Name = starter.Name,
+                    Version = "1.0.0"
+                };
+
+                var localDll = PluginLibraryService.FindLocalPluginDll(manifest);
+                if (!string.IsNullOrWhiteSpace(localDll) && File.Exists(localDll))
+                {
+                    var targetDir = Path.Combine(_pluginsDirectory, starter.Id);
+                    Directory.CreateDirectory(targetDir);
+                    var targetDll = Path.Combine(targetDir, starter.Dll);
+                    File.Copy(localDll, targetDll, true);
+
+                    var srcDir = Path.GetDirectoryName(localDll);
+                    var srcManifest = srcDir != null ? Path.Combine(srcDir, "manifest.json") : null;
+                    if (srcManifest != null && File.Exists(srcManifest))
+                    {
+                        File.Copy(srcManifest, Path.Combine(targetDir, "manifest.json"), true);
+                    }
+                    else
+                    {
+                        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true });
+                        File.WriteAllText(Path.Combine(targetDir, "manifest.json"), json);
+                    }
+                }
+            }
+
+            File.WriteAllText(marker, "1");
+        }
+        catch (Exception ex)
+        {
+            _context.Log($"Provisioning default plugins failed: {ex.Message}", PluginLogLevel.Warning);
         }
     }
 
