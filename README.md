@@ -119,7 +119,9 @@ X-Notch provides a dynamic plugin system allowing developers to build custom not
 Open the in-notch settings (**⚙ Settings → Manage Plugins**) to launch the **Plugin Browser & Manager**:
 
 - **Live Toggle:** Enable or disable plugins on the fly with immediate UI injection (no restart required).
-- **Online Catalog:** Browse, search, and install verified community plugins directly from the in-app library.
+- **Online Catalog:** Browse, search, and install verified community plugins directly from the in-app library with offline embedded binary fallbacks.
+- **Theme Plugins (`IThemePlugin`):** Full palette dynamic overrides (**Cyberpunk Neon**, **Nord Arctic**, **Sunset Glow**) applied instantly across all dynamic island surfaces.
+- **Widgets (`IUIPlugin`):** Interactive widgets like **Pet Widget** (desktop companion), **Weather**, **Focus Timer**, and **Todo Peek**.
 - **Configurable Settings:** Click **Configure** on any supporting plugin to adjust parameters, timers, and layout styles.
 - **Manual Installation:** Drop any plugin directory into `%APPDATA%\X-Notch\Plugins\<PluginId>\`.
 
@@ -130,7 +132,7 @@ Plugins are compiled against the official [`XNotch.PluginSdk`](src/XNotch.Plugin
 #### 1. Add Reference to the Plugin SDK
 ```xml
 <ItemGroup>
-  <PackageReference Include="XNotch.PluginSdk" Version="0.8.0" />
+  <PackageReference Include="XNotch.PluginSdk" Version="0.8.1" />
 </ItemGroup>
 ```
 

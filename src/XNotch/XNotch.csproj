@@ -14,9 +14,9 @@
 
     <!-- App metadata -->
     <ApplicationIcon>Assets\Icons\XNotch.ico</ApplicationIcon>
-    <Version>0.8.0</Version>
-    <FileVersion>0.8.0.0</FileVersion>
-    <AssemblyVersion>0.8.0.0</AssemblyVersion>
+    <Version>0.8.1</Version>
+    <FileVersion>0.8.1.0</FileVersion>
+    <AssemblyVersion>0.8.1.0</AssemblyVersion>
     <Product>X-Notch</Product>
     <Description>X-Notch — Intelligent Dynamic Island for Windows by Gravit</Description>
     <Company>Gravit</Company>
