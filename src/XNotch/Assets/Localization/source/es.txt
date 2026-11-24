@@ -1,0 +1,229 @@
+AGENTES
+APARIENCIA
+ACERCA DE
+GENERAL
+PANTALLAS
+HUD DEL SISTEMA
+MÚSICA
+COMPLEMENTOS
+ESCRITORIO
+STREAMING
+WIDGETS Y TARJETAS
+DESARROLLO Y ESPACIOS DE TRABAJO
+NOTIFICACIONES Y ALERTAS
+Agentes
+Los agentes están desactivados
+Tarjeta de agentes
+Agentes desactivados
+Agentes activados
+Alertas
+Todo
+Automático
+Atrás
+Indicador de batería
+Bluetooth
+Descanso
+Fin del descanso
+Brillo
+HUD de brillo
+Examinar
+Panel de calendario
+La cámara está activa
+Cancelar
+Captura
+Tarjeta de captura
+El chat está tranquilo
+Chat superpuesto en pantalla
+Buscar actualizaciones
+Borrar
+Borrar todo
+Portapapeles
+Tarjeta del portapapeles
+Historial del portapapeles
+El historial del portapapeles está desactivado
+Código
+Color
+Conectar Claude Code y Codex
+Conectar a OBS
+Controles
+Tarjeta de controles
+Cuenta atrás
+Fecha de la cuenta atrás
+Cuenta atrás hasta
+Moneda
+Oscuro
+Deck
+Tarjeta del Deck
+Descartar
+Dock (sustituye a la barra de tareas)
+Dock en cada pantalla
+El Dock muestra las apps de su pantalla
+Suelta archivos aquí
+Terminar emisión
+Todo lo que copias se queda aquí, incluso tras reiniciar
+Los FPS requieren administrador
+Fahrenheit
+Archivos
+Concentración
+Concentración terminada, toma un descanso
+Calendario completo
+Barra de juego
+Emitir en directo
+Buena
+Peligrosa
+Ocultar
+Comportamiento al pasar el ratón
+Isla en cada pantalla
+Mantener en el Dock
+Mantener la isla
+Idioma
+Claro
+Enlaces
+Fondo de pantalla animado
+Cargando…
+Pasar el ratón largo
+Mirando alrededor
+Administrar complementos
+Micro
+El micrófono está activo
+Moderada
+Música
+Controles de música
+Necesita una ciudad
+Luz nocturna
+No hay agentes en marcha
+No hay dispositivos
+No se está reproduciendo música
+Sin red: conéctate a Wi-Fi o Ethernet.
+Aún no hay teléfonos vinculados
+No hay notificaciones recientes
+No se encontró texto
+Aún no has copiado nada
+Notificaciones y calendario
+OBS no se está ejecutando
+Contraseña de OBS
+Puerto de OBS
+OBS listo
+Abrir
+TELÉFONOS VINCULADOS
+Vincular teléfono
+Asomar + clic
+Reglas por app (apps recientes)
+Phone Deck
+Phone Deck está activado
+Teléfono vinculado
+Fijar
+Ping
+Host para ping
+Fijados
+Configuración rápida
+Salir
+Listo para el siguiente bloque de concentración
+Grabar
+Grabando
+Grabación guardada
+Grabación detenida
+Quitar
+Quitar del Dock
+Reservar espacio arriba
+Reinicia X-Notch para aplicarlo
+Tiempo de pantalla
+Captura en la estantería
+Capturas y grabaciones a la estantería
+Buscar
+Sensibles
+Elige una ciudad en la configuración
+Elige una fecha en la configuración
+Configuración
+Estantería
+Mostrar su terminal
+Sueño
+Durmiendo
+Recortar
+Sonido
+Inicio
+Inicia Claude Code o Codex y aparecerá aquí
+Iniciar con Windows
+Detener grab.
+Cronómetro
+Directo
+Tarjeta de directo
+Emisión terminada
+Sincronizar islas
+Tareas
+Texto
+Falló la captura de texto
+Texto copiado
+Tema
+Hoy
+Iconos de la bandeja
+Canal de Twitch
+Mala
+Desfijar
+Actualización disponible
+Muy mala
+Vídeo
+Rendimiento
+HUD de volumen
+Esperándote
+Paseando
+Agua
+Tiempo
+Ciudad del tiempo
+Cuando una app está a pantalla completa
+Wi-Fi
+Widgets
+Tarjeta de widgets
+Windows no encontró palabras en esa zona
+Reloj mundial
+Contraseña de OBS incorrecta
+Estás en directo
+Tu mascota
+listo
+error
+en espera
+ahora mismo
+te necesita
+ahora
+{0} activos
+{0} ha terminado
+hace {0} h
+hace {0} min
+Descanso de {0} min iniciado
+{0} te necesita
+{0} se detuvo
+{0} · en pausa
+Aire
+Aire · {0}
+1 {0} en {1}
+Clic para copiar · {0}
+El Deck no pudo iniciarse (puede que el puerto {0} esté en uso).
+{0} ya puede controlar este PC. Quítalo en la tarjeta del Deck.
+Phone Deck está desactivado. Actívalo en la configuración para controlar la música, el ratón y las apps desde tu teléfono.
+Tu red es Pública, así que el Deck sigue desactivado. Márcala como Privada en la configuración de red de Windows.
+Activa los agentes en la configuración para ver Claude Code y Codex en directo
+Actívalo en la configuración para guardar lo que copias
+Añade un canal de Twitch en la configuración para ver el chat
+Escanéalo con tu teléfono, o abre
+e introduce
+Este teléfono pierde el acceso al instante
+Tiempo activo hoy
+Elige cualquier color de la pantalla · Esc cancela
+Recorta una zona y copia su texto (OCR de Windows)
+Alt-Tab de X-Notch
+Recordatorio de X-Notch
+Tareas y pendientes
+Registro de agua (hidratación)
+Registro y horario de sueño
+Rendimiento y telemetría del sistema
+Historial de notificaciones y alertas
+Tarjeta del reproductor
+Visualizador de audio
+Espejo de la cámara
+Ocultar al estar inactivo
+Mostrar sombra
+Adaptar al tema de Windows
+Mostrar al pasar bajo la cámara
+Mostrar centrado en el cursor
+Administrador de complementos
+Explorar complementos

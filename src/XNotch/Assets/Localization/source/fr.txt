@@ -1,0 +1,229 @@
+AGENTS
+APPARENCE
+À PROPOS
+GÉNÉRAL
+ÉCRANS
+HUD SYSTÈME
+MUSIQUE
+MODULES
+BUREAU
+STREAMING
+WIDGETS ET CARTES
+DÉVELOPPEMENT ET ESPACES DE TRAVAIL
+NOTIFICATIONS ET ALERTES
+Agents
+Les agents sont désactivés
+Carte des agents
+Agents désactivés
+Agents activés
+Alertes
+Tout
+Automatique
+Retour
+Indicateur de batterie
+Bluetooth
+Pause
+Pause terminée
+Luminosité
+HUD de luminosité
+Parcourir
+Panneau du calendrier
+La caméra est active
+Annuler
+Capture
+Carte de capture
+Le chat est calme
+Chat en surimpression
+Rechercher des mises à jour
+Effacer
+Tout effacer
+Presse-papiers
+Carte du presse-papiers
+Historique du presse-papiers
+L’historique du presse-papiers est désactivé
+Code
+Couleur
+Connecter Claude Code et Codex
+Se connecter à OBS
+Commandes
+Carte des commandes
+Compte à rebours
+Date du compte à rebours
+Compte à rebours jusqu’à
+Devise
+Sombre
+Deck
+Carte du Deck
+Ignorer
+Dock (remplace la barre des tâches)
+Dock sur chaque écran
+Le Dock affiche les apps de son écran
+Déposez des fichiers ici
+Arrêter le direct
+Tout ce que vous copiez reste ici, même après un redémarrage
+Les FPS nécessitent les droits admin
+Fahrenheit
+Fichiers
+Concentration
+Concentration terminée, faites une pause
+Calendrier complet
+Bandeau de jeu
+Passer en direct
+Bon
+Dangereux
+Masquer
+Comportement au survol
+Île sur chaque écran
+Garder dans le Dock
+Garder l’île
+Langue
+Clair
+Liens
+Fond d’écran animé
+Chargement…
+Survol prolongé
+Regarde autour
+Gérer les modules
+Micro
+Le micro est actif
+Moyen
+Musique
+Commandes de musique
+Ville requise
+Éclairage nocturne
+Aucun agent en cours
+Aucun appareil
+Aucune musique en cours
+Pas de réseau : connectez-vous au Wi-Fi ou à l’Ethernet.
+Aucun téléphone associé
+Aucune notification récente
+Aucun texte trouvé
+Rien de copié pour l’instant
+Notifications et calendrier
+OBS n’est pas lancé
+Mot de passe OBS
+Port OBS
+OBS prêt
+Ouvrir
+TÉLÉPHONES ASSOCIÉS
+Associer un téléphone
+Aperçu + clic
+Règles par app (apps récentes)
+Phone Deck
+Phone Deck est activé
+Téléphone associé
+Épingler
+Ping
+Hôte du ping
+Épinglés
+Paramètres rapides
+Quitter
+Prêt pour la prochaine session de concentration
+Enregistrer
+Enregistrement
+Enregistrement sauvegardé
+Enregistrement arrêté
+Retirer
+Retirer du Dock
+Réserver l’espace en haut
+Redémarrez X-Notch pour appliquer
+Temps d’écran
+Capture sur l’étagère
+Captures et enregistrements sur l’étagère
+Rechercher
+Sensibles
+Choisissez une ville dans les paramètres
+Choisissez une date dans les paramètres
+Paramètres
+Étagère
+Afficher son terminal
+Sommeil
+Dort
+Capturer
+Son
+Démarrer
+Lancez Claude Code ou Codex et il apparaîtra ici
+Lancer au démarrage
+Arrêter l’enr.
+Chronomètre
+Direct
+Carte du direct
+Direct terminé
+Synchroniser les îles
+Tâches
+Texte
+Échec de la capture de texte
+Texte copié
+Thème
+Aujourd’hui
+Icônes de la zone de notification
+Chaîne Twitch
+Mauvais
+Désépingler
+Mise à jour disponible
+Très mauvais
+Vidéo
+Performances
+HUD du volume
+Vous attend
+Se promène
+Eau
+Météo
+Ville pour la météo
+Quand une app est en plein écran
+Wi-Fi
+Widgets
+Carte des widgets
+Windows n’a trouvé aucun mot dans cette zone
+Horloge mondiale
+Mot de passe OBS incorrect
+Vous êtes en direct
+Votre compagnon
+terminé
+erreur
+en attente
+à l’instant
+a besoin de vous
+maintenant
+{0} actifs
+{0} a terminé
+il y a {0} h
+il y a {0} min
+Pause de {0} min lancée
+{0} a besoin de vous
+{0} s’est arrêté
+{0} · en pause
+Air
+Air · {0}
+1 {0} en {1}
+Cliquez pour copier · {0}
+Le Deck n’a pas pu démarrer (le port {0} est peut-être utilisé).
+{0} peut maintenant contrôler ce PC. Retirez-le dans la carte du Deck.
+Phone Deck est désactivé. Activez-le dans les paramètres pour contrôler la musique, la souris et les apps depuis votre téléphone.
+Votre réseau est Public, donc le Deck reste désactivé. Passez-le en Privé dans les paramètres réseau de Windows.
+Activez les agents dans les paramètres pour suivre Claude Code et Codex en direct
+Activez-le dans les paramètres pour garder ce que vous copiez
+Ajoutez une chaîne Twitch dans les paramètres pour voir le chat
+Scannez avec votre téléphone, ou ouvrez
+et saisissez
+Ce téléphone perd l’accès immédiatement
+Temps actif aujourd’hui
+Choisissez une couleur à l’écran · Échap annule
+Capturez une zone et copiez son texte (OCR Windows)
+Alt-Tab X-Notch
+Rappel X-Notch
+Tâches et concentration
+Suivi de l’eau (hydratation)
+Suivi et horaires de sommeil
+Performances et télémétrie système
+Historique des notifications et alertes
+Carte du lecteur de musique
+Visualiseur audio
+Miroir de la webcam
+Masquer quand inactif
+Afficher l’ombre
+S’adapter au thème de Windows
+Afficher sous la caméra
+Afficher centré sur le curseur
+Gestionnaire de modules
+Parcourir les modules

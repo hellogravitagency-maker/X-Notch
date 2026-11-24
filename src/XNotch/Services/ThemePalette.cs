@@ -5,8 +5,49 @@ using Windows.UI.ViewManagement;
 
 namespace XNotch.Services;
 
-public sealed class ThemePalette
+public sealed record ThemePalette
 {
+    /// <summary>Same palette with a user-picked accent (macOS accent colour picker).</summary>
+    public ThemePalette WithAccent(Color seed)
+    {
+        var bg = Color.FromRgb(Background.R, Background.G, Background.B);
+        var accent = EnsureContrast(seed, bg, MinimumAccentContrast);
+        return this with
+        {
+            Accent = accent,
+            AccentPressed = Mix(accent, IsLight ? Colors.Black : Colors.White, IsLight ? 0.16 : 0.12),
+            AccentSoft = WithAlpha(accent, (byte)(IsLight ? 0x26 : 0x36)),
+            AccentText = PickReadableForeground(accent, MinimumTextContrast),
+            FocusRing = accent,
+            VisualizerBar = UseLiquidGlass ? VisualizerBar : accent,
+        };
+    }
+
+    // Apple system colours (dark appearance) used by the solid themes.
+    private static readonly Color AppleGreen = Color.FromRgb(0x30, 0xD1, 0x58);
+    private static readonly Color AppleOrange = Color.FromRgb(0xFF, 0x9F, 0x0A);
+    private static readonly Color AppleRed = Color.FromRgb(0xFF, 0x45, 0x3A);
+
+    /// <summary>Glassmorphism: the window shows the blurred desktop; this tint sits on top.</summary>
+    public static ThemePalette CreateGlass() =>
+        CreateCustom(Color.FromArgb(0x8C, 0x16, 0x16, 0x1A), Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF), Color.FromArgb(0x3A, 0xFF, 0xFF, 0xFF),
+            Colors.White, Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF), DetectSystemAccentColor(),
+            success: AppleGreen, warning: AppleOrange, danger: AppleRed) with { UseReducedMotion = ReduceMotion() };
+
+    /// <summary>Graphite: monochrome greys, graphite accent (macOS "Graphite").</summary>
+    public static ThemePalette CreateGraphite() =>
+        CreateCustom(Color.FromRgb(0x23, 0x23, 0x26), Color.FromRgb(0x2E, 0x2E, 0x32), Color.FromRgb(0x3A, 0x3A, 0x3F),
+            Color.FromRgb(0xF2, 0xF2, 0xF4), Color.FromRgb(0x48, 0x48, 0x4E), Color.FromRgb(0x98, 0x98, 0x9D),
+            success: AppleGreen, warning: AppleOrange, danger: AppleRed) with { UseReducedMotion = ReduceMotion() };
+
+    /// <summary>OLED black: the island disappears into a real camera notch.</summary>
+    public static ThemePalette CreateOled() =>
+        CreateCustom(Colors.Black, Color.FromRgb(0x12, 0x12, 0x14), Color.FromRgb(0x1C, 0x1C, 0x1E),
+            Colors.White, Color.FromRgb(0x26, 0x26, 0x28), DetectSystemAccentColor(),
+            success: AppleGreen, warning: AppleOrange, danger: AppleRed) with { UseReducedMotion = ReduceMotion() };
+
+    private static bool ReduceMotion() => SystemParameters.HighContrast || !SystemParameters.ClientAreaAnimation;
+
     private const double MinimumTextContrast = 4.5;
     private const double MinimumAccentContrast = 3.0;
 
@@ -229,9 +270,10 @@ public sealed class ThemePalette
         var accentSoft = WithAlpha(accent, (byte)(isLight ? 0x26 : 0x36));
         var accentText = PickReadableForeground(accent, MinimumTextContrast);
 
-        var success = EnsureContrast(Color.FromRgb(0x1E, 0xB8, 0x4B), readabilityBackground, MinimumAccentContrast);
-        var warning = EnsureContrast(Color.FromRgb(0xC9, 0x7A, 0x00), readabilityBackground, MinimumAccentContrast);
-        var danger = EnsureContrast(Color.FromRgb(0xD8, 0x3B, 0x32), readabilityBackground, MinimumAccentContrast);
+        // Apple system green / orange / red for the current appearance.
+        var success = EnsureContrast(isLight ? Color.FromRgb(0x34, 0xC7, 0x59) : AppleGreen, readabilityBackground, MinimumAccentContrast);
+        var warning = EnsureContrast(isLight ? Color.FromRgb(0xFF, 0x95, 0x00) : AppleOrange, readabilityBackground, MinimumAccentContrast);
+        var danger = EnsureContrast(isLight ? Color.FromRgb(0xFF, 0x3B, 0x30) : AppleRed, readabilityBackground, MinimumAccentContrast);
         var focusRing = EnsureContrast(accent, readabilityBackground, MinimumAccentContrast);
 
         var disabledBackground = Mix(surfaceRaised, textPrimary, isLight ? 0.06 : 0.12);

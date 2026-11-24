@@ -54,6 +54,13 @@ public static class TerminalFocusHelper
         return false;
     }
 
+    /// <summary>Hooks carry no Windows PID, so bring the first terminal window forward.</summary>
+    public static bool FocusAnyTerminal()
+    {
+        var term = FindParentProcess(Process.GetCurrentProcess());
+        return term != null && FocusProcessWindow(term.Id);
+    }
+
     private static Process? FindParentProcess(Process process)
     {
         try

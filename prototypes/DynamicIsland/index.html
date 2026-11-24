@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en" data-theme="black">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X-Notch Island Prototype</title>
+<!--
+  X-Notch Dynamic Island prototype.
+  Purpose: agree on look + motion before porting to WPF (NotchWindow / NotchConstants).
+  Everything the port needs lives in SPEC (sizes px @100% DPI, spring response/damping).
+-->
+<style>
+:root{
+  --tint:#ff3d6e;
+  --ease:cubic-bezier(.23,1,.32,1);
+  --island:#000;
+  --fg:#fff; --fg2:rgba(255,255,255,.62); --fg3:rgba(255,255,255,.38);
+  --tile:rgba(255,255,255,.13);
+  --orange:#ff9f0a; --green:#30d158; --blue:#0a84ff; --purple:#5e5ce6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;overflow:hidden;background:#140c28;color:var(--fg);
+  font:13px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;user-select:none}
+.mono{font-variant-numeric:tabular-nums}
+.wall{position:fixed;inset:0;background:
+  radial-gradient(55% 45% at 18% 28%,#ff6a3d 0,transparent 62%),
+  radial-gradient(45% 55% at 82% 18%,#7b3dff 0,transparent 62%),
+  radial-gradient(70% 60% at 58% 92%,#00a8ff 0,transparent 60%),#1a1030}
+.menubar{position:fixed;inset:0 0 auto;height:32px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;background:rgba(0,0,0,.2);backdrop-filter:blur(30px) saturate(160%);font-weight:600;letter-spacing:-.01em}
+.menubar span{font-weight:500;color:var(--fg2);margin-left:16px}
+
+/* ---------- island ---------- */
+.shell{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:10;transition:top .35s var(--ease)}
+[data-theme=glass] .shell{top:6px}
+.island{position:relative;overflow:hidden;width:200px;height:32px;border-radius:0 0 12px 12px;
+  background:var(--island);touch-action:none;
+  box-shadow:0 12px 30px -14px rgba(0,0,0,.7);transition:background .3s,box-shadow .3s}
+/* concave flares where the black notch meets the screen edge (Mac notch) */
+.shell::before,.shell::after{content:"";position:absolute;top:0;width:10px;height:10px;pointer-events:none}
+.shell::before{left:-10px;background:radial-gradient(circle at 0 100%,transparent 9.5px,#000 10px)}
+.shell::after{right:-10px;background:radial-gradient(circle at 100% 100%,transparent 9.5px,#000 10px)}
+[data-theme=glass] .shell::before,[data-theme=glass] .shell::after{display:none}
+[data-theme=glass] .island{background:rgba(26,26,32,.42);backdrop-filter:blur(28px) saturate(190%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,255,255,.12),0 18px 40px -14px rgba(0,0,0,.55)}
+@media (prefers-reduced-transparency:reduce){[data-theme=glass] .island{background:rgba(26,26,32,.94);backdrop-filter:none}}
+
+/* adaptive album glow, sits behind the island */
+.glow{position:absolute;inset:4px 14px -8px;border-radius:999px;background:var(--tint);filter:blur(22px);
+  opacity:0;z-index:-1;pointer-events:none;transition:opacity .6s,background .8s,inset .5s var(--ease)}
+.shell.playing .glow{opacity:.55}
+.shell.big .glow{inset:24px 30px -10px;opacity:.42}
+
+/* content layers: one per state, crossfade with blur, grow out of the notch */
+.layer{position:absolute;top:0;left:50%;transform:translateX(-50%) scale(.92);transform-origin:50% 0;
+  opacity:0;filter:blur(6px);pointer-events:none;
+  transition:opacity .12s,filter .12s,transform .3s var(--ease)}
+.layer.on{opacity:1;filter:blur(0);transform:translateX(-50%) scale(1);pointer-events:auto;
+  transition-delay:.06s;transition-duration:.24s,.24s,.42s}
+.cpt{height:100%;max-height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;gap:8px}
+@media (prefers-reduced-motion:reduce){.layer,.layer.on{filter:none;transform:translateX(-50%)}}
+
+.art{display:block;object-fit:cover;background:var(--tile)}
+.art.sm{width:22px;height:22px;border-radius:6px}
+.xp .art{width:58px;height:58px;border-radius:14px;box-shadow:0 6px 18px -6px var(--tint)}
+.wave{display:flex;align-items:center;gap:2.5px;height:16px}
+.wave i{width:3px;height:100%;border-radius:2px;background:var(--tint);transform:scaleY(.2);transition:background .8s}
+.wave.w5{height:22px;gap:3px}.wave.w5 i{width:3.5px}
+
+.orange{color:var(--orange)}.green{color:var(--green)}
+.t-left{font-weight:600;font-size:13px}
+.pill-label{font-weight:600;font-size:12.5px}
+.batt{display:flex;align-items:center;gap:6px;font-weight:600;font-size:12.5px}
+.bat{position:relative;width:24px;height:12px;border:1.5px solid rgba(255,255,255,.45);border-radius:4px;padding:1px}
+.bat i{display:block;height:100%;border-radius:2px;background:var(--green)}
+.bat::after{content:"";position:absolute;right:-4px;top:3px;width:2px;height:4px;border-radius:0 1px 1px 0;background:rgba(255,255,255,.45)}
+.hudbar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}
+.hudbar i{display:block;height:100%;background:#fff;border-radius:3px;transform-origin:0 50%;transition:transform .12s var(--ease)}
+.hud-val{width:26px;text-align:right;font-weight:600;font-size:12px;color:var(--fg2)}
+.idle-moon{color:var(--purple);display:none}
+.focus-on .idle-moon{display:block}
+
+/* notification */
+.ncard{display:flex;align-items:center;gap:12px;height:78px;padding:0 18px}
+.nicon{flex:none;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:#fff}
+.ntext{min-width:0;flex:1}
+.nrow{display:flex;justify-content:space-between;color:var(--fg2);font-size:11.5px;margin-bottom:1px}
+.ntitle{display:block;font-size:13.5px;letter-spacing:-.01em}
+.nbody{display:block;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* expanded */
+.xp{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px}
+.xm{display:flex;align-items:center;gap:14px}
+.meta{flex:1;min-width:0}
+.meta b{display:block;font-size:15px;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta span{display:block;color:var(--fg2);margin-top:1px}
+.scrub{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--fg3)}
+.scrub span{width:34px}.scrub span:last-child{text-align:right}
+.transport{display:flex;justify-content:center;gap:22px;margin-top:-4px}
+.nomusic .scrub,.nomusic .transport,.nomusic .xm .wave{display:none}
+.nomusic .xp .art,.nomusic .art{opacity:.35}
+
+.ib{border:0;background:none;color:inherit;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;
+  padding:0;cursor:pointer;transition:transform .12s var(--ease),background .2s}
+.ib.big{width:46px;height:46px}
+.ib:active{transform:scale(.88)}
+@media (hover:hover){.ib:hover{background:rgba(255,255,255,.1)}}
+
+.chip{display:none;align-items:center;gap:10px;height:40px;padding:0 6px 0 14px;border-radius:20px;background:rgba(255,159,10,.14);color:var(--orange)}
+.has-timer .chip{display:flex}
+.chip .mono{flex:1;font-weight:600;font-size:14px}
+.chip button{border:0;height:28px;padding:0 12px;border-radius:14px;background:rgba(255,159,10,.22);color:var(--orange);font:inherit;font-weight:600;cursor:pointer;transition:transform .12s var(--ease)}
+.chip button:active{transform:scale(.95)}
+
+.cc{display:flex;gap:16px;align-items:center}
+.tiles{display:flex;gap:10px}
+.tile{width:44px;height:44px;border-radius:50%;border:0;background:var(--tile);color:#fff;display:grid;place-items:center;cursor:pointer;
+  transition:transform .14s var(--ease),background .25s}
+.tile:active{transform:scale(.92)}
+.tile.on{background:var(--blue)}
+.tile.on[data-tog=focus]{background:var(--purple)}
+.sliders{flex:1;display:flex;flex-direction:column;gap:8px}
+.sl{position:relative;display:block}
+.sl svg{position:absolute;left:9px;top:6px;color:rgba(0,0,0,.55);pointer-events:none}
+
+.range{-webkit-appearance:none;appearance:none;display:block;width:100%;margin:0;height:var(--h,5px);border-radius:99px;outline:none;cursor:pointer;
+  background:linear-gradient(90deg,var(--fill,#fff) var(--v,50%),rgba(255,255,255,.16) 0);transition:height .2s var(--ease)}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:1px;height:var(--h,5px);background:transparent}
+.range::-moz-range-thumb{width:1px;height:1px;border:0;background:transparent}
+.scrub .range:hover,.scrub .range:active{--h:9px}
+.range.thick{--h:26px;border-radius:13px}
+.range:focus-visible{box-shadow:0 0 0 2px var(--blue)}
+
+/* detached bubble (split island) */
+.bubble{position:fixed;top:0;width:34px;height:34px;border-radius:50%;background:var(--island);z-index:10;
+  display:grid;place-items:center;visibility:hidden;cursor:pointer;transition:background .3s,top .35s var(--ease)}
+[data-theme=black] .bubble{top:1px}
+[data-theme=glass] .bubble{top:6px;background:rgba(26,26,32,.42);backdrop-filter:blur(28px) saturate(190%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,255,255,.12)}
+.ring circle{fill:none;stroke-width:3}
+.ring .bg{stroke:rgba(255,159,10,.25)}
+.ring .fg{stroke:var(--orange);stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%}
+
+/* ---------- prototype controls (not part of the island) ---------- */
+.controls{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(760px,calc(100vw - 32px));
+  padding:14px 16px;border-radius:22px;background:rgba(20,20,28,.5);backdrop-filter:blur(30px) saturate(170%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 20px 50px -20px rgba(0,0,0,.6)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row+.row{margin-top:10px}
+.btn{height:32px;padding:0 13px;border-radius:99px;border:0;background:rgba(255,255,255,.13);color:#fff;font:inherit;font-weight:500;cursor:pointer;
+  transition:transform .12s var(--ease),background .2s,color .2s}
+.btn:active{transform:scale(.96)}
+.btn.on{background:#fff;color:#000}
+.btn kbd{font:inherit;font-size:11px;opacity:.5;margin-left:6px}
+.readout{font-size:12px;color:var(--fg2)}
+.readout b{color:#fff;font-weight:600}
+.hint{font-size:12px;color:var(--fg3)}
+.sep{flex:1}
+</style>
+</head>
+<body>
+<div class="wall"></div>
+<header class="menubar"><div>X-Notch<span>File</span><span>Edit</span><span>View</span></div><div id="clock" class="mono"></div></header>
+
+<div class="shell" id="shell">
+  <div class="glow"></div>
+  <div class="island" id="island">
+
+    <div class="layer cpt" data-s="idle"><span class="idle-moon" data-i="moon" data-sz="14"></span><span></span></div>
+
+    <div class="layer cpt" data-s="music"><img class="art sm" alt=""><div class="wave"><i></i><i></i><i></i><i></i></div></div>
+
+    <div class="layer cpt" data-s="split"><img class="art sm" alt=""><div class="wave"><i></i><i></i><i></i><i></i></div></div>
+
+    <div class="layer cpt" data-s="timer"><span class="orange" data-i="timer" data-sz="17"></span><span class="t-left mono orange tm-left">5:00</span></div>
+
+    <div class="layer cpt" data-s="charge"><span class="pill-label green">Charging</span>
+      <span class="batt mono">82%<i class="bat"><i style="width:82%"></i></i></span></div>
+
+    <div class="layer cpt" data-s="silenced"><span style="color:var(--purple)" data-i="moon" data-sz="15"></span><span class="pill-label" style="color:var(--fg2)">Notification silenced</span></div>
+
+    <div class="layer cpt" data-s="hud" style="gap:12px"><span data-i="speaker" data-sz="17" id="hudIco"></span>
+      <div class="hudbar"><i id="hudFill"></i></div><span class="hud-val mono" id="hudVal">60</span></div>
+
+    <div class="layer" data-s="notif">
+      <div class="ncard" id="ncard">
+        <div class="nicon" id="nicon"></div>
+        <div class="ntext"><div class="nrow"><span id="napp">Messages</span><span>now</span></div>
+          <b class="ntitle" id="ntitle"></b><span class="nbody" id="nbody"></span></div>
+      </div>
+    </div>
+
+    <div class="layer xp" data-s="expanded">
+      <div class="xm">
+        <img class="art" alt="">
+        <div class="meta"><b class="t-title">Not Playing</b><span class="t-artist">Press M to start music</span></div>
+        <div class="wave w5"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="scrub mono"><span class="t-cur">0:00</span>
+        <input type="range" class="range" id="prog" min="0" max="1000" value="0" aria-label="Playback position">
+        <span class="t-rem">-0:00</span></div>
+      <div class="transport">
+        <button class="ib" data-act="prev" aria-label="Previous track" data-i="prev" data-sz="22"></button>
+        <button class="ib big" data-act="play" aria-label="Play or pause" id="ppBtn"></button>
+        <button class="ib" data-act="next" aria-label="Next track" data-i="next" data-sz="22"></button>
+      </div>
+      <div class="chip"><span data-i="timer" data-sz="18"></span><span class="mono tm-left">5:00</span><button data-act="timer">Stop</button></div>
+      <div class="cc">
+        <div class="tiles">
+          <button class="tile on" data-tog="wifi" aria-label="Wi-Fi" data-i="wifi" data-sz="19"></button>
+          <button class="tile on" data-tog="bt" aria-label="Bluetooth" data-i="bt" data-sz="19"></button>
+          <button class="tile" data-tog="focus" aria-label="Focus" data-i="moon" data-sz="18"></button>
+          <button class="tile" data-tog="airdrop" aria-label="AirDrop" data-i="airdrop" data-sz="19"></button>
+        </div>
+        <div class="sliders">
+          <label class="sl"><span data-i="speaker" data-sz="14"></span><input type="range" class="range thick" id="vol" min="0" max="100" aria-label="Volume"></label>
+          <label class="sl"><span data-i="sun" data-sz="14"></span><input type="range" class="range thick" id="bri" min="0" max="100" aria-label="Brightness"></label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="bubble" id="bubble" title="Timer">
+  <svg class="ring" width="24" height="24" viewBox="0 0 24 24"><circle class="bg" cx="12" cy="12" r="9"/><circle class="fg" id="ringFg" cx="12" cy="12" r="9"/></svg>
+</div>
+
+<aside class="controls" id="controls">
+  <div class="row">
+    <div class="readout">State <b id="roState">idle</b> · <span class="mono" id="roDims">200 × 32</span></div>
+    <div class="sep"></div>
+    <button class="btn on" data-act="theme-black">True black</button>
+    <button class="btn" data-act="theme-glass">Liquid Glass</button>
+  </div>
+  <div class="row">
+    <button class="btn" data-act="music">Music<kbd>M</kbd></button>
+    <button class="btn" data-act="play">Play/Pause<kbd>P</kbd></button>
+    <button class="btn" data-act="next">Next track</button>
+    <button class="btn" data-act="timer">Timer<kbd>T</kbd></button>
+    <button class="btn" data-act="notif">Notification<kbd>N</kbd></button>
+    <button class="btn" data-act="vol">Volume HUD<kbd>↑↓</kbd></button>
+    <button class="btn" data-act="charge">Charging<kbd>C</kbd></button>
+    <button class="btn" data-act="expand">Expand<kbd>E</kbd></button>
+  </div>
+  <div class="row hint">Hover to peek · click or pull the island down to expand · flick up or Esc to close · swipe a notification sideways to dismiss · Music + Timer = split island</div>
+</aside>
+
+<script>
+// ================= SPEC: the port contract for WPF NotchConstants =================
+const SPEC = {
+  idle:     { w: 200, h: 32, r: 12 },      // r = bottom radius (black) ; glass uses pill radius
+  music:    { w: 300, h: 34 },
+  split:    { w: 248, h: 34 },
+  timer:    { w: 272, h: 34 },
+  charge:   { w: 300, h: 34 },
+  silenced: { w: 300, h: 34 },
+  hud:      { w: 330, h: 40 },
+  notif:    { w: 400, h: 78, r: 28 },
+  expanded: { w: 540, h: 0,  r: 36 },      // h measured from content
+  peek:     { dw: 14, dh: 3 },
+  bubble:   { size: 34, gap: 8 },
+  springs: {                               // Apple response (s) / damping ratio
+    open:  { response: .46, damping: .74 },  // momentum-driven, a little bounce
+    close: { response: .36, damping: .92 },
+    morph: { response: .40, damping: .82 },
+    peek:  { response: .28, damping: .86 },
+  },
+  dragRange: 180,                           // px of pull for a full open
+};
+
+// ================= tiny helpers =================
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = s => `${(s / 60) | 0}:${String((s % 60) | 0).padStart(2, '0')}`;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const canHover = matchMedia('(hover: hover)').matches;
+const project = (v, d = .998) => (v / 1000) * d / (1 - d);                 // Apple momentum projection
+const rubber = (o, dim = 1, c = .55) => (o * dim * c) / (dim + c * Math.abs(o));
+
+const ICONS = {
+  play: '<path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/>',
+  pause: '<rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/>',
+  next: '<path d="M5 6.2v11.6a.8.8 0 0 0 1.2.7l8.3-5.8a.8.8 0 0 0 0-1.4L6.2 5.5a.8.8 0 0 0-1.2.7z"/><rect x="16" y="5.5" width="2.6" height="13" rx="1"/>',
+  prev: '<path d="M19 6.2v11.6a.8.8 0 0 1-1.2.7l-8.3-5.8a.8.8 0 0 1 0-1.4l8.3-5.8a.8.8 0 0 1 1.2.7z"/><rect x="5.4" y="5.5" width="2.6" height="13" rx="1"/>',
+  wifi: '<path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.4a9.5 9.5 0 0 1 13 0M8.6 15.7a5 5 0 0 1 6.8 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="19.2" r="1.7"/>',
+  bt: '<path d="M7 7.5l10 9-5 4.5V3l5 4.5-10 9" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>',
+  moon: '<path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/>',
+  airdrop: '<circle cx="12" cy="12.5" r="2.4"/><path d="M7.6 17a6.3 6.3 0 1 1 8.8 0M4.7 19.9a10.4 10.4 0 1 1 14.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  speaker: '<path d="M3.5 9.5h3.8L12 5.6v12.8l-4.7-3.9H3.5z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.3 6.3a8 8 0 0 1 0 11.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  timer: '<circle cx="12" cy="13.5" r="7.5" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M12 9.5v4.2l2.6 2M9.5 2.8h5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>',
+  bell: '<path d="M12 3a6 6 0 0 0-6 6v4l-1.8 3h15.6L18 13V9a6 6 0 0 0-6-6zM9.8 19a2.3 2.3 0 0 0 4.4 0z"/>',
+  bolt: '<path d="M13.5 2 4.5 13.6h6.3L9.6 22l9.9-12.4h-6.6z"/>',
+};
+const ico = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${ICONS[n]}</svg>`;
+$$('[data-i]').forEach(el => el.insertAdjacentHTML('afterbegin', ico(el.dataset.i, +el.dataset.sz || 18)));
+
+// ================= spring (Apple response/damping → k/c, mass 1) =================
+class Spring {
+  constructor(x, eps = .05) { this.x = this.t = x; this.v = 0; this.eps = eps; this.cfg(SPEC.springs.morph); }
+  cfg({ response, damping }) {
+    if (reduce.matches) { response = .22; damping = 1; }
+    this.k = (2 * Math.PI / response) ** 2; this.c = 4 * Math.PI * damping / response;
+  }
+  to(t, c) { this.t = t; if (c) this.cfg(c); }
+  snap(x) { this.x = this.t = x; this.v = 0; }
+  step(dt) { this.v += (-this.k * (this.x - this.t) - this.c * this.v) * dt; this.x += this.v * dt; }
+  get done() { return Math.abs(this.x - this.t) < this.eps && Math.abs(this.v) < this.eps; }
+}
+const S = { w: new Spring(200), h: new Spring(32), r: new Spring(12), b: new Spring(0, .002) };
+
+// ================= model =================
+const root = document.documentElement, shell = $('#shell'), island = $('#island'), bubble = $('#bubble');
+const st = {
+  theme: 'black', music: false, playing: false, track: 0, elapsed: 0,
+  timer: null, vol: 60, bri: 80, expanded: false, transient: null, hover: false,
+  tog: { wifi: true, bt: true, focus: false, airdrop: false },
+};
+const base = () => st.music && st.timer ? 'split' : st.music ? 'music' : st.timer ? 'timer' : 'idle';
+const view = () => st.expanded ? 'expanded' : st.transient?.kind || base();
+const xpLayer = $('[data-s=expanded]');
+$$('.layer').forEach(l => l.style.width = SPEC[l.dataset.s].w + 'px');
+
+function dimsOf(v, peek = st.hover && !st.expanded && v !== 'notif') {
+  const s = SPEC[v], d = { w: s.w, h: v === 'expanded' ? xpLayer.offsetHeight : s.h };
+  if (peek && v !== 'expanded') { d.w += SPEC.peek.dw; d.h += SPEC.peek.dh; }
+  d.r = s.r ?? d.h / 2;
+  if (st.theme === 'glass' && v === 'idle') d.r = d.h / 2;
+  return d;
+}
+
+// ================= render loop =================
+let raf = 0, last = 0, current = 'idle', drag = null;
+function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 1 / 30); last = now;
+  const n = Math.ceil(dt / .004);
+  for (const s of Object.values(S)) for (let i = 0; i < n; i++) s.step(dt / n);
+  apply();
+  if (!drag?.active && Object.values(S).every(s => s.done)) {
+    Object.values(S).forEach(s => s.snap(s.t)); apply(); raf = 0; return;
+  }
+  raf = requestAnimationFrame(frame);
+}
+function apply() {
+  const w = S.w.x, h = Math.max(S.h.x, 10), r = clamp(S.r.x, 0, Math.min(h, w) / 2);
+  island.style.width = w + 'px'; island.style.height = h + 'px';
+  island.style.borderRadius = st.theme === 'glass' ? `${r}px` : `0 0 ${r}px ${r}px`;
+  const b = S.b.x, g = SPEC.bubble;
+  bubble.style.visibility = b < .01 ? 'hidden' : 'visible';
+  bubble.style.opacity = clamp(b, 0, 1);
+  bubble.style.left = `calc(50% + ${w / 2 + g.gap}px)`;
+  bubble.style.transform = `translateX(${(1 - b) * -(g.size + g.gap)}px) scale(${.4 + .6 * b})`;
+}
+function showLayer(v) { if (v !== current) { current = v; $$('.layer').forEach(l => l.classList.toggle('on', l.dataset.s === v)); } }
+
+function render(cfg) {
+  sync();
+  const prev = current, v = view(), d = dimsOf(v);
+  showLayer(v);
+  cfg ??= v === 'expanded' && prev !== 'expanded' ? SPEC.springs.open
+       : prev === 'expanded' && v !== 'expanded' ? SPEC.springs.close : SPEC.springs.morph;
+  if (!drag?.active) { S.w.to(d.w, cfg); S.h.to(d.h, cfg); S.r.to(d.r, cfg); }
+  S.b.to(v === 'split' ? 1 : 0, SPEC.springs.open);
+  $('#roState').textContent = v + (st.hover && v !== 'expanded' ? ' (peek)' : '');
+  $('#roDims').textContent = `${Math.round(d.w)} × ${Math.round(d.h)}  r${Math.round(d.r)}`;
+  kick();
+}
+
+// DOM that depends on model (classes, icons, chip) – runs before measuring
+function sync() {
+  shell.classList.toggle('playing', st.music && st.playing);
+  shell.classList.toggle('big', view() === 'expanded');
+  island.classList.toggle('has-timer', !!st.timer);
+  island.classList.toggle('nomusic', !st.music);
+  island.classList.toggle('focus-on', st.tog.focus);
+  $('#ppBtn').innerHTML = ico(st.playing ? 'pause' : 'play', 26);
+  $$('.tile').forEach(t => t.classList.toggle('on', st.tog[t.dataset.tog]));
+  $$('[data-act^=theme]').forEach(b => b.classList.toggle('on', b.dataset.act === 'theme-' + st.theme));
+  $$('[data-act=music]').forEach(b => b.classList.toggle('on', st.music));
+  $$('.controls [data-act=timer]').forEach(b => b.classList.toggle('on', !!st.timer));
+  paintSliders();
+}
+
+// ================= music + adaptive tint =================
+const TRACKS = [
+  { title: 'Midnight Drive', artist: 'Neon Coast', dur: 204, c: ['#ff3d6e', '#5b21d6'] },
+  { title: 'Glass Gardens', artist: 'Aurel', dur: 187, c: ['#19d3a2', '#0a3fd6'] },
+  { title: 'Ember Season', artist: 'Sol Vega', dur: 221, c: ['#ffb21f', '#c2185b'] },
+];
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+// Port note: same algorithm in WPF on a 12×12 downscale of the SMTC thumbnail.
+function dominant(img) {
+  const c = document.createElement('canvas'); c.width = c.height = 12;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0, 12, 12);
+  const d = g.getImageData(0, 0, 12, 12).data; let r = 0, gg = 0, b = 0, wt = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const w = (Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2])) / 255 + .05; // favour saturated pixels
+    r += d[i] * w; gg += d[i + 1] * w; b += d[i + 2] * w; wt += w;
+  }
+  const [h, s, l] = rgbToHsl(r / wt, gg / wt, b / wt);
+  return `hsl(${Math.round(h * 360)} ${Math.round(Math.max(s, .6) * 100)}% ${Math.round(clamp(l, .55, .68) * 100)}%)`;
+}
+TRACKS.forEach(t => {   // fake album art (real app: SMTC thumbnail)
+  const c = document.createElement('canvas'); c.width = c.height = 120; const g = c.getContext('2d');
+  const lg = g.createLinearGradient(0, 0, 120, 120); lg.addColorStop(0, t.c[0]); lg.addColorStop(1, t.c[1]);
+  g.fillStyle = lg; g.fillRect(0, 0, 120, 120);
+  const rg = g.createRadialGradient(80, 40, 4, 80, 40, 58); rg.addColorStop(0, 'rgba(255,255,255,.55)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, 120, 120);
+  g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 4; g.beginPath(); g.arc(40, 82, 22, 0, 7); g.stroke();
+  t.art = c.toDataURL(); t.tint = dominant(c);
+});
+function setTrack(i) {
+  st.track = (i + TRACKS.length) % TRACKS.length; st.elapsed = 0;
+  const t = TRACKS[st.track];
+  $$('.art').forEach(a => a.src = t.art);
+  root.style.setProperty('--tint', t.tint);
+  paint();
+}
+
+// waveform: smooth random bars while playing (compositor-only scaleY)
+const bars = $$('.wave i'), wv = [0, 1, 2, 3, 4].map(() => ({ x: .2, t: .2 }));
+let waveRaf = 0, lastPick = 0;
+function wave(now) {
+  if (now - lastPick > 140) {
+    lastPick = now;
+    wv.forEach((b, i) => b.t = !st.playing ? .18 : reduce.matches ? [.5, .9, .6, .8, .4][i] : .25 + Math.random() * .75);
+  }
+  let moving = false;
+  wv.forEach(b => { b.x += (b.t - b.x) * .22; if (Math.abs(b.t - b.x) > .004) moving = true; });
+  bars.forEach((el, i) => el.style.transform = `scaleY(${wv[i % 5].x})`);
+  waveRaf = st.playing || moving ? requestAnimationFrame(wave) : 0;
+}
+const startWave = () => { if (!waveRaf) waveRaf = requestAnimationFrame(wave); };
+
+// ================= transients (notification / HUD / charging) =================
+let tTimer = 0;
+function flash(kind, ms, data = {}) {
+  if (st.expanded && kind !== 'notif') return render();         // expanded already shows volume etc.
+  st.expanded = false; st.transient = { kind, ms, ...data };
+  clearTimeout(tTimer); if (ms && !st.hover) tTimer = setTimeout(endTransient, ms);
+  render();
+}
+function endTransient() { st.transient = null; resetCard(); render(); }
+
+const NOTES = [
+  { app: 'Messages', title: 'Maya', body: 'Are we still on for 7? I booked the table.', color: '#30d158', icon: 'bell' },
+  { app: 'Calendar', title: 'Design review', body: 'In 10 minutes · Room 4', color: '#ff453a', icon: 'bell' },
+  { app: 'Xcode Cloud', title: 'Build 842 passed', body: 'All 128 tests green on main.', color: '#0a84ff', icon: 'bolt' },
+];
+let noteIx = 0;
+function notify(n = NOTES[noteIx++ % NOTES.length]) {
+  if (st.tog.focus) return flash('silenced', 1600);              // Focus mode silences banners
+  $('#napp').textContent = n.app; $('#ntitle').textContent = n.title; $('#nbody').textContent = n.body;
+  $('#nicon').style.background = n.color; $('#nicon').innerHTML = ico(n.icon, 22);
+  resetCard(); flash('notif', 4500);
+}
+const card = $('#ncard');
+function resetCard() { card.getAnimations().forEach(a => a.cancel()); card.style.transform = ''; card.style.opacity = ''; }
+function dismissNotif(dx, dy) {
+  card.animate([{ transform: card.style.transform || 'none', opacity: card.style.opacity || 1 },
+                { transform: `translate(${dx * 420}px, ${dy * 40}px)`, opacity: 0 }],
+               { duration: 180, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'forwards' });
+  clearTimeout(tTimer); tTimer = setTimeout(endTransient, 120);
+}
+function springBack() {
+  card.animate([{ transform: card.style.transform, opacity: card.style.opacity }, { transform: 'none', opacity: 1 }],
+               { duration: 320, easing: 'cubic-bezier(.23,1,.32,1)' });
+  card.style.transform = ''; card.style.opacity = '';
+}
+
+function setVol(v, hud = true) {
+  st.vol = clamp(Math.round(v), 0, 100);
+  $('#hudFill').style.transform = `scaleX(${st.vol / 100})`; $('#hudVal').textContent = st.vol;
+  if (hud) flash('hud', 1400); else paintSliders();
+}
+
+// ================= timer =================
+function toggleTimer() { st.timer = st.timer ? null : { end: Date.now() + 5 * 60e3, total: 5 * 60e3 }; paint(); render(); }
+
+// ================= periodic paint (text, progress) =================
+const prog = $('#prog'), ringFg = $('#ringFg'), RING = 2 * Math.PI * 9;
+ringFg.style.strokeDasharray = RING;
+let progDrag = false;
+function paint() {
+  const t = TRACKS[st.track];
+  $$('.t-title').forEach(e => e.textContent = st.music ? t.title : 'Not Playing');
+  $$('.t-artist').forEach(e => e.textContent = st.music ? t.artist : 'Press M to start music');
+  $$('.t-cur').forEach(e => e.textContent = fmt(st.elapsed));
+  $$('.t-rem').forEach(e => e.textContent = '-' + fmt(t.dur - st.elapsed));
+  if (!progDrag) { prog.value = st.elapsed / t.dur * 1000; prog.style.setProperty('--v', prog.value / 10 + '%'); }
+  if (st.timer) {
+    const left = Math.max(0, st.timer.end - Date.now());
+    $$('.tm-left').forEach(e => e.textContent = fmt(Math.ceil(left / 1000)));
+    ringFg.style.strokeDashoffset = RING * (1 - left / st.timer.total);
+  }
+  $('#clock').textContent = new Date().toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+}
+function paintSliders() {
+  for (const [id, v] of [['vol', st.vol], ['bri', st.bri]]) { const el = $('#' + id); el.value = v; el.style.setProperty('--v', v + '%'); }
+}
+setInterval(() => {
+  if (st.music && st.playing && (st.elapsed += .25) >= TRACKS[st.track].dur) setTrack(st.track + 1);
+  if (st.timer && Date.now() >= st.timer.end) {
+    st.timer = null; render();
+    notify({ app: 'Clock', title: 'Timer done', body: '5:00 focus session complete', color: '#ff9f0a', icon: 'timer' });
+  }
+  paint();
+}, 250);
+
+// ================= actions =================
+const ACT = {
+  music() { st.music = !st.music; st.playing = st.music; if (st.music) setTrack(st.track); startWave(); render(); },
+  play() { if (!st.music) return ACT.music(); st.playing = !st.playing; startWave(); render(); },
+  next() { if (!st.music) return ACT.music(); setTrack(st.track + 1); },
+  prev() { if (!st.music) return; st.elapsed > 3 ? (st.elapsed = 0, paint()) : setTrack(st.track - 1); },
+  timer: toggleTimer,
+  notif: () => notify(),
+  vol: () => setVol(st.vol >= 100 ? 20 : st.vol + 10),
+  charge: () => flash('charge', 2600),
+  expand() { st.expanded = !st.expanded; st.transient = null; render(); },
+  'theme-black'() { st.theme = 'black'; root.dataset.theme = 'black'; render(); },
+  'theme-glass'() { st.theme = 'glass'; root.dataset.theme = 'glass'; render(); },
+};
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (a) return ACT[a.dataset.act]();
+  const t = e.target.closest('[data-tog]'); if (t) { st.tog[t.dataset.tog] = !st.tog[t.dataset.tog]; render(); }
+});
+bubble.addEventListener('click', () => { st.expanded = true; st.transient = null; render(); });
+prog.addEventListener('pointerdown', () => progDrag = true);
+prog.addEventListener('input', () => { st.elapsed = prog.value / 1000 * TRACKS[st.track].dur; prog.style.setProperty('--v', prog.value / 10 + '%'); paint(); });
+prog.addEventListener('change', () => progDrag = false);
+$('#vol').addEventListener('input', e => setVol(+e.target.value, false));
+$('#bri').addEventListener('input', e => { st.bri = +e.target.value; paintSliders(); });
+
+window.addEventListener('keydown', e => {
+  if (e.target.matches('input') || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  const map = { m: 'music', p: 'play', t: 'timer', n: 'notif', c: 'charge', e: 'expand' };
+  if (map[k]) return ACT[map[k]]();
+  if (k === 'escape' && (st.expanded || st.transient)) { st.expanded = false; st.transient = null; resetCard(); render(); }
+  if (k === 'arrowup' || k === 'arrowdown') { e.preventDefault(); setVol(st.vol + (k === 'arrowup' ? 6 : -6)); }
+});
+document.addEventListener('pointerdown', e => {   // click outside collapses
+  if (st.expanded && !shell.contains(e.target) && !bubble.contains(e.target) && !$('#controls').contains(e.target)) {
+    st.expanded = false; render();
+  }
+});
+
+// ================= hover peek =================
+if (canHover) {
+  island.addEventListener('pointerenter', () => { st.hover = true; clearTimeout(tTimer); render(SPEC.springs.peek); });
+  island.addEventListener('pointerleave', () => {
+    st.hover = false; render(SPEC.springs.peek);
+    if (st.transient) { clearTimeout(tTimer); tTimer = setTimeout(endTransient, Math.min(st.transient.ms, 2200)); }
+  });
+}
+
+// ================= gestures: pull-to-expand, flick-to-close, swipe notification =================
+island.addEventListener('pointerdown', e => {
+  if (e.button || e.target.closest('button,input,label')) return;
+  drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, from: view(), axis: null, active: false, p: 0,
+           hist: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
+  island.setPointerCapture(e.pointerId);
+});
+island.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+  drag.hist.push({ t: e.timeStamp, x: e.clientX, y: e.clientY }); if (drag.hist.length > 6) drag.hist.shift();
+  if (!drag.axis) {
+    if (Math.hypot(dx, dy) < 6) return;                                   // hysteresis
+    drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; drag.active = true;
+    clearTimeout(tTimer);
+    const open = drag.from === 'expanded';
+    drag.A = dimsOf(open ? base() : drag.from, false); drag.B = dimsOf('expanded', false);
+  }
+  if (drag.axis === 'x') {
+    if (drag.from === 'notif') { card.style.transform = `translateX(${dx}px)`; card.style.opacity = 1 - Math.min(Math.abs(dx) / 300, .7); }
+    return;
+  }
+  if (drag.from === 'notif' && dy < 0) { card.style.transform = `translateY(${-rubber(-dy, 40)}px)`; card.style.opacity = 1 + dy / 120; return; }
+  let p = (drag.from === 'expanded' ? 1 : 0) + dy / SPEC.dragRange;
+  p = p > 1 ? 1 + rubber(p - 1) * .5 : p < 0 ? -rubber(-p) * .3 : p;   // soft edges both ways
+  drag.p = p;
+  const { A, B } = drag, L = (a, b) => a + (b - a) * p;
+  S.w.snap(L(A.w, B.w)); S.h.snap(Math.max(L(A.h, B.h), A.h * .8)); S.r.snap(L(A.r, B.r));
+  showLayer(p > .35 ? 'expanded' : drag.from === 'expanded' ? base() : drag.from);
+  kick();
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag; drag = null;
+  if (!d.active) { if (d.from !== 'expanded') ACT.expand(); return; }      // tap opens
+  const a = d.hist[0], z = d.hist[d.hist.length - 1], dt = Math.max((z.t - a.t) / 1000, .016);
+  const vx = (z.x - a.x) / dt, vy = (z.y - a.y) / dt;
+  if (d.axis === 'x') {
+    const dx = z.x - d.x0;
+    if (d.from === 'notif' && Math.abs(dx + project(vx) * .25) > 150) dismissNotif(Math.sign(dx || vx), 0);
+    else { springBack(); if (st.transient) tTimer = setTimeout(endTransient, 2200); }
+    return;
+  }
+  if (d.from === 'notif' && z.y - d.y0 < 0) {
+    if (z.y - d.y0 + project(vy) * .25 < -30) dismissNotif(0, -1); else { springBack(); tTimer = setTimeout(endTransient, 2200); }
+    return;
+  }
+  const open = d.p + project(vy) / SPEC.dragRange > .5;                    // project momentum, then pick target
+  st.expanded = open; if (open) st.transient = null;
+  current = '';                                                           // force layer refresh
+  render(open ? SPEC.springs.open : SPEC.springs.close);
+  const vp = vy / SPEC.dragRange;                                          // velocity handoff (no seam)
+  S.w.v = vp * (d.B.w - d.A.w); S.h.v = vp * (d.B.h - d.A.h); S.r.v = vp * (d.B.r - d.A.r);
+}
+island.addEventListener('pointerup', endDrag);
+island.addEventListener('pointercancel', endDrag);
+
+// ================= boot =================
+setTrack(0); setVol(st.vol, false); paint(); render();
+</script>
+</body>
+</html>

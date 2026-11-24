@@ -13,6 +13,10 @@ using System.Windows.Interop;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 using MouseButton = System.Windows.Input.MouseButton;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Key = System.Windows.Input.Key;
+using Keyboard = System.Windows.Input.Keyboard;
+using ModifierKeys = System.Windows.Input.ModifierKeys;
 using DragEventArgs = System.Windows.DragEventArgs;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
@@ -62,6 +66,11 @@ public partial class NotchWindow : Window
     private double _currentContentScale;
     private double _currentAuraOpacity;
 
+    // Split island timer bubble (0 = tucked into the island, 1 = detached) + album glow tint
+    private readonly SpringAnimator _bubbleSpring = new(0.46, 0.74);
+    private double _currentBubble;
+    private readonly SolidColorBrush _glowBrush = new(Colors.White);
+
     private double _currentNotificationScale = 0.88;
     private double _currentNotificationTranslate = -3.0;
     private double _currentNotificationOpacity = 0.0;
@@ -104,9 +113,7 @@ public partial class NotchWindow : Window
     private DispatcherTimer? _hoverOpenTimer;
     private DispatcherTimer? _hoverCloseTimer;
     private bool _isMouseOverNotch;
-    private bool _isSettingsExpanded;
     private bool _isContextMenuOpen;
-    private bool _isCommandCenterActive;
 
     // Notifications & Intelligence
     private NotificationItem? _activeNotification;
@@ -150,7 +157,10 @@ public partial class NotchWindow : Window
     /// <summary>Raised when the user opens/closes this island (not for synced changes).</summary>
     public event Action<NotchState>? UserStateChanged;
 
-    /// <summary>Raised after the user changed settings from this island's inline panel.</summary>
+    /// <summary>Raised when the user requests opening the full Settings window.</summary>
+    public event Action? SettingsRequested;
+
+    /// <summary>Raised after the user changed settings.</summary>
     public event Action<AppSettings>? SettingsUpdatedByUser;
 
     /// <summary>Device name of the screen currently hosting this island.</summary>
@@ -199,6 +209,7 @@ public partial class NotchWindow : Window
         InitializeComponent();
 
         _settings = settings;
+        ApplyMotionPreferences(settings);
         _isPrimary = isPrimary;
         _screenDevice = screenDevice;
         _vm = new NotchViewModel();
@@ -222,10 +233,11 @@ public partial class NotchWindow : Window
         _currentHeight = NotchConstants.ClosedHeight;
         _currentTopRadius = NotchConstants.ClosedTopRadius;
         _currentBottomRadius = NotchConstants.ClosedBottomRadius;
-        _currentShadowOpacity = _settings.ShowShadow ? 0.6 : 0.0;
+        _currentShadowOpacity = 0.0;
         _currentContentOpacity = 0.0;
         _currentContentScale = 0.92;
         _currentAuraOpacity = 0.0;
+        AmbientAuraPath.Fill = _glowBrush;
 
         // Shared services
         _services = services;
@@ -243,6 +255,21 @@ public partial class NotchWindow : Window
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
         Deactivated += OnNotchDeactivated;
+        PreviewKeyDown += OnNotchPreviewKeyDown;
+    }
+
+    private void OnNotchPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.OemComma && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            e.Handled = true;
+            OpenSettings();
+        }
+        else if (e.Key == Key.Escape && _vm.NotchState == NotchState.Open)
+        {
+            e.Handled = true;
+            TransitionToClose();
+        }
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -259,7 +286,7 @@ public partial class NotchWindow : Window
         {
             _globalHotkey.Register(this);
             _globalHotkey.HotkeyPressed += OnGlobalHotkeyPressed;
-            _globalHotkey.SpotlightHotkeyPressed += () => Dispatcher.BeginInvoke(ToggleCommandCenter);
+            _globalHotkey.SpotlightHotkeyPressed += () => Dispatcher.BeginInvoke(OpenSpotlight);
         }
     }
 
@@ -321,8 +348,8 @@ public partial class NotchWindow : Window
         UpdateNotchVisuals();
 
         // Apply liquid glass if enabled at startup
-        ApplyLiquidGlassEffect(_settings.Theme == AppTheme.LiquidGlass || _settings.UseLiquidGlassTheme);
-        _themeService.ThemeChanged += () => Dispatcher.Invoke(() => ApplyLiquidGlassEffect(_themeService.IsLiquidGlass));
+        ApplyLiquidGlassEffect(_themeService.UsesBackdrop);
+        _themeService.ThemeChanged += () => Dispatcher.Invoke(() => ApplyLiquidGlassEffect(_themeService.UsesBackdrop));
 
         // Register for per-frame rendering
         CompositionTarget.Rendering += OnRendering;
@@ -403,52 +430,34 @@ public partial class NotchWindow : Window
         SleepWidget.Bind(_settings);
         VitalsWidget.Bind(_services.Hardware, _batteryService, _services.ArmouryCrate);
         NotificationHistoryWidget.Bind(_services.Notifications);
-        AiIntelligenceWidget.Bind(_services);
-        EmbeddedCommandCenter.Bind(_services, _settings);
-        EmbeddedCommandCenter.CloseRequested += () => DismissCommandCenter();
-        EmbeddedCommandCenter.SettingsChanged += s =>
+        AgentsWidget.Bind(_services.Agents);
+        ClipboardWidget.Bind(_services.Clipboard);
+        ControlsWidget.Bind(_services.Controls, _services.Volume, _batteryService);
+        WidgetsCard.Bind(_services.Widgets, _services.Timer, _settings);
+        CaptureCard.CloseIslandRequested += TransitionToClose;
+        DeckCard.Bind(_services);
+        StreamCard.Bind(_services.Obs, _services.Chat);
+        _services.Obs.StateChanged += () => Dispatcher.BeginInvoke(() =>
         {
-            ApplySettings(s);
-            SettingsUpdatedByUser?.Invoke(s);
-        };
-        EmbeddedCommandCenter.OpenSettingsRequested += () => OpenSettings();
-        EmbeddedCommandCenter.OpenPluginsRequested += () => OpenPluginManager();
+            bool live = _services.Obs.Streaming || _services.Obs.Recording;
+            ObsLiveDot.Visibility = live ? Visibility.Visible : Visibility.Collapsed;
+            ObsLiveDot.ToolTip = _services.Obs.Streaming ? "OBS: live" : "OBS: recording";
+        });
+        CaptureCard.Result += (title, body) => _services.Notifications.AddNotification("X-Notch", title, body);
+        ClipboardWidget.SetEnabled(_settings.ClipboardEnabled);
+        AgentsWidget.SetEnabled(_settings.AgentsEnabled);
+        _services.Agents.SessionsChanged += () => Dispatcher.BeginInvoke(UpdateClosedContentVisibility);
         UpdateCarouselCards();
-
-        // Inline settings
-        InlineSettings.SettingsChanged += s =>
-        {
-            ApplySettings(s);
-            SettingsUpdatedByUser?.Invoke(s);
-        };
-        InlineSettings.BackRequested += CollapseSettings;
-        InlineSettings.ThemeChangeRequested += async themeSettings =>
-        {
-            _settings = themeSettings;
-            await _themeService.ApplyWithTransition(themeSettings, NotchCanvas);
-            SettingsUpdatedByUser?.Invoke(themeSettings);
-        };
-
-        // Vertical inline settings (separate instance for side dock)
-        VerticalInlineSettings.SettingsChanged += s =>
-        {
-            ApplySettings(s);
-            SettingsUpdatedByUser?.Invoke(s);
-        };
-        VerticalInlineSettings.BackRequested += CollapseSettings;
-        VerticalInlineSettings.ThemeChangeRequested += async themeSettings =>
-        {
-            _settings = themeSettings;
-            await _themeService.ApplyWithTransition(themeSettings, NotchCanvas);
-            SettingsUpdatedByUser?.Invoke(themeSettings);
-        };
 
         // Toggle clock/live-activity visibility based on music state
         _mediaService.MediaInfo.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(MediaInfo.HasMedia) or nameof(MediaInfo.IsPlaying))
                 Dispatcher.Invoke(UpdateClosedContentVisibility);
+            else if (e.PropertyName is nameof(MediaInfo.DominantColor))
+                Dispatcher.Invoke(UpdateGlowTint);
         };
+        UpdateGlowTint();
         _mediaService.SessionChanged += () => Dispatcher.Invoke(UpdateClosedContentVisibility);
         UpdateClosedContentVisibility();
 
@@ -543,15 +552,9 @@ public partial class NotchWindow : Window
         // is on the SAME monitor (a game on screen 1 shouldn't hide screen 2's island)
         _fullscreenService.FullscreenChanged += isFs =>
         {
-            Dispatcher.Invoke(() =>
-            {
-                bool hideThisIsland = isFs &&
-                    _fullscreenService.FullscreenMonitor == ScreenHelper.GetMonitorHandle(this);
-
-                NotchCanvas.Opacity = hideThisIsland ? 0 : 1;
-                IsHitTestVisible = !hideThisIsland;
-            });
+            Dispatcher.Invoke(ApplyAppRule); // fullscreen rule (default Hide) + per-app rules
         };
+        _services.Foreground.Changed += ApplyAppRule; // WinEvent callbacks arrive on the UI thread
 
         // When HUD shows, expand notch and hide other content
         // Top dock HUD: expand width with Apple Dynamic Island liquid spring
@@ -626,10 +629,6 @@ public partial class NotchWindow : Window
 
             // Enable/disable now applies live — re-inject without a restart
             _pluginManager.PluginStateChanged += () => Dispatcher.Invoke(InjectPluginUI);
-
-            // Wire settings "Manage Plugins" button
-            InlineSettings.ManagePluginsRequested += OpenPluginManager;
-            VerticalInlineSettings.ManagePluginsRequested += OpenPluginManager;
         }
         catch (Exception ex)
         {
@@ -721,7 +720,7 @@ public partial class NotchWindow : Window
         }
     }
 
-    private void OpenPluginManager()
+    public void OpenPluginManager()
     {
         OpenPluginManager(null);
     }
@@ -731,10 +730,6 @@ public partial class NotchWindow : Window
         if (_pluginManager == null || _pluginLibraryService == null) return;
 
         // Dismiss notch overlay so it does not cover or block the plugin manager window
-        if (_isSettingsExpanded)
-        {
-            CollapseSettings();
-        }
         TransitionToClose();
 
         // If a plugin manager instance is already open, activate and focus it instead of stacking multiple windows
@@ -789,8 +784,67 @@ public partial class NotchWindow : Window
         var info = _mediaService.MediaInfo;
         bool hasMusic = _settings.ShowMusicControls && info.HasMedia && info.IsPlaying;
         LiveActivity.Visibility = hasMusic ? Visibility.Visible : Visibility.Collapsed;
-        ClockWidget.Visibility = hasMusic ? Visibility.Collapsed : Visibility.Visible;
+        bool agentCompact = UpdateAgentActivity(hasMusic);
+        ClockWidget.Visibility = hasMusic || agentCompact ? Visibility.Collapsed : Visibility.Visible;
         PluginClosedPanel.Visibility = Visibility.Visible;
+        UpdateIslandExtras();
+    }
+
+    private bool AnyCapsuleActive =>
+        _activeNotification != null || _powerSurgeActive || _lockStateActive || _usbDriveActive || _operatingModeActive;
+
+    private bool TimerActive =>
+        _services.Timer.State is CountdownTimerState.Running or CountdownTimerState.Paused;
+
+    /// <summary>
+    /// Retargets the split-island timer bubble and the album-art glow for the current state.
+    /// Idempotent (only starts a spring when its target changes), so it is safe to call every frame.
+    /// </summary>
+    private void UpdateIslandExtras()
+    {
+        bool topDocked = _dock == NotchDock.Top && !_isDragging;
+        var info = _mediaService.MediaInfo;
+        bool music = _settings.ShowMusicControls && info.HasMedia && info.IsPlaying;
+
+        // Split island: music owns the island, the timer detaches into its own bubble
+        double bubble = topDocked && music && TimerActive && _vm.NotchState != NotchState.Open && !AnyCapsuleActive ? 1 : 0;
+        if (Math.Abs(_bubbleSpring.TargetValue - bubble) > 0.001)
+            _bubbleSpring.AnimateTo(bubble, _currentBubble);
+        TimerCompactBadge.Visibility = TimerActive && bubble == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        double glow = !topDocked || !music || !_settings.ShowAlbumGlow || AnyCapsuleActive ? 0
+            : _vm.NotchState switch
+            {
+                NotchState.Open => NotchConstants.GlowOpenOpacity,
+                NotchState.Peeking => NotchConstants.GlowPeekOpacity,
+                _ => NotchConstants.GlowClosedOpacity,
+            };
+        if (Math.Abs(_auraOpacitySpring.TargetValue - glow) > 0.001)
+            _auraOpacitySpring.AnimateTo(glow, _currentAuraOpacity);
+    }
+
+    private void UpdateGlowTint()
+    {
+        var tint = ColorExtractionService.ToGlowTint(_mediaService.MediaInfo.DominantColor);
+        if (SpringAnimator.Reduced) { _glowBrush.BeginAnimation(SolidColorBrush.ColorProperty, null); _glowBrush.Color = tint; return; }
+        _glowBrush.BeginAnimation(SolidColorBrush.ColorProperty,
+            new ColorAnimation(tint, TimeSpan.FromMilliseconds(600)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut } });
+    }
+
+    private void UpdateTimerArc(double remainingFraction)
+    {
+        const double c = 15, r = 8.25; // bubble centre; ring radius = (19 - stroke 2.5) / 2
+        double f = Math.Clamp(remainingFraction, 0.0, 1.0);
+        if (f >= 0.999) { TimerBubbleArc.Data = new EllipseGeometry(new Point(c, c), r, r); return; }
+        if (f <= 0.001) { TimerBubbleArc.Data = null; return; }
+        double a = f * 2 * Math.PI;
+        var fig = new PathFigure { StartPoint = new Point(c, c - r), IsClosed = false, IsFilled = false };
+        fig.Segments.Add(new ArcSegment(new Point(c + r * Math.Sin(a), c - r * Math.Cos(a)),
+            new Size(r, r), 0, f > 0.5, SweepDirection.Clockwise, true));
+        var geo = new PathGeometry();
+        geo.Figures.Add(fig);
+        geo.Freeze();
+        TimerBubbleArc.Data = geo;
     }
 
     #region Vertical Side Content
@@ -879,88 +933,25 @@ public partial class NotchWindow : Window
 
     private void OnSideSettingsClick(object sender, RoutedEventArgs e)
     {
-        // In vertical view, expand settings on the right side dynamically
-        if (_isSettingsExpanded)
-            CollapseSettings();
-        else
-            ExpandSettings();
-    }
-
-    #endregion
-
-    public void OpenSettings()
-    {
-        // First ensure the notch is open
-        if (_vm.NotchState != NotchState.Open)
-            TransitionToOpen();
-
-        ExpandSettings();
+        OpenSettings();
     }
 
     private void OnSettingsGearClick(object sender, RoutedEventArgs e)
     {
-        if (_isSettingsExpanded)
-            CollapseSettings();
-        else
-            ExpandSettings();
+        OpenSettings();
     }
 
-    private void ExpandSettings()
+    /// <summary>
+    /// Closes the notch and opens the dedicated macOS-style Settings window.
+    /// </summary>
+    public void OpenSettings()
     {
-        _isSettingsExpanded = true;
-
-        if (_dock == NotchDock.Top)
-        {
-            // Top dock: Load settings and grow the notch taller (slide down)
-            InlineSettings.LoadSettings(_settings);
-            InlineSettings.ResetScroll();
-            InlineSettings.Visibility = Visibility.Visible;
-
-            double targetH = GetTopSettingsHeight();
-            _heightSpring.Response = 0.42;
-            _heightSpring.DampingFraction = 0.80;
-            _heightSpring.AnimateTo(targetH, _currentHeight);
-        }
-        else
-        {
-            // Side dock: Load settings in vertical panel and expand width
-            VerticalInlineSettings.LoadSettings(_settings);
-            VerticalInlineSettings.ResetScroll();
-            VerticalSettingsPanel.Visibility = Visibility.Visible;
-
-            double targetW = NotchConstants.SideOpenWidth + 280 + NotchConstants.OpenTopRadius;
-            _widthSpring.Response = 0.42;
-            _widthSpring.DampingFraction = 0.80;
-            _widthSpring.AnimateTo(targetW, _currentWidth);
-        }
+        TransitionToClose();
+        SettingsRequested?.Invoke();
+        (Application.Current as App)?.OpenSettings();
     }
 
-    private void CollapseSettings()
-    {
-        _isSettingsExpanded = false;
-
-        if (_dock == NotchDock.Top)
-        {
-            // Top dock: Hide settings and shrink back to normal open height
-            InlineSettings.Visibility = Visibility.Collapsed;
-
-            double targetH = GetTopOpenHeight();
-            _heightSpring.Response = 0.42;
-            _heightSpring.DampingFraction = 0.80;
-            _heightSpring.AnimateTo(targetH, _currentHeight);
-        }
-        else
-        {
-            // Side dock: Hide settings panel and shrink width back
-            VerticalSettingsPanel.Visibility = Visibility.Collapsed;
-
-            _widthSpring.Response = 0.42;
-            _widthSpring.DampingFraction = 0.80;
-            _widthSpring.AnimateTo(NotchConstants.SideOpenWidth, _currentWidth);
-        }
-    }
-
-    // Removed OpenSettingsWindow - now using integrated settings panel
+    #endregion
 
     /// <summary>
     /// Position the window once: centered at top of primary screen,
@@ -1017,9 +1008,9 @@ public partial class NotchWindow : Window
         double maxTopOpenWidth = maxBaseTopOpenWidth
             + GetMeasuredPanelWidth(PluginAccessoryPanel, NotchConstants.OpenHeight);
 
-        double maxTopHeight = Math.Max(GetTopOpenHeight(), GetTopSettingsHeight());
-        double sideExpandedWidth = NotchConstants.SideOpenWidth + 280 + NotchConstants.OpenTopRadius;
-        double maxShortAxis = Math.Max(maxTopHeight, sideExpandedWidth);
+        double maxTopHeight = GetTopOpenHeight();
+        double sideOpenWidth = NotchConstants.SideOpenWidth + NotchConstants.OpenTopRadius;
+        double maxShortAxis = Math.Max(maxTopHeight, sideOpenWidth);
         double maxTallAxis = Math.Max(maxTopOpenWidth, GetSideOpenHeight());
 
         _fixedWindowWidth = maxTallAxis + padding * 2;
@@ -1041,12 +1032,7 @@ public partial class NotchWindow : Window
         if (_dock == NotchDock.Top)
         {
             _widthSpring.AnimateTo(GetOpenWidth(), _currentWidth);
-
-            var targetHeight = _isSettingsExpanded
-                ? GetTopSettingsHeight()
-                : GetTopOpenHeight();
-
-            _heightSpring.AnimateTo(targetHeight, _currentHeight);
+            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
             return;
         }
 
@@ -1060,21 +1046,9 @@ public partial class NotchWindow : Window
 
     private double GetTopOpenHeight()
     {
-        if (_isCommandCenterActive)
-            return NotchConstants.CommandHeight;
-
         double baseHeight = ShouldReserveShelfSpace()
             ? NotchConstants.OpenHeightWithShelf
             : NotchConstants.OpenHeight;
-
-        return baseHeight + GetMeasuredPanelHeight(PluginOpenPanel, Math.Max(220, GetOpenWidth() - 48));
-    }
-
-    private double GetTopSettingsHeight()
-    {
-        double baseHeight = ShouldReserveShelfSpace()
-            ? NotchConstants.OpenSettingsHeightWithShelf
-            : NotchConstants.OpenSettingsHeight;
 
         return baseHeight + GetMeasuredPanelHeight(PluginOpenPanel, Math.Max(220, GetOpenWidth() - 48));
     }
@@ -1151,8 +1125,12 @@ public partial class NotchWindow : Window
         if (_auraOpacitySpring.IsAnimating)
         {
             _currentAuraOpacity = _auraOpacitySpring.Tick();
-            AmbientAuraPath.Opacity = 0.0;
-            AmbientAuraPath.Visibility = Visibility.Collapsed;
+            anyAnimating = true;
+        }
+        if (_bubbleSpring.IsAnimating)
+        {
+            _currentBubble = _bubbleSpring.Tick();
+            anyAnimating = true;
         }
 
         if (_notificationScaleSpring.IsAnimating || _notificationTranslateSpring.IsAnimating ||
@@ -1245,8 +1223,11 @@ public partial class NotchWindow : Window
     {
         double w = _currentWidth;
         double h = _currentHeight;
-        double topR = _currentTopRadius;
-        double bottomR = _currentBottomRadius;
+        // User "Corner roundness" scales the animated radii; clamp so ears + corners never overlap
+        double radiusScale = Math.Clamp(_settings.CornerRadiusScale, 0.5, 1.6);
+        double topR = Math.Max(0, _currentTopRadius * radiusScale);
+        double bottomR = Math.Clamp(_currentBottomRadius * radiusScale, 0,
+            Math.Max(0, Math.Min(h - topR, (w - 2 * topR) / 2)));
 
         // Generate notch geometry
         var rect = new Rect(0, 0, w, h);
@@ -1267,11 +1248,25 @@ public partial class NotchWindow : Window
         BackdropBlurPath.Data = geometry;
         GlassSpecularPath.Data = geometry;
         GlassBorderPath.Data = geometry;
+
+        if (_isPrimary)
+        {
+            XDesktopBroadcastService.Instance.Publish(
+                w,
+                h,
+                _dock,
+                _vm.NotchState,
+                _vm.NotchState == NotchState.Open,
+                Visibility == Visibility.Visible,
+                _mediaService?.MediaInfo?.IsPlaying ?? false,
+                _activeNotification != null,
+                ClockWidget?.Visibility == Visibility.Visible);
+        }
         GlassInnerShadowPath.Data = geometry;
 
-        // Ambient Aura chromatic illumination — permanently disabled for clean borderless cutout
-        AmbientAuraPath.Opacity = 0.0;
-        AmbientAuraPath.Visibility = Visibility.Collapsed;
+        // Album-art glow (opacity driven by _auraOpacitySpring via UpdateIslandExtras)
+        AmbientAuraPath.Opacity = Math.Clamp(_currentAuraOpacity, 0.0, 1.0);
+        AmbientAuraPath.Visibility = _currentAuraOpacity > 0.01 ? Visibility.Visible : Visibility.Collapsed;
 
         double windowW = ActualWidth > 0 ? ActualWidth : Width;
         double windowH = ActualHeight > 0 ? ActualHeight : Height;
@@ -1314,7 +1309,18 @@ public partial class NotchWindow : Window
         System.Windows.Controls.Canvas.SetLeft(ShadowPath, offsetX);
         System.Windows.Controls.Canvas.SetTop(ShadowPath, offsetY);
         System.Windows.Controls.Canvas.SetLeft(AmbientAuraPath, offsetX);
-        System.Windows.Controls.Canvas.SetTop(AmbientAuraPath, offsetY);
+        System.Windows.Controls.Canvas.SetTop(AmbientAuraPath, offsetY + 3); // glow sits slightly below the island
+
+        // Split island bubble: emerges from the island's right edge
+        double bubbleSize = NotchConstants.TimerBubbleSize, bubbleGap = NotchConstants.TimerBubbleGap, bv = _currentBubble;
+        System.Windows.Controls.Canvas.SetLeft(TimerBubble, offsetX + w + bubbleGap);
+        System.Windows.Controls.Canvas.SetTop(TimerBubble, offsetY + Math.Max(0, (h - bubbleSize) / 2));
+        TimerBubbleTranslate.X = (1 - bv) * -(bubbleSize + bubbleGap);
+        TimerBubbleScale.ScaleX = TimerBubbleScale.ScaleY = 0.4 + 0.6 * bv;
+        TimerBubble.Opacity = Math.Clamp(bv, 0.0, 1.0);
+        TimerBubble.Visibility = bv > 0.01 ? Visibility.Visible : Visibility.Collapsed;
+        TimerBubble.IsHitTestVisible = bv > 0.5;
+        UpdateIslandExtras();
         System.Windows.Controls.Canvas.SetLeft(BackdropBlurPath, offsetX);
         System.Windows.Controls.Canvas.SetTop(BackdropBlurPath, offsetY);
         System.Windows.Controls.Canvas.SetLeft(GlassSpecularPath, offsetX);
@@ -1324,9 +1330,9 @@ public partial class NotchWindow : Window
         System.Windows.Controls.Canvas.SetLeft(GlassInnerShadowPath, offsetX);
         System.Windows.Controls.Canvas.SetTop(GlassInnerShadowPath, offsetY);
 
-        // Shadow opacity: soft ambient depth in closed state, elevated depth in open state
-        ShadowPath.Opacity = _settings.ShowShadow ? Math.Max(0.25, _currentShadowOpacity) : 0.0;
-        ShadowPath.Visibility = _settings.ShowShadow ? Visibility.Visible : Visibility.Collapsed;
+        // Shadow opacity (disabled by default for seamless borderless cutout)
+        ShadowPath.Opacity = _settings.ShowShadow ? _currentShadowOpacity : 0.0;
+        ShadowPath.Visibility = _settings.ShowShadow && ShadowPath.Opacity > 0.01 ? Visibility.Visible : Visibility.Collapsed;
 
         // Content grid: positioned inside the notch shape (inset from corners)
         double contentLeft, contentTop, contentWidth, contentHeight;
@@ -1496,9 +1502,12 @@ public partial class NotchWindow : Window
         _topRadiusSpring.AnimateTo(NotchConstants.OpenTopRadius, _currentTopRadius);
         _bottomRadiusSpring.AnimateTo(NotchConstants.OpenBottomRadius, _currentBottomRadius);
         _shadowOpacitySpring.AnimateTo(OpenShadowOpacity, _currentShadowOpacity);
+        // Hierarchy: the shape leads, content follows slightly behind (no overshoot on text)
+        _contentOpacitySpring.SetPhysics(0.42, 1.0);
+        _contentScaleSpring.SetPhysics(0.44, 0.86);
         _contentOpacitySpring.AnimateTo(1.0, _currentContentOpacity);
         _contentScaleSpring.AnimateTo(1.0, _currentContentScale);
-        _auraOpacitySpring.AnimateTo(0.65, _currentAuraOpacity);
+        UpdateIslandExtras();
     }
 
     private void TransitionToPeek()
@@ -1532,7 +1541,7 @@ public partial class NotchWindow : Window
         _topRadiusSpring.AnimateTo(NotchConstants.PeekTopRadius, _currentTopRadius);
         _bottomRadiusSpring.AnimateTo(NotchConstants.PeekBottomRadius, _currentBottomRadius);
         _shadowOpacitySpring.AnimateTo(ClosedShadowOpacity + 0.15, _currentShadowOpacity);
-        _auraOpacitySpring.AnimateTo(hasMusic ? 0.38 : 0.0, _currentAuraOpacity);
+        UpdateIslandExtras();
     }
 
     private void TransitionToClose()
@@ -1545,14 +1554,6 @@ public partial class NotchWindow : Window
         NotifyPluginsStateChanged(NotchState.Closed);
         if (!_applyingSyncedState)
             UserStateChanged?.Invoke(NotchState.Closed);
-
-        // Collapse settings if open
-        if (_isSettingsExpanded)
-        {
-            _isSettingsExpanded = false;
-            InlineSettings.Visibility = Visibility.Collapsed;
-            VerticalSettingsPanel.Visibility = Visibility.Collapsed;
-        }
 
         _vm.Close();
         WindowHelper.DisableActivation(this);
@@ -1578,9 +1579,12 @@ public partial class NotchWindow : Window
         _topRadiusSpring.AnimateTo(NotchConstants.ClosedTopRadius, _currentTopRadius);
         _bottomRadiusSpring.AnimateTo(NotchConstants.ClosedBottomRadius, _currentBottomRadius);
         _shadowOpacitySpring.AnimateTo(ClosedShadowOpacity, _currentShadowOpacity);
+        // Exit faster than enter: content clears before the shape tucks back into the bezel
+        _contentOpacitySpring.SetPhysics(0.16, 1.0);
+        _contentScaleSpring.SetPhysics(0.24, 1.0);
         _contentOpacitySpring.AnimateTo(0.0, _currentContentOpacity);
         _contentScaleSpring.AnimateTo(0.92, _currentContentScale);
-        _auraOpacitySpring.AnimateTo(0.0, _currentAuraOpacity);
+        UpdateIslandExtras();
     }
 
     #endregion
@@ -1638,8 +1642,8 @@ public partial class NotchWindow : Window
         _isMouseOverNotch = false;
         _hoverOpenTimer?.Stop();
 
-        // Don't close while a context menu is open, user is actively typing, pinned in Focus mode, or Command Center active
-        if (_isContextMenuOpen || IsKeyboardFocusWithin || _vm.IsPinned || _isCommandCenterActive) return;
+        // Don't close while a context menu is open or user is actively typing with keyboard focus within
+        if (_isContextMenuOpen || IsKeyboardFocusWithin) return;
 
         if (_vm.NotchState == NotchState.Open || _vm.NotchState == NotchState.Peeking)
         {
@@ -1652,7 +1656,7 @@ public partial class NotchWindow : Window
             _hoverCloseTimer.Tick += (_, _) =>
             {
                 _hoverCloseTimer!.Stop();
-                if (!_isMouseOverNotch && !_isContextMenuOpen && !IsKeyboardFocusWithin && !_vm.IsPinned && !_isCommandCenterActive)
+                if (!_isMouseOverNotch && !_isContextMenuOpen && !IsKeyboardFocusWithin)
                     TransitionToClose();
             };
             _hoverCloseTimer.Start();
@@ -1795,8 +1799,6 @@ public partial class NotchWindow : Window
         if (_vm.NotchState != NotchState.Closed)
         {
             _vm.Close();
-            _isSettingsExpanded = false;
-            InlineSettings.Visibility = Visibility.Collapsed;
         }
 
         // Animate to compact drag pill size
@@ -1994,60 +1996,13 @@ public partial class NotchWindow : Window
     {
         var menu = CreateStyledContextMenu();
 
-        var cmdItem = new System.Windows.Controls.MenuItem { Header = "🔍 Command Center (Ctrl+Space)" };
-        cmdItem.Click += (_, _) => OpenCommandCenter();
-        menu.Items.Add(cmdItem);
-
-        var pinItem = new System.Windows.Controls.MenuItem { Header = _vm.IsPinned ? "📌 Unpin Focus Mode" : "📌 Pin Focus Mode (Ctrl+P)" };
-        pinItem.Click += (_, _) => ToggleFocusMode();
-        menu.Items.Add(pinItem);
-
-        menu.Items.Add(new System.Windows.Controls.Separator());
-
-        var musicItem = new System.Windows.Controls.MenuItem { Header = "🎵 Media Player" };
-        musicItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(MusicPlayer); };
-        menu.Items.Add(musicItem);
-
-        var tasksItem = new System.Windows.Controls.MenuItem { Header = "✓ Tasks & Focus" };
-        tasksItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(TasksWidget); };
-        menu.Items.Add(tasksItem);
-
-        var vitalsItem = new System.Windows.Controls.MenuItem { Header = "⚡ System Vitals" };
-        vitalsItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(VitalsWidget); };
-        menu.Items.Add(vitalsItem);
-
-        var aiItem = new System.Windows.Controls.MenuItem { Header = "🤖 AI Assistant" };
-        aiItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); NavigateToCard(AiIntelligenceWidget); };
-        menu.Items.Add(aiItem);
-
-        var shelfItem = new System.Windows.Controls.MenuItem { Header = "📁 File Shelf" };
-        shelfItem.Click += (_, _) => { if (_vm.NotchState != NotchState.Open) TransitionToOpen(); ToggleShelf(); };
-        menu.Items.Add(shelfItem);
-
-        menu.Items.Add(new System.Windows.Controls.Separator());
-
-        var themeItem = new System.Windows.Controls.MenuItem { Header = "🎨 Toggle Theme" };
-        themeItem.Click += (_, _) =>
-        {
-            _settings.Theme = _settings.Theme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
-            _settings.AdaptToWindowsTheme = false;
-            _themeService.Apply(_settings);
-            _settings.Save();
-            SettingsUpdatedByUser?.Invoke(_settings);
-        };
-        menu.Items.Add(themeItem);
-
-        var settingsItem = new System.Windows.Controls.MenuItem { Header = "⚙ Settings" };
-        settingsItem.Click += (_, _) => OpenSettings();
+        var settingsItem = new System.Windows.Controls.MenuItem { Header = Loc.T("Settings…") };
+        settingsItem.Click += (_, _) => (Application.Current as App)?.OpenSettings();
         menu.Items.Add(settingsItem);
 
-        var pluginsItem = new System.Windows.Controls.MenuItem { Header = "🧩 Plugin Manager" };
-        pluginsItem.Click += (_, _) => OpenPluginManager();
-        menu.Items.Add(pluginsItem);
-
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        var quitItem = new System.Windows.Controls.MenuItem { Header = "✕ Quit X-Notch" };
+        var quitItem = new System.Windows.Controls.MenuItem { Header = "Quit" };
         quitItem.Click += (_, _) => Application.Current.Shutdown();
         menu.Items.Add(quitItem);
 
@@ -2087,7 +2042,7 @@ public partial class NotchWindow : Window
                 _hoverCloseTimer.Tick += (_, _) =>
                 {
                     _hoverCloseTimer!.Stop();
-                    if (!_isMouseOverNotch && !_isContextMenuOpen && !_vm.IsPinned && !_isCommandCenterActive)
+                    if (!_isMouseOverNotch && !_isContextMenuOpen)
                         TransitionToClose();
                 };
                 _hoverCloseTimer.Start();
@@ -2216,14 +2171,23 @@ public partial class NotchWindow : Window
         base.OnClosed(e);
     }
 
+    private static void ApplyMotionPreferences(AppSettings s)
+    {
+        SpringAnimator.SpeedScale = s.AnimationSpeed;
+        SpringAnimator.Intensity = s.SpringIntensity;
+        SpringAnimator.ReducedByUser = s.ReduceMotion;
+    }
+
     public void ApplySettings(AppSettings settings)
     {
         _settings = settings;
+        ApplyMotionPreferences(settings);
+        UpdateNotchVisuals(); // corner roundness applies immediately
         UpdateCameraProximityTimerState();
 
         // Apply liquid glass theme if toggled
         _themeService.Apply(settings);
-        ApplyLiquidGlassEffect(settings.Theme == AppTheme.LiquidGlass || settings.UseLiquidGlassTheme);
+        ApplyLiquidGlassEffect(_themeService.UsesBackdrop);
 
         // Toggle visibility of components based on settings
         LiveActivity.UserEnabled = settings.ShowMusicControls;
@@ -2232,6 +2196,17 @@ public partial class NotchWindow : Window
         CompactVisualizer_SetVisible(settings.ShowVisualizer);
         WaterWidget.Bind(settings);
         SleepWidget.Bind(settings);
+        _services.SetAgentsEnabled(settings.AgentsEnabled);
+        AgentsWidget.SetEnabled(settings.AgentsEnabled);
+        _services.ApplyClipboardSettings(settings);
+        ApplyAppRule();
+        _services.ApplyWidgetSettings(settings);
+        _services.ApplyCaptureSettings(settings);
+        _ = _services.SetDeckEnabledAsync(settings.DeckEnabled);
+        _services.ApplyStreamSettings(settings);
+        _services.ApplyDesktopSettings(settings);
+        WidgetsCard.SetSettings(settings);
+        ClipboardWidget.SetEnabled(settings.ClipboardEnabled);
         UpdateCarouselCards();
         UpdateClosedContentVisibility();
 
@@ -2247,11 +2222,6 @@ public partial class NotchWindow : Window
         {
             WebcamPanel.Visibility = Visibility.Visible;
             WebcamMirror.Bind(_webcamService);
-            if (_webcamService.MaxCameraFps > 0)
-            {
-                InlineSettings.UpdateWebcamFpsMax(_webcamService.MaxCameraFps);
-                VerticalInlineSettings.UpdateWebcamFpsMax(_webcamService.MaxCameraFps);
-            }
         }
         else
         {
@@ -2265,14 +2235,9 @@ public partial class NotchWindow : Window
             if (_dock == NotchDock.Top)
             {
                 _widthSpring.AnimateTo(GetOpenWidth(), _currentWidth);
-
-                if (!_isSettingsExpanded)
-                {
-                    double targetH = GetTopOpenHeight();
-                    _heightSpring.AnimateTo(targetH, _currentHeight);
-                }
+                double targetH = GetTopOpenHeight();
+                _heightSpring.AnimateTo(targetH, _currentHeight);
             }
-            // Side docks: don't re-animate width/height — settings panel has fixed size
         }
 
         UpdateSpaceReservation();
@@ -2288,9 +2253,6 @@ public partial class NotchWindow : Window
 
     private double GetOpenWidth()
     {
-        if (_isCommandCenterActive)
-            return NotchConstants.CommandWidth;
-
         double accessoryWidth = GetMeasuredPanelWidth(PluginAccessoryPanel, NotchConstants.OpenHeight);
         bool cal = _settings.ShowCalendar;
         bool cam = _settings.ShowWebcam;
@@ -2316,25 +2278,38 @@ public partial class NotchWindow : Window
         _enabledCards.Clear();
 
         if (_settings.ShowMusicControls && _settings.ShowMusicCard)
-            _enabledCards.Add((MusicPlayer, "🎵 Music"));
+            _enabledCards.Add((MusicPlayer, "🎵 " + Loc.T("Music")));
         if (_settings.ShowStopwatchCard)
-            _enabledCards.Add((StopwatchWidget, "⏱ Stopwatch"));
+            _enabledCards.Add((StopwatchWidget, "⏱ " + Loc.T("Stopwatch")));
         if (_settings.ShowWaterCard)
-            _enabledCards.Add((WaterWidget, "💧 Water"));
+            _enabledCards.Add((WaterWidget, "💧 " + Loc.T("Water")));
         if (_settings.ShowSleepCard)
-            _enabledCards.Add((SleepWidget, "🌙 Sleep"));
+            _enabledCards.Add((SleepWidget, "🌙 " + Loc.T("Sleep")));
         if (_settings.ShowTasksCard)
-            _enabledCards.Add((TasksWidget, "✓ Tasks"));
+            _enabledCards.Add((TasksWidget, "✓ " + Loc.T("Tasks")));
         if (_settings.ShowVitalsCard)
-            _enabledCards.Add((VitalsWidget, "⚡ Vitals"));
+            _enabledCards.Add((VitalsWidget, "⚡ " + Loc.T("Vitals")));
         if (_settings.ShowNotificationsCard)
-            _enabledCards.Add((NotificationHistoryWidget, "🔔 Alerts"));
-        _enabledCards.Add((AiIntelligenceWidget, "🤖 AI"));
+            _enabledCards.Add((NotificationHistoryWidget, "🔔 " + Loc.T("Alerts")));
+        if (_settings.ShowStreamCard)
+            _enabledCards.Add((StreamCard, "◉ " + Loc.T("Stream")));
+        if (_settings.ShowDeckCard)
+            _enabledCards.Add((DeckCard, "☎ " + Loc.T("Deck")));
+        if (_settings.ShowCaptureCard)
+            _enabledCards.Add((CaptureCard, "◎ " + Loc.T("Capture")));
+        if (_settings.ShowWidgetsCard)
+            _enabledCards.Add((WidgetsCard, "▦ " + Loc.T("Widgets")));
+        if (_settings.ShowControlsCard)
+            _enabledCards.Add((ControlsWidget, "◐ " + Loc.T("Controls")));
+        if (_settings.ShowClipboardCard)
+            _enabledCards.Add((ClipboardWidget, "📋 " + Loc.T("Clipboard")));
+        if (_settings.ShowAgentsCard)
+            _enabledCards.Add((AgentsWidget, "✦ " + Loc.T("Agents")));
 
         // If none enabled, fallback to MusicPlayer
         if (_enabledCards.Count == 0)
         {
-            _enabledCards.Add((MusicPlayer, "🎵 Music"));
+            _enabledCards.Add((MusicPlayer, "🎵 " + Loc.T("Music")));
         }
 
         _carouselIndex = Math.Clamp(_carouselIndex, 0, _enabledCards.Count - 1);
@@ -2640,8 +2615,21 @@ public partial class NotchWindow : Window
 
             GlassSpecularPath.Opacity = 0.0;
             GlassSpecularPath.Visibility = Visibility.Collapsed;
-            GlassBorderPath.Opacity = 0.0;
-            GlassBorderPath.Visibility = Visibility.Collapsed;
+
+            // Hairline rim: Liquid Glass catches light on its lower edge (the island hangs from the top);
+            // glassmorphism gets an even frosted border.
+            bool liquid = _themeService.ActiveTheme == AppTheme.LiquidGlass;
+            var rim = liquid
+                ? new LinearGradientBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF), Color.FromArgb(0x9C, 0xFF, 0xFF, 0xFF), 90)
+                : (System.Windows.Media.Brush)new SolidColorBrush(Color.FromArgb(0x38, 0xFF, 0xFF, 0xFF));
+            rim.Freeze();
+            GlassBorderPath.Stroke = rim;
+            GlassBorderPath.StrokeThickness = 1;
+            GlassBorderPath.Fill = null;
+            GlassBorderPath.Opacity = 1.0;
+            GlassBorderPath.Visibility = Visibility.Visible;
+            if (BackdropBlurPath.Effect is System.Windows.Media.Effects.BlurEffect blur && !blur.IsFrozen) blur.Radius = liquid ? 22 : 34;
+
             GlassInnerShadowPath.Opacity = 0.0;
             GlassInnerShadowPath.Visibility = Visibility.Collapsed;
             BackdropBlurPath.Opacity = 1.0;
@@ -2656,6 +2644,7 @@ public partial class NotchWindow : Window
             WindowHelper.SetExcludeFromCapture(this, false);
             GlassSpecularPath.Opacity = 0;
             GlassBorderPath.Opacity = 0;
+            GlassBorderPath.Visibility = Visibility.Collapsed;
             GlassInnerShadowPath.Opacity = 0;
             BackdropBlurPath.Opacity = 0;
             BackdropBlurPath.Fill = null;
@@ -2709,7 +2698,7 @@ public partial class NotchWindow : Window
 
             // Capture directly into the WriteableBitmap (zero alloc)
             // Padding feeds the edge-lens: rim pixels sample from this outside band
-            BackdropBlurHelper.CaptureInto(_backdropWb, px, py, pw, ph, padding: 8);
+            BackdropBlurHelper.CaptureInto(_backdropWb, px, py, pw, ph, padding: 8, refract: _themeService.ActiveTheme == AppTheme.LiquidGlass);
         }
         catch
         {
@@ -2732,7 +2721,7 @@ public partial class NotchWindow : Window
         ShelfPanel.Visibility = hasItems ? Visibility.Visible : Visibility.Collapsed;
 
         // Adjust open height if notch is open
-        if (_vm.NotchState == NotchState.Open && !_isSettingsExpanded)
+        if (_vm.NotchState == NotchState.Open)
         {
             double targetHeight = GetTopOpenHeight();
             _heightSpring.AnimateTo(targetHeight, _currentHeight);
@@ -2756,10 +2745,7 @@ public partial class NotchWindow : Window
             ShelfPanel.Visibility = Visibility.Visible;
             ShelfPanel.ShowDropZone();
 
-            if (!_isSettingsExpanded)
-            {
-                _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
-            }
+            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
 
             e.Handled = true;
         }
@@ -2784,7 +2770,7 @@ public partial class NotchWindow : Window
         if (!_shelfService.HasItems)
         {
             ShelfPanel.Visibility = Visibility.Collapsed;
-            if (_vm.NotchState == NotchState.Open && !_isSettingsExpanded)
+            if (_vm.NotchState == NotchState.Open)
             {
                 _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
             }
@@ -2814,7 +2800,7 @@ public partial class NotchWindow : Window
 
     public void OpenSpotlight()
     {
-        OpenCommandCenter();
+        _spotlightLauncher?.Open();
     }
 
     #endregion
@@ -2946,8 +2932,7 @@ public partial class NotchWindow : Window
         {
             if (item.AppName == "X-Notch")
             {
-                TransitionToOpen();
-                ExpandSettings();
+                OpenSettings();
             }
             else
             {
@@ -3142,14 +3127,15 @@ public partial class NotchWindow : Window
     private void UpdateTimerDisplay(TimeSpan remaining, double progress)
     {
         TimerCompactText.Text = _services.Timer.FormattedTime;
-        TimerCompactBadge.Visibility = Visibility.Visible;
+        TimerBubble.ToolTip = _services.Timer.FormattedTime;
+        UpdateTimerArc(1.0 - progress);
+        UpdateIslandExtras();
     }
 
     private void UpdateTimerState(CountdownTimerState state)
     {
-        TimerCompactBadge.Visibility = (state == CountdownTimerState.Running || state == CountdownTimerState.Paused)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        UpdateTimerArc(1.0 - _services.Timer.Progress);
+        UpdateIslandExtras();
     }
 
     private void OnTimerCompleted()
@@ -3591,153 +3577,6 @@ public partial class NotchWindow : Window
             e.Handled = true;
         }
     }
-
-    #endregion
-
-    #region Master Header, Command Center & Focus Mode
-
-    protected override void OnKeyDown(System.Windows.Input.KeyEventArgs e)
-    {
-        base.OnKeyDown(e);
-
-        if (e.Key == System.Windows.Input.Key.Escape)
-        {
-            if (_isCommandCenterActive)
-            {
-                DismissCommandCenter();
-                e.Handled = true;
-            }
-            else if (_isSettingsExpanded)
-            {
-                CollapseSettings();
-                e.Handled = true;
-            }
-            else if (_vm.NotchState == NotchState.Open && !_vm.IsPinned)
-            {
-                TransitionToClose();
-                e.Handled = true;
-            }
-        }
-        else if (e.Key == System.Windows.Input.Key.Space && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
-        {
-            ToggleCommandCenter();
-            e.Handled = true;
-        }
-        else if (e.Key == System.Windows.Input.Key.P && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
-        {
-            ToggleFocusMode();
-            e.Handled = true;
-        }
-        else if (e.Key == System.Windows.Input.Key.OemComma && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
-        {
-            OpenSettings();
-            e.Handled = true;
-        }
-        else if (e.Key == System.Windows.Input.Key.Left && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
-        {
-            NavigateCarousel(-1);
-            e.Handled = true;
-        }
-        else if (e.Key == System.Windows.Input.Key.Right && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
-        {
-            NavigateCarousel(1);
-            e.Handled = true;
-        }
-    }
-
-    private void OnNavActivitiesClick(object sender, RoutedEventArgs e) => NavigateToCard(MusicPlayer);
-    private void OnNavTasksClick(object sender, RoutedEventArgs e) => NavigateToCard(TasksWidget);
-    private void OnNavVitalsClick(object sender, RoutedEventArgs e) => NavigateToCard(VitalsWidget);
-    private void OnNavAiClick(object sender, RoutedEventArgs e) => NavigateToCard(AiIntelligenceWidget);
-    private void OnNavShelfClick(object sender, RoutedEventArgs e) => ToggleShelf();
-
-    private void OnCommandSearchClick(object sender, RoutedEventArgs e) => ToggleCommandCenter();
-    private void OnFocusPinClick(object sender, RoutedEventArgs e) => ToggleFocusMode();
-
-    public void ToggleShelf()
-    {
-        if (ShelfPanel.Visibility == Visibility.Visible)
-        {
-            ShelfPanel.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            ShelfPanel.Visibility = Visibility.Visible;
-        }
-
-        if (_dock == NotchDock.Top)
-        {
-            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
-        }
-    }
-
-    public void ToggleFocusMode()
-    {
-        _vm.TogglePin();
-        bool pinned = _vm.IsPinned;
-        FocusModeBadge.Visibility = pinned ? Visibility.Visible : Visibility.Collapsed;
-        FocusPinIcon.Foreground = pinned
-            ? (System.Windows.Media.Brush)FindResource("AccentPrimaryBrush")
-            : (System.Windows.Media.Brush)FindResource("TextMutedBrush");
-
-        if (pinned && _vm.NotchState != NotchState.Open)
-        {
-            TransitionToOpen();
-        }
-    }
-
-    public void OpenCommandCenter()
-    {
-        if (_vm.NotchState != NotchState.Open)
-            TransitionToOpen();
-
-        _isCommandCenterActive = true;
-        _vm.Command();
-        MainOpenContent.Visibility = Visibility.Collapsed;
-        EmbeddedCommandCenter.Visibility = Visibility.Visible;
-        EmbeddedCommandCenter.FocusInput();
-
-        if (_dock == NotchDock.Top)
-        {
-            _widthSpring.AnimateTo(Math.Max(GetOpenWidth(), NotchConstants.CommandWidth), _currentWidth);
-            _heightSpring.AnimateTo(Math.Max(GetTopOpenHeight(), NotchConstants.CommandHeight), _currentHeight);
-        }
-    }
-
-    public void DismissCommandCenter()
-    {
-        if (!_isCommandCenterActive) return;
-        _isCommandCenterActive = false;
-        EmbeddedCommandCenter.Visibility = Visibility.Collapsed;
-        MainOpenContent.Visibility = Visibility.Visible;
-        _vm.Open();
-
-        if (_dock == NotchDock.Top)
-        {
-            _widthSpring.AnimateTo(GetOpenWidth(), _currentWidth);
-            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
-        }
-    }
-
-    public void ToggleCommandCenter()
-    {
-        if (_isCommandCenterActive)
-            DismissCommandCenter();
-        else
-            OpenCommandCenter();
-    }
-
-    public void TransitionToCommand() => OpenCommandCenter();
-    public void TransitionToFocus() => ToggleFocusMode();
-    public void TransitionToWorkspace()
-    {
-        if (_vm.NotchState != NotchState.Open)
-            TransitionToOpen();
-        _vm.Workspace();
-        NavigateToCard(TasksWidget);
-    }
-    public void TransitionToDormant() => TransitionToClose();
-    public void TransitionToAmbient() => TransitionToClose();
 
     #endregion
 

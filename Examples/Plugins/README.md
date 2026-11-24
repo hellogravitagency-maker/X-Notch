@@ -119,7 +119,7 @@ Use these examples as templates:
 2. **For UI/Integration Plugins:** Start with `ChatGPTAddonPlugin`
 3. **For Simple Service Plugins:** Combine concepts from both
 
-See the main [Plugin Development Guide](../../PLUGIN_DEVELOPMENT.md) for detailed instructions.
+See the main [Plugin Development Guide](../../vault/03-Plugins/PLUGIN_DEVELOPMENT.md) for detailed instructions.
 
 ## Plugin Ideas
 
@@ -176,7 +176,7 @@ If you create a useful plugin:
 ## Support
 
 For questions about plugin development:
-- Read the [Plugin Development Guide](../../PLUGIN_DEVELOPMENT.md)
+- Read the [Plugin Development Guide](../../vault/03-Plugins/PLUGIN_DEVELOPMENT.md)
 - Check the [API Reference](https://github.com/Gravit/X-Notch/wiki)
 - Ask in [GitHub Discussions](https://github.com/Gravit/X-Notch/discussions)
 - Report issues: [GitHub Issues](https://github.com/Gravit/X-Notch/issues)

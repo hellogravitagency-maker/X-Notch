@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Threading;
@@ -32,6 +34,7 @@ public partial class App : Application
         {
             if (args.ExceptionObject is Exception ex)
                 LogCrash(ex);
+            try { TaskbarHelper.Restore(); } catch { } // never leave the user without a taskbar
         };
         DispatcherUnhandledException += (_, args) =>
         {
@@ -84,6 +87,7 @@ public partial class App : Application
         {
             // Load settings
             _settings = AppSettings.Load();
+            Helpers.Loc.Init(_settings.Language); // before any window is built
             LogTrace($"Settings loaded: Theme={_settings.Theme}, AutoHide={_settings.AutoHide}");
 
             // Initialize theme
@@ -108,6 +112,12 @@ public partial class App : Application
             // Optional islands on every other screen
             RebuildSecondaryWindows();
 
+            // Dock (replaces the taskbar while on); also undoes a hidden taskbar left by a crash
+            UpdateDock();
+
+            // Genie: minimizing pours windows into their dock icon
+            _genie = new GenieService(_settings, DockPointFor, () => _docks.FirstOrDefault()?.IconPixels ?? 48);
+
             // React to monitors being plugged/unplugged or rearranged
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
 
@@ -128,22 +138,17 @@ public partial class App : Application
         {
             _notchWindow?.HandleDisplayChange();
             RebuildSecondaryWindows();
+            UpdateDock();
         });
     }
 
     private void WireIslandEvents(NotchWindow window)
     {
+        // Settings window requested from island gear or shortcut
+        window.SettingsRequested += OpenSettings;
+
         // Settings changed on one island → apply everywhere + re-evaluate islands
-        window.SettingsUpdatedByUser += settings =>
-        {
-            _settings = settings;
-            foreach (var other in AllIslands())
-            {
-                if (!ReferenceEquals(other, window))
-                    other.ApplySettings(settings);
-            }
-            RebuildSecondaryWindows();
-        };
+        window.SettingsUpdatedByUser += settings => ApplyAll(settings, except: window);
 
         // Open/close sync across islands (when enabled)
         window.UserStateChanged += state =>
@@ -371,9 +376,44 @@ public partial class App : Application
         return _cachedDefaultIcon;
     }
 
-    private void OpenSettings()
+    private SettingsWindow? _settingsWindow;
+    private GenieService? _genie;
+
+    /// <summary>Opens (or brings forward) the macOS-style Settings window.</summary>
+    internal void OpenSettings()
     {
-        _notchWindow?.OpenSettings();
+        if (_settingsWindow == null)
+        {
+            _settingsWindow = new SettingsWindow(_settings, _themeService, s => ApplyAll(s), () => _notchWindow?.OpenPluginManager(),
+                () => _services.Foreground.Recent);
+            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+            _settingsWindow.Show();
+        }
+        if (_settingsWindow.WindowState == WindowState.Minimized) _settingsWindow.WindowState = WindowState.Normal;
+        _settingsWindow.Activate();
+    }
+
+    /// <summary>One place that pushes changed settings to every surface.</summary>
+    private void ApplyAll(AppSettings settings, NotchWindow? except = null)
+    {
+        _settings = settings;
+        foreach (var island in AllIslands().ToList())
+            if (!ReferenceEquals(island, except)) island.ApplySettings(settings);
+        RebuildSecondaryWindows();
+        UpdateDock();
+        if (_genie != null) _genie.Settings = settings;
+    }
+
+    /// <summary>Genie target: the window's app icon in the dock on its screen (physical px).</summary>
+    private System.Drawing.Point? DockPointFor(IntPtr hwnd)
+    {
+        Native.GetWindowThreadProcessId(hwnd, out int pid);
+        var path = Native.ProcessPath(pid);
+        if (path == null) return null;
+        string key = AppIdentity.Key(hwnd, path);
+        var screen = Forms.Screen.FromHandle(hwnd).DeviceName;
+        return _docks.FirstOrDefault(d => d.Screen.DeviceName == screen)?.IconPoint(key)
+            ?? _docks.Select(d => d.IconPoint(key)).FirstOrDefault(p => p != null);
     }
 
     private void QuitApp()
@@ -389,8 +429,57 @@ public partial class App : Application
         Shutdown();
     }
 
+    private readonly List<DockWindow> _docks = [];
+
+    /// <summary>One dock per screen (or just the main one). Restores the taskbar when the last closes.</summary>
+    private void UpdateDock()
+    {
+        var screens = !_settings.DockEnabled ? []
+            : _settings.DockEveryScreen ? Forms.Screen.AllScreens.ToList()
+            : [Forms.Screen.PrimaryScreen!];
+
+        foreach (var d in _docks.Where(d => screens.All(s => s.DeviceName != d.Screen.DeviceName)).ToList())
+        {
+            d.Close();
+            _docks.Remove(d);
+        }
+        foreach (var s in screens)
+        {
+            var dock = _docks.FirstOrDefault(d => d.Screen.DeviceName == s.DeviceName);
+            if (dock == null)
+            {
+                dock = new DockWindow(_settings, s);
+                dock.Show();
+                _docks.Add(dock);
+            }
+            else { dock.MoveTo(s); dock.ApplySettings(_settings); } // resolution / arrangement / settings changed
+        }
+
+        if (_services != null)
+        {
+            _services.Fullscreen.FullscreenChanged -= OnFullscreenForDock;
+            if (_docks.Count > 0) _services.Fullscreen.FullscreenChanged += OnFullscreenForDock;
+        }
+        if (_docks.Count == 0) TaskbarHelper.Restore();
+    }
+
+    private void OnFullscreenForDock(bool fullscreen) => Dispatcher.BeginInvoke(() =>
+    {
+        foreach (var d in _docks)
+        {
+            // Hide only the dock on the screen that has the fullscreen app.
+            bool here = fullscreen && _services != null && _services.Fullscreen.FullscreenMonitor ==
+                Helpers.ScreenHelper.GetMonitorHandle(d);
+            d.Visibility = here ? Visibility.Hidden : Visibility.Visible;
+        }
+    });
+
     protected override void OnExit(ExitEventArgs e)
     {
+        foreach (var d in _docks) d.Close();
+        _docks.Clear();
+        TaskbarHelper.Restore();
+        _genie?.Dispose();
         LogTrace($"OnExit: ApplicationExitCode={e.ApplicationExitCode}");
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         if (_themeService != null)

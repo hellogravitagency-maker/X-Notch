@@ -1,62 +1,48 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ═══ Dark Theme — Apple macOS Obsidian & Liquid Glass Semantic Tokens ═══ -->
+    <!-- ═══ Dark Theme ═══ -->
 
-    <!-- Base Semantic Surfaces -->
-    <SolidColorBrush x:Key="BackgroundBrush" Color="#08090D"/>
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#111319"/>
-    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="#191C25"/>
-    <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#222631"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="#262A36"/>
-
-    <!-- Accents -->
-    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="#0A84FF"/>
-    <SolidColorBrush x:Key="AccentCyanBrush" Color="#64D2FF"/>
-    <SolidColorBrush x:Key="AccentSuccessBrush" Color="#30D158"/>
-    <SolidColorBrush x:Key="AccentWarningBrush" Color="#FF9F0A"/>
-    <SolidColorBrush x:Key="AccentErrorBrush" Color="#FF453A"/>
-
-    <!-- Notch: Apple Dynamic Island obsidian graphite with subtle Liquid Glass rim and depth shadow -->
-    <SolidColorBrush x:Key="NotchFillBrush" Color="#0B0D14"/>
-    <SolidColorBrush x:Key="NotchShadowBrush" Color="#000000"/>
-    <SolidColorBrush x:Key="NotchBorderBrush" Color="#28FFFFFF"/>
+    <!-- Notch: Apple Dynamic Island pure OLED obsidian black (seamless, borderless, shadowless) -->
+    <SolidColorBrush x:Key="NotchFillBrush" Color="#000000"/>
+    <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
     <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#22FFFFFF"/>
     <SolidColorBrush x:Key="ShelfBadgeBorderBrush" Color="#30FFFFFF"/>
     <SolidColorBrush x:Key="DropZoneGlowBrush" Color="#338B5CF6"/>
 
     <!-- Text hierarchy -->
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F5F5F7"/>
-    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#A1A1AA"/>
-    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#8E8E93"/>
-    <SolidColorBrush x:Key="TextMutedBrush" Color="#71717A"/>
-    <SolidColorBrush x:Key="TextDimBrush" Color="#5A5A60"/>
-    <SolidColorBrush x:Key="TextSubtleBrush" Color="#48484E"/>
-    <SolidColorBrush x:Key="TextFaintBrush" Color="#3A3A40"/>
-    <SolidColorBrush x:Key="TextFaintestBrush" Color="#2C2C32"/>
-    <SolidColorBrush x:Key="SettingLabelBrush" Color="#D1D1D6"/>
-    <SolidColorBrush x:Key="BatteryTextBrush" Color="#A1A1AA"/>
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#AAAAAA"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#888888"/>
+    <SolidColorBrush x:Key="TextDimBrush" Color="#777777"/>
+    <SolidColorBrush x:Key="TextSubtleBrush" Color="#666666"/>
+    <SolidColorBrush x:Key="TextFaintBrush" Color="#555555"/>
+    <SolidColorBrush x:Key="TextFaintestBrush" Color="#444444"/>
+    <SolidColorBrush x:Key="SettingLabelBrush" Color="#B0B0B0"/>
+    <SolidColorBrush x:Key="BatteryTextBrush" Color="#999999"/>
 
     <!-- Surfaces -->
-    <SolidColorBrush x:Key="SeparatorBrush" Color="#262A36"/>
-    <SolidColorBrush x:Key="ProgressTrackBrush" Color="#222631"/>
-    <SolidColorBrush x:Key="ProgressFillBrush" Color="#F5F5F7"/>
-    <SolidColorBrush x:Key="SegmentedBgBrush" Color="#111319"/>
-    <SolidColorBrush x:Key="SegmentedCheckedBgBrush" Color="#191C25"/>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#2A2A2A"/>
+    <SolidColorBrush x:Key="ProgressTrackBrush" Color="#333333"/>
+    <SolidColorBrush x:Key="ProgressFillBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SegmentedBgBrush" Color="#1A1A1C"/>
+    <SolidColorBrush x:Key="SegmentedCheckedBgBrush" Color="#2A2A2E"/>
 
     <!-- Toggle switch -->
     <SolidColorBrush x:Key="ToggleTrackOffBrush" Color="#3A3A3C"/>
     <SolidColorBrush x:Key="ToggleThumbBrush" Color="White"/>
 
     <!-- Segmented radio text -->
-    <SolidColorBrush x:Key="SegmentedTextBrush" Color="#71717A"/>
+    <SolidColorBrush x:Key="SegmentedTextBrush" Color="#777777"/>
     <SolidColorBrush x:Key="SegmentedHoverBgBrush" Color="#22FFFFFF"/>
-    <SolidColorBrush x:Key="SegmentedHoverTextBrush" Color="#A1A1AA"/>
-    <SolidColorBrush x:Key="SegmentedCheckedTextBrush" Color="#F5F5F7"/>
+    <SolidColorBrush x:Key="SegmentedHoverTextBrush" Color="#AAAAAA"/>
+    <SolidColorBrush x:Key="SegmentedCheckedTextBrush" Color="#FFFFFF"/>
 
     <!-- Overlays / hover -->
-    <SolidColorBrush x:Key="TransportHoverBrush" Color="#25FFFFFF"/>
-    <SolidColorBrush x:Key="TransportPressedBrush" Color="#40FFFFFF"/>
+    <SolidColorBrush x:Key="TransportHoverBrush" Color="#33FFFFFF"/>
+    <SolidColorBrush x:Key="TransportPressedBrush" Color="#55FFFFFF"/>
     <SolidColorBrush x:Key="HoverOverlayBrush" Color="#18FFFFFF"/>
     <SolidColorBrush x:Key="PressedOverlayBrush" Color="#30FFFFFF"/>
 
@@ -66,8 +52,8 @@
     <SolidColorBrush x:Key="ScrollThumbDragBrush" Color="#88FFFFFF"/>
 
     <!-- Battery -->
-    <SolidColorBrush x:Key="BatteryBorderBrush" Color="#71717A"/>
-    <SolidColorBrush x:Key="BatteryNormalFillBrush" Color="#F5F5F7"/>
+    <SolidColorBrush x:Key="BatteryBorderBrush" Color="#888888"/>
+    <SolidColorBrush x:Key="BatteryNormalFillBrush" Color="#FFFFFF"/>
 
     <!-- HUD -->
     <SolidColorBrush x:Key="HudIconBrush" Color="White"/>

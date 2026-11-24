@@ -48,3 +48,6 @@ research/reference_repos/
 
 # Obsidian
 .obsidian/
+
+# NotchPixel inspector dumps: private user data copied from the installed app
+vault/04-Research/NotchPixel/raw/user_*

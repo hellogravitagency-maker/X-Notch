@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X-Notch Deck">
+<title>X-Notch Deck</title>
+<style>
+  :root {
+    --bg: #000; --card: #1c1c1e; --card2: #2c2c2e; --text: #f5f5f7; --muted: #8e8e93;
+    --accent: #0a84ff; --danger: #ff453a; --ok: #30d158;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 16px 0; overscroll-behavior: none; }
+  main { flex: 1; overflow: auto; padding-top: 12px; }
+  section[hidden] { display: none; }
+  h1 { font-size: 28px; font-weight: 700; margin: 8px 0 16px; letter-spacing: -0.02em; }
+  .muted { color: var(--muted); }
+  button { font: inherit; color: inherit; border: 0; background: var(--card); border-radius: 14px; padding: 14px;
+    cursor: pointer; transition: transform 120ms var(--ease-out), background-color 150ms ease; touch-action: manipulation; }
+  button:active { transform: scale(0.96); }
+  button.primary { background: var(--accent); color: #fff; font-weight: 600; }
+  input { font: inherit; color: var(--text); background: var(--card); border: 1px solid #3a3a3c; border-radius: 14px;
+    padding: 14px; width: 100%; outline: none; }
+  input:focus { border-color: var(--accent); }
+  .code { font-size: 32px; letter-spacing: 0.4em; text-align: center; font-variant-numeric: tabular-nums; }
+
+  /* Now playing */
+  .art { width: min(72vw, 320px); aspect-ratio: 1; margin: 8px auto 20px; border-radius: 18px; background: var(--card);
+    overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .title { font-size: 20px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .artist { text-align: center; margin-bottom: 18px; }
+  input[type=range] { -webkit-appearance: none; appearance: none; padding: 0; height: 6px; border: 0; border-radius: 3px; background: var(--card2); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; }
+  .times { display: flex; justify-content: space-between; font-size: 12px; margin: 6px 0 16px; font-variant-numeric: tabular-nums; }
+  .transport { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 12px; margin-bottom: 22px; }
+  .transport button { font-size: 26px; padding: 16px 0; }
+  .vol { display: flex; gap: 12px; align-items: center; }
+  .vol button { padding: 10px 14px; }
+
+  /* Trackpad */
+  .pad { height: 52vh; border-radius: 22px; background: var(--card); display: grid; place-items: center; touch-action: none;
+    color: var(--muted); font-size: 14px; text-align: center; padding: 20px; user-select: none; }
+  .pad.active { background: var(--card2); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .typer { display: flex; gap: 8px; margin-top: 12px; }
+  .typer button { flex: none; }
+
+  /* Lists / grids */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .grid button { text-align: left; padding: 18px 16px; min-height: 76px; }
+  .grid small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  nav { display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid #1f1f22; background: rgba(0,0,0,.85); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  nav button { background: none; padding: 8px 0; font-size: 11px; color: var(--muted); border-radius: 10px; }
+  nav button span { display: block; font-size: 22px; margin-bottom: 2px; }
+  nav button[aria-current="page"] { color: var(--accent); }
+  .toast { position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 8px); opacity: 0; background: var(--card2);
+    padding: 10px 16px; border-radius: 999px; font-size: 14px; pointer-events: none;
+    transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { button, .toast { transition: opacity 150ms ease; } button:active { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <section id="pair" hidden>
+    <h1>Pair with your PC</h1>
+    <p class="muted">On your PC, open the island, go to the <b>Deck</b> card and press <b>Pair phone</b>. Enter the 6-digit code it shows.</p>
+    <form id="pairForm">
+      <input id="code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" aria-label="Pairing code">
+      <div style="height:12px"></div>
+      <input id="name" maxlength="40" placeholder="This phone's name" aria-label="Phone name">
+      <div style="height:16px"></div>
+      <button class="primary" style="width:100%">Pair</button>
+    </form>
+    <p id="pairError" class="muted" role="alert"></p>
+  </section>
+
+  <section id="now" hidden>
+    <div class="art"><img id="art" alt="" hidden></div>
+    <div class="title" id="title">Nothing playing</div>
+    <div class="artist muted" id="artist">Start some music on your PC</div>
+    <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Position">
+    <div class="times muted"><span id="tNow">0:00</span><span id="tEnd">0:00</span></div>
+    <div class="transport">
+      <button data-media="prev" aria-label="Previous">⏮</button>
+      <button data-media="play" id="playBtn" aria-label="Play or pause">▶</button>
+      <button data-media="next" aria-label="Next">⏭</button>
+    </div>
+    <div class="vol">
+      <button id="muteBtn" aria-label="Mute">🔊</button>
+      <input type="range" id="volume" min="0" max="100" value="50" aria-label="Volume">
+    </div>
+  </section>
+
+  <section id="pad" hidden>
+    <div class="pad" id="padArea">Slide to move · tap to click<br>Two fingers to scroll · hold to drag</div>
+    <div class="row"><button id="leftBtn">Left click</button><button id="rightBtn">Right click</button></div>
+    <form class="typer" id="typeForm">
+      <input id="typeText" maxlength="500" placeholder="Type on your PC" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button class="primary">Send</button>
+    </form>
+  </section>
+
+  <section id="apps" hidden>
+    <h1>Apps</h1>
+    <div class="grid" id="appGrid"></div>
+  </section>
+
+  <section id="controls" hidden>
+    <h1>Controls</h1>
+    <div class="grid">
+      <button data-action="mute">Sound<small>Mute or unmute the PC</small></button>
+      <button data-action="mic">Microphone<small>Mute or unmute</small></button>
+      <button data-action="desktop">Desktop<small>Show the desktop</small></button>
+      <button data-action="snip">Screenshot<small>Opens the snip overlay</small></button>
+      <button data-action="lock">Lock PC<small>Locks Windows</small></button>
+      <button id="forget">Unpair<small>Forget this phone</small></button>
+    </div>
+  </section>
+</main>
+
+<nav id="nav" hidden>
+  <button data-tab="now" aria-current="page"><span>♫</span>Playing</button>
+  <button data-tab="pad"><span>◳</span>Trackpad</button>
+  <button data-tab="apps"><span>▦</span>Apps</button>
+  <button data-tab="controls"><span>◐</span>Controls</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let token = localStorage.getItem("xnotch-deck-token");
+let status = {}, artVersion = -1, seeking = false, volDragging = false;
+
+const buzz = (ms = 8) => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.classList.add("show");
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 1600);
+}
+const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+
+async function api(path, body) {
+  const r = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "Authorization": `Bearer ${token}`, ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (r.status === 401) { forget(); throw new Error("unpaired"); }
+  return r;
+}
+
+function show(tab) {
+  for (const s of ["now", "pad", "apps", "controls"]) $(s).hidden = s !== tab;
+  for (const b of document.querySelectorAll("nav button")) b.toggleAttribute("aria-current", b.dataset.tab === tab);
+  if (tab === "apps") loadApps();
+  if (tab === "pad") openSocket();
+}
+
+function start() {
+  const paired = !!token;
+  $("pair").hidden = paired; $("nav").hidden = !paired;
+  if (!paired) {
+    const m = location.hash.match(/code=(\d{6})/);
+    if (m) $("code").value = m[1];
+    return;
+  }
+  show("now");
+  poll();
+}
+
+// ── Pairing ──
+$("pairForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); buzz();
+  const r = await fetch("/api/pair", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: $("code").value.trim(), name: $("name").value.trim() || navigator.platform || "Phone" }) });
+  if (r.ok) { token = (await r.json()).token; localStorage.setItem("xnotch-deck-token", token); history.replaceState(null, "", "/"); start(); toast("Paired"); }
+  else $("pairError").textContent = r.status === 429 ? "Slow down a little and try again." : "That code didn't work. Check the PC and try again.";
+});
+function forget() { localStorage.removeItem("xnotch-deck-token"); token = null; start(); }
+$("forget").addEventListener("click", forget);
+
+// ── Now playing ──
+async function poll() {
+  if (!token) return;
+  if (document.visibilityState === "visible") {
+    try {
+      status = await (await api("/api/status")).json();
+      $("title").textContent = status.title || "Nothing playing";
+      $("artist").textContent = status.artist || (status.title ? "" : "Start some music on your PC");
+      $("playBtn").textContent = status.playing ? "⏸" : "▶";
+      $("muteBtn").textContent = status.muted ? "🔇" : "🔊";
+      if (!seeking) $("seek").value = status.duration ? Math.round(1000 * status.position / status.duration) : 0;
+      if (!volDragging) $("volume").value = Math.round((status.volume || 0) * 100);
+      $("tNow").textContent = fmt(status.position); $("tEnd").textContent = fmt(status.duration);
+      if (status.artVersion !== artVersion) {
+        artVersion = status.artVersion;
+        const r = await api("/api/art");
+        const img = $("art");
+        if (r.ok) { URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(await r.blob()); img.hidden = false; }
+        else img.hidden = true;
+      }
+    } catch {}
+  }
+  setTimeout(poll, 1000);
+}
+for (const b of document.querySelectorAll("[data-media]"))
+  b.addEventListener("click", async () => { buzz(); await api("/api/media", { cmd: b.dataset.media }); });
+$("seek").addEventListener("input", () => seeking = true);
+$("seek").addEventListener("change", async () => { await api("/api/media", { cmd: "seek", value: $("seek").value / 1000 }); seeking = false; });
+$("volume").addEventListener("input", () => { volDragging = true; api("/api/volume", { value: $("volume").value / 100 }); });
+$("volume").addEventListener("change", () => volDragging = false);
+$("muteBtn").addEventListener("click", () => { buzz(); api("/api/volume", { mute: true }); });
+
+// ── Trackpad over WebSocket ──
+let ws = null;
+function openSocket() {
+  if (ws && ws.readyState <= 1) return;
+  ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`);
+  ws.onopen = () => ws.send(token);
+}
+const send = (m) => { if (ws && ws.readyState === 1) ws.send(m); };
+const pad = $("padArea");
+let last = null, moved = 0, startT = 0, fingers = 0, holdTimer = null, dragging = false, pending = [0, 0], raf = 0;
+function flush() { raf = 0; if (pending[0] || pending[1]) { send(`m ${pending[0].toFixed(1)} ${pending[1].toFixed(1)}`); pending = [0, 0]; } }
+pad.addEventListener("pointerdown", (e) => {
+  pad.setPointerCapture(e.pointerId); pad.classList.add("active");
+  fingers++; last = { x: e.clientX, y: e.clientY }; moved = 0; startT = performance.now();
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => { if (moved < 6 && fingers === 1) { dragging = true; send("d"); buzz(15); } }, 450);
+});
+pad.addEventListener("pointermove", (e) => {
+  if (!last) return;
+  const dx = e.clientX - last.x, dy = e.clientY - last.y;
+  last = { x: e.clientX, y: e.clientY }; moved += Math.abs(dx) + Math.abs(dy);
+  if (fingers >= 2) { send(`s ${dy.toFixed(1)}`); return; }
+  pending[0] += dx; pending[1] += dy;
+  if (!raf) raf = requestAnimationFrame(flush); // one message per frame, not per touch event
+});
+function end() {
+  clearTimeout(holdTimer); pad.classList.remove("active");
+  if (dragging) { send("u"); dragging = false; }
+  else if (moved < 6 && performance.now() - startT < 250) { send(fingers >= 2 ? "c r" : "c l"); buzz(); }
+  fingers = Math.max(0, fingers - 1); if (fingers === 0) last = null;
+}
+pad.addEventListener("pointerup", end);
+pad.addEventListener("pointercancel", end);
+$("leftBtn").addEventListener("click", () => { openSocket(); send("c l"); buzz(); });
+$("rightBtn").addEventListener("click", () => { openSocket(); send("c r"); buzz(); });
+$("typeForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const text = $("typeText").value; if (!text) return;
+  buzz(); await api("/api/type", { text }); $("typeText").value = ""; toast("Typed on your PC");
+});
+
+// ── Apps & controls ──
+async function loadApps() {
+  const names = await (await api("/api/apps")).json();
+  const grid = $("appGrid"); grid.textContent = "";
+  if (!names.length) { grid.innerHTML = '<p class="muted">Add apps to the X-Notch dock on your PC and they show up here.</p>'; return; }
+  names.forEach((n, i) => {
+    const b = document.createElement("button"); b.textContent = n;
+    b.addEventListener("click", async () => { buzz(); await api("/api/apps/launch", { index: i }); toast(`Opening ${n}`); });
+    grid.appendChild(b);
+  });
+}
+for (const b of document.querySelectorAll("[data-action]"))
+  b.addEventListener("click", async () => { buzz(); await api("/api/action", { id: b.dataset.action }); toast("Done"); });
+for (const b of document.querySelectorAll("nav button")) b.addEventListener("click", () => show(b.dataset.tab));
+
+start();
+</script>
+</body>
+</html>

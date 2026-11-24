@@ -1,6 +1,7 @@
 <Window x:Class="XNotch.Views.PluginBrowserWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:XNotch.Helpers"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
@@ -47,11 +48,11 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel>
-                        <TextBlock Text="Browse Plugins"
+                        <TextBlock Text="{l:L 'Browse Plugins'}"
                                    FontSize="28"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Discover verified widgets and utilities that fit directly into X-Notch."
+                        <TextBlock Text="{l:L 'Discover verified widgets and utilities that fit directly into X-Notch.'}"
                                    Margin="0,6,0,0"
                                    FontSize="12"
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
@@ -61,7 +62,7 @@
                             Grid.Column="1"
                             Width="32"
                             Height="32"
-                            Content="X"
+                            Content="{l:L 'X'}"
                             Style="{StaticResource PluginTitlebarButton}"/>
                 </Grid>
 
@@ -88,7 +89,7 @@
                             Grid.Column="2"
                             MinWidth="96"
                             Margin="14,0,0,0"
-                            Content="Search"
+                            Content="{l:L 'Search'}"
                             Style="{StaticResource PluginPrimaryButton}"/>
                 </Grid>
 

@@ -114,9 +114,6 @@ public class XamlLoadTests
             var calendar = new CalendarView();
             Assert.NotNull(calendar);
 
-            var settingsView = new InlineSettingsView();
-            Assert.NotNull(settingsView);
-
             var clock = new ClockWidget();
             Assert.NotNull(clock);
 

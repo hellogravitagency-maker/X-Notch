@@ -12,6 +12,17 @@ namespace XNotch.Helpers;
 /// </summary>
 public class SpringAnimator
 {
+    /// <summary>
+    /// App-wide motion preferences applied to every spring when it starts.
+    /// SpeedScale &gt; 1 = faster (shorter response). Intensity 0..1 scales overshoot
+    /// (0 = critically damped). Reduced = Windows "Animation effects" off or the
+    /// user's Reduce motion setting: no overshoot, short settle.
+    /// </summary>
+    public static double SpeedScale { get; set; } = 1.0;
+    public static double Intensity { get; set; } = 1.0;
+    public static bool ReducedByUser { get; set; }
+    public static bool Reduced => ReducedByUser || !System.Windows.SystemParameters.ClientAreaAnimation;
+
     private double _omega;       // Natural frequency (ω = 2π / response)
     private double _zeta;        // Damping ratio (ζ)
     private double _omegaD;      // Damped frequency
@@ -89,8 +100,14 @@ public class SpringAnimator
         _startVelocity = velocity ?? (_isAnimating ? CurrentVelocity : 0.0);
         _startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
 
-        _omega = 2.0 * Math.PI / Math.Max(Response, 0.01);
-        _zeta = DampingFraction;
+        double response = Response / Math.Clamp(SpeedScale, 0.25, 4.0);
+        double zeta = DampingFraction < 1.0
+            ? 1.0 - (1.0 - DampingFraction) * Math.Clamp(Intensity, 0.0, 1.5)
+            : DampingFraction;
+        if (Reduced) { response = Math.Min(response, 0.22); zeta = 1.0; }
+
+        _omega = 2.0 * Math.PI / Math.Max(response, 0.01);
+        _zeta = zeta;
         _omegaD = _omega * Math.Sqrt(Math.Max(1.0 - _zeta * _zeta, 0.0001));
 
         _isAnimating = true;

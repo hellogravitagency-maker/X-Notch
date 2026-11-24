@@ -19,6 +19,7 @@ public sealed class AppBarHelper : IDisposable
     private const uint ABM_QUERYPOS = 0x2;
     private const uint ABM_SETPOS = 0x3;
     private const int ABE_TOP = 1;
+    private const int ABE_BOTTOM = 3;
     private const int ABN_POSCHANGED = 1;
     private const int CallbackMessage = 0x0400 + 0x0137; // WM_USER + arbitrary id
 
@@ -27,6 +28,7 @@ public sealed class AppBarHelper : IDisposable
     private bool _registered;
     private RECT _requestedRect;
     private bool _hasRegion;
+    private int _edge = ABE_TOP;
 
     /// <summary>Call once after the window handle exists (SourceInitialized).</summary>
     public void Attach(Window window)
@@ -46,12 +48,30 @@ public sealed class AppBarHelper : IDisposable
 
         EnsureRegistered();
 
+        _edge = ABE_TOP;
         _requestedRect = new RECT
         {
             left = screenPhysicalBounds.Left,
             top = screenPhysicalBounds.Top,
             right = screenPhysicalBounds.Right,
             bottom = screenPhysicalBounds.Top + stripHeightPhysical
+        };
+        _hasRegion = true;
+        ClaimRegion();
+    }
+
+    /// <summary>Reserves a strip at the bottom of the screen (dock). Physical pixels.</summary>
+    public void ReserveBottom(System.Drawing.Rectangle screenPhysicalBounds, int stripHeightPhysical)
+    {
+        if (_hwnd == IntPtr.Zero || stripHeightPhysical <= 0) return;
+        EnsureRegistered();
+        _edge = ABE_BOTTOM;
+        _requestedRect = new RECT
+        {
+            left = screenPhysicalBounds.Left,
+            top = screenPhysicalBounds.Bottom - stripHeightPhysical,
+            right = screenPhysicalBounds.Right,
+            bottom = screenPhysicalBounds.Bottom
         };
         _hasRegion = true;
         ClaimRegion();
@@ -83,13 +103,14 @@ public sealed class AppBarHelper : IDisposable
         int height = _requestedRect.bottom - _requestedRect.top;
 
         var abd = NewData();
-        abd.uEdge = ABE_TOP;
+        abd.uEdge = (uint)_edge;
         abd.rc = _requestedRect;
 
         // Canonical sequence: let the shell adjust the rect (other appbars may
         // already own part of the edge), then claim our height from the result.
         SHAppBarMessage(ABM_QUERYPOS, ref abd);
-        abd.rc.bottom = abd.rc.top + height;
+        if (_edge == ABE_BOTTOM) abd.rc.top = abd.rc.bottom - height;
+        else abd.rc.bottom = abd.rc.top + height;
         SHAppBarMessage(ABM_SETPOS, ref abd);
     }
 

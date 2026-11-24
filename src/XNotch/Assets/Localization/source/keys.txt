@@ -1,0 +1,229 @@
+AGENTS
+APPEARANCE
+ABOUT
+GENERAL
+SCREENS
+SYSTEM HUD
+MUSIC
+PLUGINS
+DESKTOP
+STREAMING
+WIDGETS & CARDS
+DEVELOPER & WORKSPACES
+NOTIFICATIONS & ALERTS
+Agents
+Agents are off
+Agents card
+Agents off
+Agents on
+Alerts
+All
+Automatic
+Back
+Battery indicator
+Bluetooth
+Break
+Break over
+Brightness
+Brightness HUD
+Browse
+Calendar panel
+Camera is active
+Cancel
+Capture
+Capture card
+Chat is quiet
+Chat overlay on screen
+Check for updates
+Clear
+Clear All
+Clipboard
+Clipboard card
+Clipboard history
+Clipboard history is off
+Code
+Colour
+Connect Claude Code & Codex
+Connect to OBS
+Controls
+Controls card
+Countdown
+Countdown date
+Countdown to
+Currency
+Dark
+Deck
+Deck card
+Dismiss
+Dock (replaces taskbar)
+Dock on every screen
+Dock shows apps on its own screen
+Drop files here
+End stream
+Everything you copy stays here, even after a restart
+FPS needs admin
+Fahrenheit
+Files
+Focus
+Focus done, take a break
+Full Calendar
+Game strip
+Go live
+Good
+Hazardous
+Hide
+Hover behavior
+Island on every screen
+Keep in Dock
+Keep island
+Language
+Light
+Links
+Live wallpaper
+Loading…
+Long hover
+Looking around
+Manage plugins
+Mic
+Microphone is active
+Moderate
+Music
+Music controls
+Needs a city
+Night light
+No agents running
+No devices
+No music playing
+No network: connect to Wi-Fi or Ethernet.
+No phones paired yet
+No recent notifications
+No text found
+Nothing copied yet
+Notifications & calendar
+OBS isn't running
+OBS password
+OBS port
+OBS ready
+Open
+PAIRED PHONES
+Pair phone
+Peek + Click
+Per-app rules (recent apps)
+Phone Deck
+Phone Deck is on
+Phone paired
+Pin
+Ping
+Ping host
+Pinned
+Quick Settings
+Quit
+Ready for the next focus block
+Record
+Recording
+Recording saved
+Recording stopped
+Remove
+Remove from Dock
+Reserve space at top
+Restart X-Notch to apply
+Screen time
+Screenshot on the shelf
+Screenshots & recordings to shelf
+Search
+Sensitive
+Set a city in settings
+Set a date in settings
+Settings
+Shelf
+Show its terminal
+Sleep
+Sleeping
+Snip
+Sound
+Start
+Start Claude Code or Codex and it shows up here
+Start on boot
+Stop rec
+Stopwatch
+Stream
+Stream card
+Stream ended
+Synchronize islands
+Tasks
+Text
+Text capture failed
+Text copied
+Theme
+Today
+Tray icons
+Twitch channel
+Unhealthy
+Unpin
+Update available
+Very unhealthy
+Video
+Vitals
+Volume HUD
+Waiting for you
+Walking
+Water
+Weather
+Weather city
+When an app is fullscreen
+Wi-Fi
+Widgets
+Widgets card
+Windows found no words in that area
+World clock
+Wrong OBS password
+You're live
+Your idle pet
+done
+error
+idle
+just now
+needs you
+now
+{0} active
+{0} finished
+{0} h ago
+{0} min ago
+{0} min break started
+{0} needs you
+{0} stopped
+{0} · paused
+Air
+Air · {0}
+1 {0} in {1}
+Click to copy · {0}
+The Deck couldn't start (port {0} may be in use).
+{0} can now control this PC. Remove it in the Deck card.
+Phone Deck is off. Turn it on in settings to control music, the mouse and apps from your phone.
+Your network is set to Public, so the Deck stays off. Set it to Private in Windows network settings.
+Turn on Agents in settings to see Claude Code and Codex live
+Turn it on in settings to keep what you copy
+Add a Twitch channel in settings to see chat
+Scan with your phone, or open
+and enter
+This phone loses access immediately
+Active time today
+Pick any colour on screen · Esc cancels
+Snip an area and copy its text (Windows OCR)
+X-Notch Alt-Tab
+X-Notch Reminder
+Tasks & To-Do focus
+Water tracking (Hydration)
+Sleep tracking & schedule
+System vitals & telemetry
+Notification history & alerts
+Music player card
+Audio visualizer
+Webcam mirror
+Auto hide when idle
+Show shadow
+Adapt to Windows theme
+Pop-up when under camera
+Pop-up centered at cursor
+Plugin Manager
+Browse Plugins

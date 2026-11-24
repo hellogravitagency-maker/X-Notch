@@ -1,26 +1,12 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ═══ Light Theme — Apple macOS Daylight & Liquid Glass Semantic Tokens ═══ -->
+    <!-- ═══ Light Theme ═══ -->
 
-    <!-- Base Semantic Surfaces -->
-    <SolidColorBrush x:Key="BackgroundBrush" Color="#F2F3F7"/>
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#E5E7EB"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="#D1D5DB"/>
-
-    <!-- Accents -->
-    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="#007AFF"/>
-    <SolidColorBrush x:Key="AccentCyanBrush" Color="#32ADE6"/>
-    <SolidColorBrush x:Key="AccentSuccessBrush" Color="#34C759"/>
-    <SolidColorBrush x:Key="AccentWarningBrush" Color="#FF9500"/>
-    <SolidColorBrush x:Key="AccentErrorBrush" Color="#FF3B30"/>
-
-    <!-- Notch: Crisp daylight Dynamic Island with soft ambient shadow and refined rim -->
-    <SolidColorBrush x:Key="NotchFillBrush" Color="#F2F3F7"/>
-    <SolidColorBrush x:Key="NotchShadowBrush" Color="#30000000"/>
-    <SolidColorBrush x:Key="NotchBorderBrush" Color="#20000000"/>
+    <!-- Notch: seamless, borderless, shadowless -->
+    <SolidColorBrush x:Key="NotchFillBrush" Color="#F5F5F7"/>
+    <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
     <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#12000000"/>
     <SolidColorBrush x:Key="ShelfBadgeBorderBrush" Color="#20000000"/>
     <SolidColorBrush x:Key="DropZoneGlowBrush" Color="#228B5CF6"/>

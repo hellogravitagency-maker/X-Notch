@@ -1,0 +1,56 @@
+<UserControl x:Class="XNotch.Views.ClipboardWidgetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:XNotch.Helpers"
+             Height="128"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Components/IconButtonStyle.xaml"/>
+                <ResourceDictionary Source="Components/SegmentedRadioStyle.xaml"/>
+                <ResourceDictionary Source="Components/RoundedScrollBarStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="6,0" Background="Transparent" PreviewMouseWheel="OnPreviewMouseWheel">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Margin="0,0,0,4">
+            <StackPanel x:Name="FilterPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                <RadioButton Content="{l:L 'All'}" Tag="All" IsChecked="True" Style="{StaticResource SegmentedRadio}" Checked="OnFilterChecked" GroupName="ClipFilter"/>
+                <RadioButton Content="{l:L 'Text'}" Tag="Text" Style="{StaticResource SegmentedRadio}" Checked="OnFilterChecked" GroupName="ClipFilter"/>
+                <RadioButton Content="{l:L 'Links'}" Tag="Link" Style="{StaticResource SegmentedRadio}" Checked="OnFilterChecked" GroupName="ClipFilter"/>
+                <RadioButton Content="{l:L 'Code'}" Tag="Code" Style="{StaticResource SegmentedRadio}" Checked="OnFilterChecked" GroupName="ClipFilter"/>
+                <RadioButton Content="{l:L 'Files'}" Tag="Path" Style="{StaticResource SegmentedRadio}" Checked="OnFilterChecked" GroupName="ClipFilter"/>
+                <RadioButton Content="{l:L 'Pinned'}" Tag="Pinned" Style="{StaticResource SegmentedRadio}" Checked="OnFilterChecked" GroupName="ClipFilter"/>
+            </StackPanel>
+            <Button HorizontalAlignment="Right" Style="{StaticResource IconButton}" Height="20" Padding="8,1"
+                    Click="OnClearClick" ToolTip="{l:L 'Clear history (pinned items stay)'}">
+                <TextBlock Text="{l:L 'Clear'}" FontSize="9.5" Foreground="{DynamicResource TextTertiaryBrush}"/>
+            </Button>
+        </Grid>
+
+        <ScrollViewer x:Name="ListScroll" Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Style="{StaticResource RoundedScrollViewer}">
+            <StackPanel x:Name="ListPanel"/>
+        </ScrollViewer>
+
+        <Border x:Name="EmptyState" Grid.Row="1" Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="10" Padding="12,14" VerticalAlignment="Top">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="EmptyTitle" Text="{l:L 'Nothing copied yet'}" FontSize="11" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock x:Name="EmptyHint" Text="{l:L 'Everything you copy stays here, even after a restart'}"
+                           FontSize="10" Margin="0,3,0,0" TextAlignment="Center" TextWrapping="Wrap"
+                           HorizontalAlignment="Center" Foreground="{DynamicResource TextTertiaryBrush}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using XNotch.Services;
 
 namespace XNotch.Models;
 
@@ -23,7 +24,13 @@ public enum AppTheme
     Dark,
     Light,
     LiquidGlass,
-    Auto
+    Auto,
+    /// <summary>Frosted glassmorphism: blurred desktop behind a dark translucent tint.</summary>
+    Glass,
+    /// <summary>Monochrome graphite greys with a graphite accent.</summary>
+    Graphite,
+    /// <summary>Pure black, blends into a real camera notch on OLED panels.</summary>
+    Oled
 }
 
 /// <summary>
@@ -74,7 +81,28 @@ public class AppSettings
     public AppTheme Theme { get; set; } = AppTheme.Auto;
     public bool AdaptToWindowsTheme { get; set; } = true;
     public double CornerRadiusScale { get; set; } = 1.0;
-    public bool ShowShadow { get; set; } = true;
+
+    // Motion (applied to every SpringAnimator)
+    public double AnimationSpeed { get; set; } = 1.0;
+    public double SpringIntensity { get; set; } = 1.0;
+    public bool ReduceMotion { get; set; }
+    public bool ShowAlbumGlow { get; set; } = true;
+    public bool ShowShadow { get; set; } = false;
+
+    /// <summary>Accent colour as #RRGGBB, or null to follow the Windows accent.</summary>
+    public string? AccentColor { get; set; }
+
+    // Dock (macOS style)
+    public bool DockAutoHide { get; set; } = true;
+    public bool DockMagnification { get; set; } = true;
+    public double DockIconSize { get; set; } = 48;
+    public double DockMagnifiedScale { get; set; } = 1.6;
+
+    /// <summary>Genie animation when X-Notch's own windows minimize into the dock.</summary>
+    public bool GenieEffect { get; set; } = true;
+
+    /// <summary>Also play the genie when any app window minimizes, into its dock icon.</summary>
+    public bool GenieAllWindows { get; set; } = true;
 
     // Music
     public bool ShowMusicControls { get; set; } = true;
@@ -102,6 +130,101 @@ public class AppSettings
     public bool ShowTasksCard { get; set; } = true;
     public bool ShowVitalsCard { get; set; } = true;
     public bool ShowNotificationsCard { get; set; } = true;
+    public bool ShowAgentsCard { get; set; } = true;
+    public bool ShowClipboardCard { get; set; } = true;
+    public bool ShowControlsCard { get; set; } = true;
+    public bool ShowWidgetsCard { get; set; } = true;
+    public bool ShowCaptureCard { get; set; } = true;
+    public bool ShowDeckCard { get; set; } = true;
+    public bool ShowStreamCard { get; set; } = true;
+
+    /// <summary>Looping muted video behind the desktop icons (primary screen); pauses when covered.</summary>
+    public bool LiveWallpaper { get; set; }
+    public string? LiveWallpaperFile { get; set; }
+    public double LiveWallpaperBrightness { get; set; } = 1.0;
+
+    /// <summary>Replace Windows' Alt-Tab with X-Notch's thumbnail switcher.</summary>
+    public bool AltTabEnabled { get; set; }
+
+    // Streaming. Secrets are DPAPI-encrypted (only this Windows user can read them).
+    public string? ChatTwitch { get; set; }
+    public string? ChatYouTubeKeyProtected { get; set; }
+    public string? ChatYouTubeVideo { get; set; }
+    public bool ChatOverlay { get; set; }
+    public bool ObsEnabled { get; set; }
+    public int ObsPort { get; set; } = 4455;
+    public string? ObsPasswordProtected { get; set; }
+
+    public static string? Protect(string? secret) => string.IsNullOrEmpty(secret) ? null :
+        Convert.ToBase64String(System.Security.Cryptography.ProtectedData.Protect(
+            System.Text.Encoding.UTF8.GetBytes(secret), null, System.Security.Cryptography.DataProtectionScope.CurrentUser));
+
+    public static string? Unprotect(string? stored)
+    {
+        if (string.IsNullOrEmpty(stored)) return null;
+        try
+        {
+            return System.Text.Encoding.UTF8.GetString(System.Security.Cryptography.ProtectedData.Unprotect(
+                Convert.FromBase64String(stored), null, System.Security.Cryptography.DataProtectionScope.CurrentUser));
+        }
+        catch { return null; }
+    }
+
+    /// <summary>Phone Deck: LAN web remote. Off by default; never runs on Public networks.</summary>
+    public bool DeckEnabled { get; set; }
+    public List<DeckDevice> DeckDevices { get; set; } = [];
+
+    /// <summary>New screenshots and screen recordings saved by Snipping Tool go onto the shelf.</summary>
+    public bool CapturesToShelf { get; set; } = true;
+
+    // Widgets: weather/air via Open-Meteo, currency via Frankfurter (ECB). Only the typed city is sent.
+    public string? WeatherCity { get; set; }
+    public double? WeatherLatitude { get; set; }
+    public double? WeatherLongitude { get; set; }
+    public bool WeatherFahrenheit { get; set; }
+    public string CurrencyPair { get; set; } = "USD/EUR";
+    public string PingHost { get; set; } = "1.1.1.1";
+    public string? CountdownTitle { get; set; }
+    public string? CountdownDate { get; set; }
+    public string WorldClockZone { get; set; } = "UTC";
+    public PetKind PetKind { get; set; } = PetKind.Cat;
+    public int FocusMinutes { get; set; } = 25;
+    public int BreakMinutes { get; set; } = 5;
+    public string? ScreenTimeDate { get; set; }
+    public long ScreenTimeSeconds { get; set; }
+
+    /// <summary>Clipboard history (DPAPI-encrypted on disk; password-manager copies are never kept).</summary>
+    public bool ClipboardEnabled { get; set; } = true;
+    public int ClipboardKeepHours { get; set; } = 24;
+    public int ClipboardHistorySize { get; set; } = 50;
+
+    /// <summary>Live Claude Code / Codex status. Turning it on installs reporting hooks (backed up first).</summary>
+    public bool AgentsEnabled { get; set; }
+
+    /// <summary>macOS-style dock at the bottom. While on, the Windows taskbar is hidden (restored when off/exit).</summary>
+    public bool DockEnabled { get; set; }
+
+    /// <summary>UI language code, or "auto" to follow Windows. Applies on the next start.</summary>
+    public string Language { get; set; } = "auto";
+
+    /// <summary>A dock on every screen (otherwise only the main screen).</summary>
+    public bool DockEveryScreen { get; set; }
+
+    /// <summary>Each dock shows only the apps whose windows are on its screen.</summary>
+    public bool DockAppsOnOwnScreen { get; set; } = true;
+
+    /// <summary>Per-app island behaviour, keyed by lower-case exe name (e.g. "valorant.exe").</summary>
+    public Dictionary<string, AppRule> AppRules { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>What the island does when any other app is fullscreen on its screen.</summary>
+    public AppRule FullscreenRule { get; set; } = AppRule.Hide;
+
+    /// <summary>Executable paths kept in the dock, in order.</summary>
+    public List<string> DockPins { get; set; } =
+    [
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "msedge.exe"),
+    ];
 
     // Workspace Roots for Project and Task Discovery
     public List<string> WorkspaceRoots { get; set; } = [];
@@ -197,12 +320,7 @@ public class AppSettings
 
     public AppTheme GetManualTheme()
     {
-        return Theme switch
-        {
-            AppTheme.Light => AppTheme.Light,
-            AppTheme.LiquidGlass => AppTheme.LiquidGlass,
-            _ => AppTheme.Dark
-        };
+        return Theme == AppTheme.Auto ? AppTheme.Dark : Theme;
     }
 
     public AppTheme GetRequestedTheme()

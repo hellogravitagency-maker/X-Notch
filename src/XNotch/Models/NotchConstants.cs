@@ -13,39 +13,20 @@ public enum NotchDock
 
 public static class NotchConstants
 {
-    // Closed / S1 Ambient dimensions (before DPI scaling)
+    // Closed dimensions (before DPI scaling)
     public const double ClosedWidth = 200;
-    public const double ClosedHeight = 34;
-    public const double AmbientWidth = 200;
-    public const double AmbientHeight = 34;
+    public const double ClosedHeight = 32;
 
-    // S0 Auto-hide tucked dimension (subtle sliver at screen edge)
+    // Auto-hide tucked dimension (subtle sliver at screen edge)
     public const double AutoHideHeight = 4.0;
-    public const double DormantHeight = 4.0;
 
-    // S2 Peek dimensions (slightly expanded on hover)
+    // Peek dimensions (slightly expanded on hover)
     public const double PeekWidth = 220;
     public const double PeekHeight = 34;
 
     // Audio capsule peek (compact interactive media controls on hover)
     public const double AudioPeekWidth = 295;
     public const double AudioPeekHeight = 36;
-
-    // S4 Focus mode dimensions
-    public const double FocusWidth = 440;
-    public const double FocusHeight = 150;
-
-    // S5 Notification capsule dimensions
-    public const double NotificationWidth = 330;
-    public const double NotificationHeight = 42;
-
-    // S6 Command Center dimensions (Raycast-inspired)
-    public const double CommandWidth = 520;
-    public const double CommandHeight = 280;
-
-    // S7 Workspace dimensions (large multi-widget productivity)
-    public const double WorkspaceWidth = 560;
-    public const double WorkspaceHeight = 420;
 
     // Shelf drop capsule dimensions (elastic pull-down when dragging files over notch)
     public const double ShelfDropWidth = 320;
@@ -54,21 +35,32 @@ public static class NotchConstants
     // HUD dimensions (wider for volume/brightness slider)
     public const double HudWidth = 320;
 
-    // S3 Open dimensions (sized to fit music player & carousel content comfortably)
-    public const double OpenWidth = 520;
-    public const double OpenWidthWithCalendar = 755;
-    public const double OpenWidthWithWebcam = 670;
-    public const double OpenWidthWithCalendarAndWebcam = 905;
-    public const double OpenHeight = 210;
-    public const double OpenSettingsHeight = 440;
+    // Open dimensions (sized to fit music player & carousel content comfortably)
+    public const double OpenWidth = 500;
+    public const double OpenWidthWithCalendar = 735;
+    public const double OpenWidthWithWebcam = 650;
+    public const double OpenWidthWithCalendarAndWebcam = 885;
+    public const double OpenHeight = 168;
+    public const double OpenSettingsHeight = 420;
 
     // Corner radii
+    // Corner radii — bottom corners approach a capsule (h/2) when compact, and stay
+    // generous when open so the expanded island never reads as a rectangular window.
     public const double ClosedTopRadius = 6;
-    public const double ClosedBottomRadius = 14;
+    public const double ClosedBottomRadius = 15;
     public const double PeekTopRadius = 8;
-    public const double PeekBottomRadius = 16;
+    public const double PeekBottomRadius = 17;
     public const double OpenTopRadius = 10;
-    public const double OpenBottomRadius = 20;
+    public const double OpenBottomRadius = 30;
+
+    // Split island (timer bubble beside a music island)
+    public const double TimerBubbleSize = 30;
+    public const double TimerBubbleGap = 6;
+
+    // Album-art glow opacity per state (subtle — no neon)
+    public const double GlowClosedOpacity = 0.30;
+    public const double GlowPeekOpacity = 0.38;
+    public const double GlowOpenOpacity = 0.22;
 
     // Window padding around notch for shadow space
     public const double WindowPadding = 20;
@@ -95,8 +87,8 @@ public static class NotchConstants
 
     // File Shelf
     public const double ShelfRowHeight = 80;
-    public const double OpenHeightWithShelf = 300;
-    public const double OpenSettingsHeightWithShelf = 520;
+    public const double OpenHeightWithShelf = 268;
+    public const double OpenSettingsHeightWithShelf = 500;
 
     // Shadow
     public static readonly System.Windows.Media.Color ShadowColor = System.Windows.Media.Color.FromArgb(180, 0, 0, 0);

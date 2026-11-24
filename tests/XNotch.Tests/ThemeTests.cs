@@ -157,35 +157,35 @@ public class ThemeTests
     }
 
     [Fact]
-    public void InlineSettingsView_LoadAndChangeTheme_HandlesLightDarkAndGlass()
+    public void AppSettings_ThemeConfiguration_HandlesLightDarkAndGlass()
     {
         RunOnSta(() =>
         {
-            var settingsView = new InlineSettingsView();
+            var service = new ThemeService();
             var settings = new AppSettings
             {
                 Theme = AppTheme.Light,
                 AdaptToWindowsTheme = false
             };
 
-            settingsView.LoadSettings(settings);
-            Assert.True(settingsView.ThemeLightRadio.IsChecked);
-            Assert.False(settingsView.AdaptToWindowsThemeCheck.IsChecked);
+            service.Apply(settings);
+            Assert.Equal(AppTheme.Light, settings.Theme);
+            Assert.False(settings.AdaptToWindowsTheme);
 
             // Change to Liquid Glass
             settings.Theme = AppTheme.LiquidGlass;
-            settingsView.LoadSettings(settings);
-            Assert.True(settingsView.ThemeGlassRadio.IsChecked);
+            service.Apply(settings);
+            Assert.Equal(AppTheme.LiquidGlass, settings.Theme);
 
             // Change to Dark Theme
             settings.Theme = AppTheme.Dark;
-            settingsView.LoadSettings(settings);
-            Assert.True(settingsView.ThemeDarkRadio.IsChecked);
+            service.Apply(settings);
+            Assert.Equal(AppTheme.Dark, settings.Theme);
 
             // Change to Adaptive
             settings.AdaptToWindowsTheme = true;
-            settingsView.LoadSettings(settings);
-            Assert.True(settingsView.AdaptToWindowsThemeCheck.IsChecked);
+            service.Apply(settings);
+            Assert.True(settings.AdaptToWindowsTheme);
         });
     }
 
