@@ -7,6 +7,16 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using XNotch.Helpers;
 
+using Brush = System.Windows.Media.Brush;
+using FontFamily = System.Windows.Media.FontFamily;
+using Pen = System.Windows.Media.Pen;
+using Image = System.Windows.Controls.Image;
+using Orientation = System.Windows.Controls.Orientation;
+using Cursors = System.Windows.Input.Cursors;
+using ColorConverter = System.Windows.Media.ColorConverter;
+using FlowDirection = System.Windows.FlowDirection;
+using ActivitySource = XNotch.Island.ActivitySource;
+
 namespace XNotch.Island;
 
 /// <summary>

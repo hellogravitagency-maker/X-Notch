@@ -1529,6 +1529,8 @@ public partial class NotchWindow : Window
 
         if (IsDynamicTop && _island != null)
         {
+            _carouselIndex = 0; // the primary activity's page (or the first card when idle)
+            UpdateCarouselCards();
             _island.SetInteraction(NotchState.Open); // shape first, content 90 ms later
             RetargetIsland();
             UpdateIslandExtras();
@@ -1761,6 +1763,9 @@ public partial class NotchWindow : Window
 
         // Suppress hover timers while mouse is down
         _hoverOpenTimer?.Stop();
+
+        // Long-press (touch) opens like a click
+        if (IsDynamicTop && _vm.NotchState != NotchState.Open) StartLongPress();
 
         NotchPath.CaptureMouse();
     }
@@ -2287,6 +2292,7 @@ public partial class NotchWindow : Window
         ClipboardWidget.SetEnabled(settings.ClipboardEnabled);
         UpdateCarouselCards();
         UpdateClosedContentVisibility();
+        RefreshIslandActivities(); // e.g. "Now Playing in the island" toggled
 
         // HUD gates (external volume/brightness changes must respect these too)
         HudOverlay.VolumeHudEnabled = settings.ShowVolumeHud;
@@ -2394,6 +2400,8 @@ public partial class NotchWindow : Window
             _enabledCards.Add((ClipboardWidget, "📋 " + Loc.T("Clipboard")));
         if (_settings.ShowAgentsCard)
             _enabledCards.Add((AgentsWidget, "✦ " + Loc.T("Agents")));
+
+        PutActivityPagesFirst(); // Dynamic mode: live activity pages lead, primary first
 
         // If none enabled, fallback to MusicPlayer
         if (_enabledCards.Count == 0)

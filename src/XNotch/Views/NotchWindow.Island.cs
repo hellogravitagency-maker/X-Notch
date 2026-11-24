@@ -9,6 +9,16 @@ using XNotch.Helpers;
 using XNotch.Island;
 using XNotch.Models;
 
+using Brush = System.Windows.Media.Brush;
+using FontFamily = System.Windows.Media.FontFamily;
+using Pen = System.Windows.Media.Pen;
+using Image = System.Windows.Controls.Image;
+using Orientation = System.Windows.Controls.Orientation;
+using Cursors = System.Windows.Input.Cursors;
+using ColorConverter = System.Windows.Media.ColorConverter;
+using FlowDirection = System.Windows.FlowDirection;
+using ActivitySource = XNotch.Island.ActivitySource;
+
 namespace XNotch.Views;
 
 /// <summary>
@@ -47,6 +57,7 @@ public partial class NotchWindow
     // Minimal goo: 0 = circle merged into the pill's end cap, 1 = detached at the 8 px gap
     private readonly SpringAnimator _gooSpring = new SpringAnimator().Use(IslandSprings.GooSplit);
     private double _goo;
+    private bool _gooBroken;
 
     // Alert / HUD expiry
     private DispatcherTimer? _islandTimer;
@@ -113,10 +124,29 @@ public partial class NotchWindow
             if (_island.Alerts.IsBusy || _island.HudActive) _islandTimer.Start();
         };
 
+        // Hovering the island pauses the alert countdown
+        RootGrid.MouseEnter += (_, _) => _island.Alerts.HoverPaused = true;
+        RootGrid.MouseLeave += (_, _) => _island.Alerts.HoverPaused = false;
+
         _appliedIslandMode = _settings.IslandMode;
         _appliedIslandStyle = _settings.IslandStyle;
         RefreshIslandActivities();
         ApplyIslandMode(snap: true);
+    }
+
+    private DispatcherTimer? _longPressTimer;
+
+    /// <summary>Touch: holding the island for 500 ms opens it, like a click.</summary>
+    private void StartLongPress()
+    {
+        _longPressTimer?.Stop();
+        _longPressTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(IslandMetrics.LongPressMs) };
+        _longPressTimer.Tick += (_, _) =>
+        {
+            _longPressTimer?.Stop();
+            if (_isMouseDownOnNotch && !_isDragging && _vm.NotchState != NotchState.Open) TransitionToOpen();
+        };
+        _longPressTimer.Start();
     }
 
     /// <summary>Queues a transient alert (Dynamic mode).</summary>
@@ -129,6 +159,13 @@ public partial class NotchWindow
         bool on = IsDynamicTop;
 
         NotchPath.SetResourceReference(Shape.FillProperty, on ? "IslandFillBrush" : "NotchFillBrush");
+        MusicPlayer.ApplyIslandStyle(on);
+        if (!on)
+        {
+            if (_minimalCircleHost != null) _minimalCircleHost.Visibility = Visibility.Collapsed;
+            if (_assistantRing != null) _assistantRing.Visibility = _assistantHalo!.Visibility = Visibility.Collapsed;
+            _goo = 0; _gooSpring.Reset(0);
+        }
         OpenContent.Margin = on ? new Thickness(IslandMetrics.ExpandedPadding) : new Thickness(16, 8, 16, 12);
         _islandLayer.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         NotchCanvas.RenderTransform = on ? _squashTransform : null;
@@ -299,7 +336,7 @@ public partial class NotchWindow
 
     private void AimGoo(IslandPresentation p)
     {
-        double target = p == IslandPresentation.Minimal ? 1 : 0;
+        double target = p == IslandPresentation.Minimal && !_swapPending ? 1 : 0;
         if (SpringAnimator.Reduced) { _gooSpring.Reset(target); _goo = target; return; }
         if (Math.Abs(_gooSpring.TargetValue - target) > 0.001 || (!_gooSpring.IsAnimating && Math.Abs(_goo - target) > 0.001))
             Aim(_gooSpring, target, _goo);
@@ -453,7 +490,15 @@ public partial class NotchWindow
         double merged = rect.Right - r;
         double split = rect.Right + IslandMetrics.MinimalGap + r;
         var center = new Point(merged + (split - merged) * _goo, rect.Top + rect.Height / 2);
-        return GooBridgeGeometry.CreateMinimal(pill, rect, center, IslandMetrics.MinimalCircle / 2);
+
+        // The resting 8 px gap (distance 40) sits inside the 42 px break distance, so once the
+        // neck snaps on the split overshoot (or the split settles) it stays broken until a merge.
+        double capR = rect.Height / 2;
+        double distance = center.X - (rect.Right - capR);
+        bool splitting = _gooSpring.TargetValue > 0.5;
+        if (!splitting) _gooBroken = false;
+        else if (distance > GooBridgeGeometry.BreakDistance(capR, r) || !_gooSpring.IsAnimating) _gooBroken = true;
+        return GooBridgeGeometry.CreateMinimal(pill, rect, center, IslandMetrics.MinimalCircle / 2, allowBridge: !_gooBroken);
     }
 
     /// <summary>Where the detached circle's centre is, in window coordinates (for its content).</summary>

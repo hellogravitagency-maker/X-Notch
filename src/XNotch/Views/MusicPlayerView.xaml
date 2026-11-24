@@ -120,7 +120,8 @@
             </Border>
 
             <!-- Album art with Apple continuous squircle clip and hairline rim -->
-            <Border Width="90" Height="90"
+            <Border x:Name="AlbumArtFrame"
+                    Width="90" Height="90"
                     CornerRadius="12"
                     BorderThickness="1"
                     BorderBrush="#35FFFFFF"
@@ -206,7 +207,8 @@
                            Margin="0,0,8,0"
                            Typography.NumeralAlignment="Tabular"/>
 
-                <Border Grid.Column="1"
+                <Border x:Name="ProgressTrack"
+                        Grid.Column="1"
                         Height="5"
                         CornerRadius="2.5"
                         Background="{DynamicResource ProgressTrackBrush}"

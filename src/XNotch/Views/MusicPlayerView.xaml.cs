@@ -169,4 +169,37 @@ public partial class MusicPlayerView : UserControl
         double percent = Math.Clamp(pos.X / barWidth, 0, 1);
         await _mediaService.SeekToAsync(percent);
     }
+
+    /// <summary>
+    /// Dynamic Island page style (concentric metrics: 64 px art at radius 20, 4 px
+    /// white-20 % scrubber, 28 px transport buttons). Off restores the classic card.
+    /// </summary>
+    public void ApplyIslandStyle(bool on)
+    {
+        double art = on ? Island.IslandMetrics.ExpandedArt : 90;
+        AlbumArtFrame.Width = AlbumArtFrame.Height = art;
+        AlbumArtFrame.CornerRadius = new CornerRadius(on ? Island.IslandMetrics.ExpandedInnerRadius : 12);
+        AlbumGlow.Width = AlbumGlow.Height = art;
+        AlbumGlow.CornerRadius = new CornerRadius(on ? Island.IslandMetrics.ExpandedInnerRadius + 2 : 14);
+
+        double track = on ? Island.IslandMetrics.ScrubberHeight : 5;
+        ProgressTrack.Height = ProgressFill.Height = track;
+        ProgressTrack.CornerRadius = ProgressFill.CornerRadius = new CornerRadius(track / 2);
+        if (on)
+        {
+            ProgressTrack.Background = Island.Activities.IslandVisuals.Brush(Island.IslandColors.ScrubberTrack);
+            ProgressFill.Background = Island.Activities.IslandVisuals.Primary;
+        }
+        else
+        {
+            ProgressTrack.SetResourceReference(Border.BackgroundProperty, "ProgressTrackBrush");
+            ProgressFill.SetResourceReference(Border.BackgroundProperty, "ProgressFillBrush");
+        }
+
+        foreach (var b in new[] { PrevButton, PlayPauseButton, NextButton })
+        {
+            if (on) b.Width = b.Height = Island.IslandMetrics.TransportButton;
+            else { b.ClearValue(WidthProperty); b.ClearValue(HeightProperty); }
+        }
+    }
 }

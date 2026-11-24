@@ -72,14 +72,14 @@ public static class GooBridgeGeometry
     /// Pill + detached circle + neck as one filled shape. The neck joins the pill's
     /// trailing end cap (a circle of the pill's radius) to the detached circle.
     /// </summary>
-    public static Geometry CreateMinimal(Geometry pill, Rect pillRect, Point circleCenter, double circleRadius)
+    public static Geometry CreateMinimal(Geometry pill, Rect pillRect, Point circleCenter, double circleRadius, bool allowBridge = true)
     {
         double capR = pillRect.Height / 2;
         var capCenter = new Point(pillRect.Right - capR, pillRect.Top + capR);
         var circle = new EllipseGeometry(circleCenter, circleRadius, circleRadius);
 
         Geometry shape = new CombinedGeometry(GeometryCombineMode.Union, pill, circle);
-        var bridge = CreateBridge(capCenter, capR, circleCenter, circleRadius);
+        var bridge = allowBridge ? CreateBridge(capCenter, capR, circleCenter, circleRadius) : null;
         if (bridge != null) shape = new CombinedGeometry(GeometryCombineMode.Union, shape, bridge);
         shape.Freeze();
         return shape;
