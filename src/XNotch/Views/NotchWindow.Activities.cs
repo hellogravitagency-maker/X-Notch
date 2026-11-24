@@ -281,6 +281,4 @@ public partial class NotchWindow
         return (page, id == "timer" ? "◔ " + Loc.T("Timer") : id);
     }
 
-    // HUD view: built in Phase 4
-    private FrameworkElement? BuildHudView() => null;
 }

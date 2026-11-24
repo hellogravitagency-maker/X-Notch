@@ -160,6 +160,7 @@ public partial class NotchWindow
 
         NotchPath.SetResourceReference(Shape.FillProperty, on ? "IslandFillBrush" : "NotchFillBrush");
         MusicPlayer.ApplyIslandStyle(on);
+        if (_dock == NotchDock.Top) HudOverlay.IsActive = !on; // Dynamic: the island is the HUD
         if (!on)
         {
             if (_minimalCircleHost != null) _minimalCircleHost.Visibility = Visibility.Collapsed;

@@ -604,6 +604,8 @@ public partial class NotchWindow : Window
             }
         });
 
+        WireIslandSources(); // Dynamic Island alerts, HUD, Spotlight morph
+
         // Apply all persisted settings now that every component is bound —
         // without this, toggles like ShowMusicControls or ShowBattery only
         // take effect after the user touches a setting.
@@ -2900,7 +2902,8 @@ public partial class NotchWindow : Window
 
     public void OpenSpotlight()
     {
-        _spotlightLauncher?.Open();
+        if (TryOpenSpotlightInIsland()) return;
+        _spotlightLauncher?.OpenClassic();
     }
 
     #endregion

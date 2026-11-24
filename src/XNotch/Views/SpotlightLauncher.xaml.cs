@@ -30,7 +30,81 @@ public partial class SpotlightLauncher : Window
     {
         InitializeComponent();
         Deactivated += (_, _) => Hide();
+        SearchTextBox.TextChanged += (_, _) => UpdateIslandResults();
+        IsVisibleChanged += (_, _) => { if (!IsVisible) Dismissed?.Invoke(); };
     }
+
+    #region Island presentation (Dynamic mode: the island itself becomes the field)
+
+    private bool _islandStyle;
+    private bool _islandResults;
+
+    /// <summary>Raised when the launcher hides (Esc, launch, click away).</summary>
+    public event Action? Dismissed;
+
+    /// <summary>Island style: true once results show below the field (the island grows to fit).</summary>
+    public event Action<bool>? IslandResultsChanged;
+
+    /// <summary>
+    /// Opens over the morphed island at a physical-pixel rect (field on top, results below).
+    /// The island's own black shape is the background, so this window only draws content.
+    /// Search and launch behave exactly as <see cref="Open"/>.
+    /// </summary>
+    public void OpenInIsland(int x, int y, int width, int height)
+    {
+        ApplyIslandStyle(true);
+        Open();
+        Helpers.WindowHelper.SetWindowRectPhysical(this, x, y, width, height);
+        UpdateIslandResults();
+    }
+
+    /// <summary>Classic floating panel (the original look).</summary>
+    public void OpenClassic()
+    {
+        ApplyIslandStyle(false);
+        Open();
+    }
+
+    private void ApplyIslandStyle(bool on)
+    {
+        _islandStyle = on;
+        Root.Margin = new Thickness(on ? 0 : 16);
+        Panel.CornerRadius = new CornerRadius(on ? Island.IslandMetrics.SpotlightRadius : 16);
+        Panel.BorderThickness = new Thickness(on ? 0 : 1.2);
+        if (on)
+        {
+            // 1/255 black: invisible over the island, but still takes clicks in a layered window.
+            Panel.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(1, 0, 0, 0));
+            Panel.Effect = null;
+        }
+        else
+        {
+            Panel.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "NotchFillBrush");
+            Panel.Effect ??= new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 24, ShadowDepth = 8, Opacity = 0.45, Direction = 270, Color = System.Windows.Media.Colors.Black };
+        }
+        PanelContent.Margin = on ? new Thickness(Island.IslandMetrics.ExpandedPadding, 0, Island.IslandMetrics.ExpandedPadding, 0) : new Thickness(14);
+        SearchRow.Height = on ? Island.IslandMetrics.SpotlightHeight : double.NaN;
+        SearchRow.Margin = on ? new Thickness(4, 0, 4, 0) : new Thickness(4, 2, 4, 10);
+        Footer.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
+        if (!on)
+        {
+            ResultsSeparator.Visibility = ResultsListBox.Visibility = Visibility.Visible;
+            _islandResults = false;
+        }
+    }
+
+    /// <summary>Island style: the results area appears once there is a query.</summary>
+    private void UpdateIslandResults()
+    {
+        if (!_islandStyle) return;
+        bool show = !string.IsNullOrWhiteSpace(SearchTextBox.Text);
+        ResultsSeparator.Visibility = ResultsListBox.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (show == _islandResults) return;
+        _islandResults = show;
+        IslandResultsChanged?.Invoke(show);
+    }
+
+    #endregion
 
     public void Bind(NotchServices services)
     {

@@ -278,8 +278,20 @@ public class AudioCaptureService : IDisposable, IMMNotificationClient
         }
     }
 
+    /// <summary>
+    /// The default playback device changed (raised once per change, on a CoreAudio
+    /// thread) with the new device's friendly name, e.g. for an "Audio → …" alert.
+    /// </summary>
+    public event Action<string>? DefaultRenderDeviceChanged;
+
     public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
     {
+        if (flow == DataFlow.Render && role == Role.Multimedia && DefaultRenderDeviceChanged != null)
+        {
+            string name = "";
+            try { name = _enumerator?.GetDevice(defaultDeviceId)?.FriendlyName ?? ""; } catch { }
+            DefaultRenderDeviceChanged.Invoke(name);
+        }
         if (flow == DataFlow.Render && (role == Role.Multimedia || role == Role.Console))
         {
             lock (_captureLock)
