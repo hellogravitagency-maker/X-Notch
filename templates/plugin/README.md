@@ -72,4 +72,4 @@ Context.Log("Something happened", PluginLogLevel.Info);
 // Writes to: %AppData%\X-Notch\plugin.log
 ```
 
-See [PLUGIN_DEVELOPMENT.md](../../PLUGIN_DEVELOPMENT.md) for the full guide.
+See [PLUGIN_DEVELOPMENT.md](../../vault/03-Plugins/PLUGIN_DEVELOPMENT.md) for the full guide.

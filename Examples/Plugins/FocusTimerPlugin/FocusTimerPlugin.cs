@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -9,23 +10,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using XNotch.Controls;
+using XNotch.Island.Activities;
 using XNotch.Models;
 using XNotch.Plugins;
 using XNotch.Services;
 
 namespace FocusTimerPlugin;
 
-[XNotchPlugin("com.xnotch.focustimer", "Focus Timer", "1.0.1", "X-Notch Team")]
-public sealed class FocusTimerPlugin : PluginBase, IUIPlugin, IConfigurablePlugin
+[XNotchPlugin("com.xnotch.focustimer", "Focus Timer", "1.1.0", "X-Notch Team")]
+public sealed class FocusTimerPlugin : PluginBase, IUIPlugin, IConfigurablePlugin, ILiveActivityPlugin
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
 
     public override string Id => "com.xnotch.focustimer";
     public override string Name => "Focus Timer";
-    public override string Version => "1.0.1";
+    public override string Version => "1.1.0";
     public override string Author => "X-Notch Team";
     public override string Description => "Pomodoro-style focus timer with break cycles, streak tracking, and compact session controls.";
-    public override string MinimumXNotchVersion => "0.5.3";
+    public override string MinimumXNotchVersion => "0.9.0"; // ILiveActivityPlugin
 
     private ThemeService? _themeService;
     private DispatcherTimer? _timer;
@@ -41,6 +44,7 @@ public sealed class FocusTimerPlugin : PluginBase, IUIPlugin, IConfigurablePlugi
     private string? _statePath;
     private DateTime _settingsLastWriteUtc = DateTime.MinValue;
     private bool _isLight;
+    private FocusLiveActivity? _liveActivity;
 
     public override async Task InitializeAsync(IPluginContext context)
     {
@@ -434,6 +438,70 @@ public sealed class FocusTimerPlugin : PluginBase, IUIPlugin, IConfigurablePlugi
     {
         UpdateView(_openView);
         UpdateView(_verticalView);
+        _liveActivity?.Update();
+    }
+
+    /// <summary>Dynamic Island: a running focus session is a live activity.</summary>
+    public IEnumerable<ILiveActivity> GetLiveActivities()
+    {
+        _liveActivity ??= new FocusLiveActivity(this);
+        yield return _liveActivity;
+    }
+
+    /// <summary>
+    /// Reference live activity: compact = progress ring + rolling remaining time,
+    /// minimal = the ring. Changed fires only when the session starts or stops;
+    /// the views follow the 1 s tick through <see cref="Tick"/>.
+    /// </summary>
+    private sealed class FocusLiveActivity(FocusTimerPlugin plugin) : ILiveActivity
+    {
+        private const string Accent = "#5E5CE6"; // focus indigo
+        private bool _wasRunning;
+
+        public string Id => "com.xnotch.focustimer.session";
+        public int Priority => 65;
+        public DateTime StartedAt { get; private set; } = DateTime.Now;
+        public bool IsActive => plugin._isRunning;
+        public event Action? Changed;
+        private event Action? Tick;
+
+        public void Update()
+        {
+            if (plugin._isRunning != _wasRunning)
+            {
+                _wasRunning = plugin._isRunning;
+                if (_wasRunning) StartedAt = DateTime.Now;
+                Changed?.Invoke();
+            }
+            Tick?.Invoke();
+        }
+
+        private double Remaining => plugin._remaining.TotalSeconds / Math.Max(1, plugin.GetPhaseDuration(plugin._phase).TotalSeconds);
+        private string Time => $"{(int)plugin._remaining.TotalMinutes}:{plugin._remaining.Seconds:00}";
+
+        public FrameworkElement CreateCompactLeading() => Ring();
+
+        public FrameworkElement CreateCompactTrailing()
+        {
+            var text = new RollingNumberText(15, FontWeights.SemiBold, IslandVisuals.Brush(Accent)) { Text = Time };
+            Action update = () => text.Text = Time;
+            text.Loaded += (_, _) => Tick += update;
+            text.Unloaded += (_, _) => Tick -= update;
+            return text;
+        }
+
+        public FrameworkElement CreateMinimalView() => Ring();
+
+        public FrameworkElement? CreateExpandedView() => null; // the plugin's open view already covers it
+
+        private ProgressRing Ring()
+        {
+            var ring = new ProgressRing(18, Accent) { Progress = Remaining, HorizontalAlignment = HorizontalAlignment.Center };
+            Action update = () => ring.Progress = Remaining;
+            ring.Loaded += (_, _) => Tick += update;
+            ring.Unloaded += (_, _) => Tick -= update;
+            return ring;
+        }
     }
 
     private void UpdateView(FocusTimerView? view)

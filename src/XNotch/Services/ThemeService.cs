@@ -35,8 +35,29 @@ public class ThemeService
         ApplyInternal(_currentSetting, _adaptToWindowsTheme, _useLiquidGlass, palette);
     }
 
+    private Color? _accent;
+
+    /// <summary>The theme actually showing (Auto resolved to Light/Dark).</summary>
+    public AppTheme ActiveTheme => _useLiquidGlass ? AppTheme.LiquidGlass
+        : _currentSetting is AppTheme.Auto ? (_isLightResolved ? AppTheme.Light : AppTheme.Dark) : _currentSetting;
+
+    /// <summary>Themes that show the blurred desktop through the island.</summary>
+    public bool UsesBackdrop => ActiveTheme is AppTheme.LiquidGlass or AppTheme.Glass;
+
+    private void ReadAccent(AppSettings settings)
+    {
+        _accent = null;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(settings.AccentColor))
+                _accent = (Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.AccentColor);
+        }
+        catch { }
+    }
+
     public void Apply(AppSettings settings)
     {
+        ReadAccent(settings);
         bool isGlass = settings.Theme == AppTheme.LiquidGlass || settings.UseLiquidGlassTheme;
         ApplyInternal(
             settings.GetRequestedTheme(),
@@ -54,6 +75,7 @@ public class ThemeService
 
     public async Task ApplyWithTransition(AppSettings settings, UIElement target)
     {
+        ReadAccent(settings);
         await ApplyWithTransition(
             settings.GetRequestedTheme(),
             settings.AdaptToWindowsTheme,
@@ -146,17 +168,19 @@ public class ThemeService
         AppTheme theme,
         bool useLiquidGlass)
     {
-        if (useLiquidGlass || theme == AppTheme.LiquidGlass)
-            return ThemePalette.CreateLiquidGlass();
-
-        return theme switch
+        var palette = useLiquidGlass || theme == AppTheme.LiquidGlass ? ThemePalette.CreateLiquidGlass() : theme switch
         {
             AppTheme.Light => ThemePalette.CreateLight(),
             AppTheme.Dark => ThemePalette.CreateDark(),
+            AppTheme.Glass => ThemePalette.CreateGlass(),
+            AppTheme.Graphite => ThemePalette.CreateGraphite(),
+            AppTheme.Oled => ThemePalette.CreateOled(),
             _ => DetectWindowsThemeIsLight()
                 ? ThemePalette.CreateLight()
                 : ThemePalette.CreateDark()
         };
+        // Graphite keeps its grey accent unless the user picked one explicitly.
+        return _accent is Color a && !palette.IsHighContrast ? palette.WithAccent(a) : palette;
     }
 
     private void SwapThemeDictionary()
@@ -266,6 +290,18 @@ public class ThemeService
         UpdateBrush("DropZoneBrush", WithAlpha(palette.Accent, palette.IsLight ? (byte)0x16 : (byte)0x22));
         UpdateBrush("DropZoneGlowBrush", WithAlpha(palette.Accent, palette.IsLight ? (byte)0x18 : (byte)0x28));
 
+        // Dock + settings materials: macOS frosted tint over the blurred desktop, hairline rim.
+        bool backdrop = UsesBackdrop;
+        UpdateBrush("DockTintBrush", palette.IsLight
+            ? Color.FromArgb(backdrop ? (byte)0x55 : (byte)0x99, 0xF6, 0xF6, 0xF8)
+            : Color.FromArgb(backdrop ? (byte)0x40 : ActiveTheme == AppTheme.Oled ? (byte)0xE6 : (byte)0x8C,
+                palette.Background.R, palette.Background.G, palette.Background.B));
+        UpdateBrush("DockRimBrush", palette.IsLight ? Color.FromArgb(0x66, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF));
+        UpdateBrush("DockTextBrush", palette.IsLight ? Color.FromRgb(0x1D, 0x1D, 0x1F) : Colors.White);
+        UpdateBrush("SidebarSelectedBrush", palette.Accent);
+        UpdateBrush("CardBrush", palette.IsLight ? Colors.White
+            : backdrop ? Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF) : palette.Surface);
+
         // When Liquid Glass is active, ensure crisp solid black text and widgets
         if (_useLiquidGlass)
         {
@@ -298,6 +334,12 @@ public class ThemeService
         {
             Application.Current.Resources["VisualizerBarColor"] = palette.VisualizerBar;
         }
+
+        // Dynamic island fill: Apple keeps the island black in light mode too; the glass
+        // themes keep their glass material (same shape and motion).
+        UpdateBrush("IslandFillBrush", UsesBackdrop
+            ? FindBrushResource("NotchFillBrush")?.Color ?? Colors.Black
+            : Colors.Black);
     }
 
     private void UpdateBrush(string key, Color color)

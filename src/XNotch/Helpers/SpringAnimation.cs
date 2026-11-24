@@ -12,6 +12,17 @@ namespace XNotch.Helpers;
 /// </summary>
 public class SpringAnimator
 {
+    /// <summary>
+    /// App-wide motion preferences applied to every spring when it starts.
+    /// SpeedScale &gt; 1 = faster (shorter response). Intensity 0..1 scales overshoot
+    /// (0 = critically damped). Reduced = Windows "Animation effects" off or the
+    /// user's Reduce motion setting: no overshoot, short settle.
+    /// </summary>
+    public static double SpeedScale { get; set; } = 1.0;
+    public static double Intensity { get; set; } = 1.0;
+    public static bool ReducedByUser { get; set; }
+    public static bool Reduced => ReducedByUser || !System.Windows.SystemParameters.ClientAreaAnimation;
+
     private double _omega;       // Natural frequency (ω = 2π / response)
     private double _zeta;        // Damping ratio (ζ)
     private double _omegaD;      // Damped frequency
@@ -33,6 +44,12 @@ public class SpringAnimator
 
     public event Action<double>? ValueChanged;
     public event Action? Completed;
+
+    /// <summary>
+    /// Raised whenever any spring starts or retargets. Lets a window subscribe to
+    /// CompositionTarget.Rendering only while something is moving (idle CPU ≈ 0).
+    /// </summary>
+    public static event Action? AnimationStarted;
 
     public SpringAnimator() { }
 
@@ -89,13 +106,68 @@ public class SpringAnimator
         _startVelocity = velocity ?? (_isAnimating ? CurrentVelocity : 0.0);
         _startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
 
-        _omega = 2.0 * Math.PI / Math.Max(Response, 0.01);
-        _zeta = DampingFraction;
+        double response = Response / Math.Clamp(SpeedScale, 0.25, 4.0);
+        double zeta = DampingFraction < 1.0
+            ? 1.0 - (1.0 - DampingFraction) * Math.Clamp(Intensity, 0.0, 1.5)
+            : DampingFraction;
+        if (Reduced) { response = Math.Min(response, 0.22); zeta = 1.0; }
+
+        _omega = 2.0 * Math.PI / Math.Max(response, 0.01);
+        _zeta = zeta;
         _omegaD = _omega * Math.Sqrt(Math.Max(1.0 - _zeta * _zeta, 0.0001));
 
         _isAnimating = true;
         CurrentValue = currentValue;
         CurrentVelocity = _startVelocity;
+        AnimationStarted?.Invoke();
+    }
+
+    /// <summary>
+    /// Re-aims the spring at <paramref name="newTarget"/> starting from its exact value
+    /// and velocity at this instant (not the last ticked frame), so a retarget between
+    /// frames is continuous in both position and velocity — no jump, no restart.
+    /// Pass <paramref name="simulatedTimeSeconds"/> (time since the current start) for tests.
+    /// </summary>
+    public void Retarget(double newTarget, double simulatedTimeSeconds = -1)
+    {
+        if (!_isAnimating)
+        {
+            AnimateTo(newTarget, CurrentValue, 0.0);
+            return;
+        }
+
+        var (value, velocity) = Evaluate(ElapsedSeconds(simulatedTimeSeconds));
+        AnimateTo(newTarget, value, velocity);
+    }
+
+    private double ElapsedSeconds(double simulatedTimeSeconds) => simulatedTimeSeconds >= 0
+        ? simulatedTimeSeconds
+        : (System.Diagnostics.Stopwatch.GetTimestamp() - _startTimestamp) / TimestampFrequency;
+
+    /// <summary>Analytic position and velocity at time t since the current start.</summary>
+    private (double Value, double Velocity) Evaluate(double t)
+    {
+        double displacement = _startValue - _targetValue;
+        if (_zeta >= 1.0)
+        {
+            // Critically or over-damped
+            double expTerm = Math.Exp(-_omega * _zeta * t);
+            double A = displacement;
+            double B = _startVelocity + _omega * _zeta * displacement;
+            return (_targetValue + expTerm * (A + B * t),
+                    expTerm * (B - _omega * _zeta * (A + B * t)));
+        }
+        else
+        {
+            // Under-damped (elastic spring with natural overshoot)
+            double expTerm = Math.Exp(-_zeta * _omega * t);
+            double A = displacement;
+            double B = (_startVelocity + _zeta * _omega * displacement) / _omegaD;
+            double sinVal = Math.Sin(_omegaD * t);
+            double cosVal = Math.Cos(_omegaD * t);
+            return (_targetValue + expTerm * (A * cosVal + B * sinVal),
+                    expTerm * ((B * _omegaD - A * _zeta * _omega) * cosVal - (A * _omegaD + B * _zeta * _omega) * sinVal));
+        }
     }
 
     /// <summary>
@@ -107,34 +179,8 @@ public class SpringAnimator
         if (!_isAnimating)
             return CurrentValue;
 
-        double t = simulatedTimeSeconds >= 0
-            ? simulatedTimeSeconds
-            : (System.Diagnostics.Stopwatch.GetTimestamp() - _startTimestamp) / TimestampFrequency;
-
-        double displacement = _startValue - _targetValue;
-        double value;
-        double velocity;
-
-        if (_zeta >= 1.0)
-        {
-            // Critically or over-damped
-            double expTerm = Math.Exp(-_omega * _zeta * t);
-            double A = displacement;
-            double B = _startVelocity + _omega * _zeta * displacement;
-            value = _targetValue + expTerm * (A + B * t);
-            velocity = expTerm * (B - _omega * _zeta * (A + B * t));
-        }
-        else
-        {
-            // Under-damped (elastic spring with natural overshoot)
-            double expTerm = Math.Exp(-_zeta * _omega * t);
-            double A = displacement;
-            double B = (_startVelocity + _zeta * _omega * displacement) / _omegaD;
-            double sinVal = Math.Sin(_omegaD * t);
-            double cosVal = Math.Cos(_omegaD * t);
-            value = _targetValue + expTerm * (A * cosVal + B * sinVal);
-            velocity = expTerm * ((B * _omegaD - A * _zeta * _omega) * cosVal - (A * _omegaD + B * _zeta * _omega) * sinVal);
-        }
+        double t = ElapsedSeconds(simulatedTimeSeconds);
+        var (value, velocity) = Evaluate(t);
 
         CurrentValue = value;
         CurrentVelocity = velocity;

@@ -318,6 +318,15 @@ public class PluginManager : IDisposable
     }
 
     /// <summary>
+    /// Get all enabled live activity plugins (Dynamic Island).
+    /// </summary>
+    public IEnumerable<ILiveActivityPlugin> GetLiveActivityPlugins()
+    {
+        return _loadedPlugins.OfType<ILiveActivityPlugin>()
+            .Where(p => _pluginEnabledState.GetValueOrDefault(p.Id, false));
+    }
+
+    /// <summary>
     /// Get plugin directory path.
     /// </summary>
     public string GetPluginsDirectory() => _pluginsDirectory;

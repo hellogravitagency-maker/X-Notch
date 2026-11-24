@@ -44,12 +44,23 @@ public static class NotchConstants
     public const double OpenSettingsHeight = 420;
 
     // Corner radii
+    // Corner radii — bottom corners approach a capsule (h/2) when compact, and stay
+    // generous when open so the expanded island never reads as a rectangular window.
     public const double ClosedTopRadius = 6;
-    public const double ClosedBottomRadius = 14;
+    public const double ClosedBottomRadius = 15;
     public const double PeekTopRadius = 8;
-    public const double PeekBottomRadius = 16;
+    public const double PeekBottomRadius = 17;
     public const double OpenTopRadius = 10;
-    public const double OpenBottomRadius = 20;
+    public const double OpenBottomRadius = 30;
+
+    // Split island (timer bubble beside a music island)
+    public const double TimerBubbleSize = 30;
+    public const double TimerBubbleGap = 6;
+
+    // Album-art glow opacity per state (subtle — no neon)
+    public const double GlowClosedOpacity = 0.30;
+    public const double GlowPeekOpacity = 0.38;
+    public const double GlowOpenOpacity = 0.22;
 
     // Window padding around notch for shadow space
     public const double WindowPadding = 20;

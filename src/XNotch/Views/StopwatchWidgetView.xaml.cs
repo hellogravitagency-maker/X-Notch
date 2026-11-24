@@ -20,6 +20,15 @@ public partial class StopwatchWidgetView : UserControl, IDisposable
     private TimeSpan _lastLapMark = TimeSpan.Zero;
     private bool _disposed;
 
+    /// <summary>True while the stopwatch is counting.</summary>
+    public bool IsRunning => _stopwatch.IsRunning;
+
+    /// <summary>Elapsed time (also while paused).</summary>
+    public TimeSpan Elapsed => _stopwatch.Elapsed;
+
+    /// <summary>Raised on start, pause and reset (UI thread).</summary>
+    public event Action? RunningChanged;
+
     public StopwatchWidgetView()
     {
         InitializeComponent();
@@ -53,6 +62,7 @@ public partial class StopwatchWidgetView : UserControl, IDisposable
             StartStopText.Foreground = Brushes.Black;
             LapResetText.Text = "Reset";
             RunningDot.Visibility = Visibility.Collapsed;
+            RunningChanged?.Invoke();
         }
         else
         {
@@ -64,6 +74,7 @@ public partial class StopwatchWidgetView : UserControl, IDisposable
             StartStopText.Foreground = Brushes.White;
             LapResetText.Text = "Lap";
             RunningDot.Visibility = Visibility.Visible;
+            RunningChanged?.Invoke();
         }
     }
 
@@ -82,6 +93,7 @@ public partial class StopwatchWidgetView : UserControl, IDisposable
         {
             // Reset
             _stopwatch.Reset();
+            RunningChanged?.Invoke();
             _lastLapMark = TimeSpan.Zero;
             _laps.Clear();
             TimeMinutesSeconds.Text = "00:00";

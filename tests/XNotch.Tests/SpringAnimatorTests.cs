@@ -105,4 +105,28 @@ public class SpringAnimatorTests
         Assert.False(spring.IsAnimating);
         Assert.Equal(NotchConstants.OpenWidth, spring.CurrentValue, 1);
     }
+
+    [Fact]
+    public void MotionPreferences_ReducedOrZeroIntensity_RemoveOvershoot()
+    {
+        try
+        {
+            foreach (var (reduced, intensity) in new[] { (true, 1.0), (false, 0.0) })
+            {
+                SpringAnimator.ReducedByUser = reduced;
+                SpringAnimator.Intensity = intensity;
+                var spring = new SpringAnimator(0.40, 0.70); // bouncy by default
+                spring.AnimateTo(target: 100.0, currentValue: 0.0);
+                double max = 0;
+                for (double t = 0; t <= 1.0; t += 0.01) max = Math.Max(max, spring.Tick(t));
+                Assert.True(max <= 100.01, $"overshoot {max} (reduced={reduced}, intensity={intensity})");
+                Assert.Equal(100.0, spring.Tick(1.0), 1);
+            }
+        }
+        finally
+        {
+            SpringAnimator.ReducedByUser = false;
+            SpringAnimator.Intensity = 1.0;
+        }
+    }
 }

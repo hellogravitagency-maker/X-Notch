@@ -1,0 +1,229 @@
+AGENTEN
+DARSTELLUNG
+INFO
+ALLGEMEIN
+BILDSCHIRME
+SYSTEM-HUD
+MUSIK
+PLUG-INS
+DESKTOP
+STREAMING
+WIDGETS & KARTEN
+ENTWICKLUNG & ARBEITSBEREICHE
+BENACHRICHTIGUNGEN & HINWEISE
+Agenten
+Agenten sind aus
+Agenten-Karte
+Agenten aus
+Agenten an
+Hinweise
+Alle
+Automatisch
+Zurück
+Akkuanzeige
+Bluetooth
+Pause
+Pause vorbei
+Helligkeit
+Helligkeits-HUD
+Durchsuchen
+Kalenderleiste
+Kamera ist aktiv
+Abbrechen
+Aufnahme
+Aufnahme-Karte
+Im Chat ist es ruhig
+Chat-Overlay auf dem Bildschirm
+Nach Updates suchen
+Leeren
+Alle löschen
+Zwischenablage
+Zwischenablage-Karte
+Zwischenablage-Verlauf
+Der Zwischenablage-Verlauf ist aus
+Code
+Farbe
+Claude Code & Codex verbinden
+Mit OBS verbinden
+Steuerung
+Steuerungs-Karte
+Countdown
+Countdown-Datum
+Countdown bis
+Währung
+Dunkel
+Deck
+Deck-Karte
+Schließen
+Dock (ersetzt die Taskleiste)
+Dock auf jedem Bildschirm
+Dock zeigt Apps des eigenen Bildschirms
+Dateien hier ablegen
+Stream beenden
+Alles, was du kopierst, bleibt hier – auch nach einem Neustart
+FPS brauchen Adminrechte
+Fahrenheit
+Dateien
+Fokus
+Fokus geschafft, mach eine Pause
+Ganzer Kalender
+Spielleiste
+Live gehen
+Gut
+Gefährlich
+Ausblenden
+Verhalten beim Darüberfahren
+Insel auf jedem Bildschirm
+Im Dock behalten
+Insel behalten
+Sprache
+Hell
+Links
+Live-Hintergrund
+Wird geladen…
+Langes Darüberfahren
+Schaut sich um
+Plug-ins verwalten
+Mikro
+Mikrofon ist aktiv
+Mäßig
+Musik
+Musiksteuerung
+Stadt fehlt
+Nachtmodus
+Keine Agenten aktiv
+Keine Geräte
+Keine Musik
+Kein Netzwerk: Verbinde dich mit WLAN oder Ethernet.
+Noch keine Telefone gekoppelt
+Keine neuen Benachrichtigungen
+Kein Text gefunden
+Noch nichts kopiert
+Benachrichtigungen & Kalender
+OBS läuft nicht
+OBS-Passwort
+OBS-Port
+OBS bereit
+Öffnen
+GEKOPPELTE TELEFONE
+Telefon koppeln
+Vorschau + Klick
+Regeln pro App (zuletzt genutzt)
+Phone Deck
+Phone Deck ist an
+Telefon gekoppelt
+Anheften
+Ping
+Ping-Ziel
+Angeheftet
+Schnelleinstellungen
+Beenden
+Bereit für den nächsten Fokusblock
+Aufnehmen
+Aufnahme läuft
+Aufnahme gespeichert
+Aufnahme beendet
+Entfernen
+Aus dem Dock entfernen
+Platz oben reservieren
+X-Notch neu starten, um es zu übernehmen
+Bildschirmzeit
+Screenshot im Regal
+Screenshots & Aufnahmen ins Regal
+Suchen
+Empfindliche
+Wähle in den Einstellungen eine Stadt
+Wähle in den Einstellungen ein Datum
+Einstellungen
+Regal
+Terminal anzeigen
+Schlaf
+Schläft
+Ausschneiden
+Ton
+Start
+Starte Claude Code oder Codex, dann erscheint es hier
+Mit Windows starten
+Aufn. stoppen
+Stoppuhr
+Stream
+Stream-Karte
+Stream beendet
+Inseln synchronisieren
+Aufgaben
+Text
+Texterfassung fehlgeschlagen
+Text kopiert
+Design
+Heute
+Infobereich-Symbole
+Twitch-Kanal
+Ungesund
+Lösen
+Update verfügbar
+Sehr ungesund
+Video
+Leistung
+Lautstärke-HUD
+Wartet auf dich
+Läuft herum
+Wasser
+Wetter
+Stadt fürs Wetter
+Wenn eine App im Vollbild ist
+WLAN
+Widgets
+Widget-Karte
+Windows hat in diesem Bereich keine Wörter gefunden
+Weltuhr
+Falsches OBS-Passwort
+Du bist live
+Dein Haustier
+fertig
+Fehler
+wartet
+gerade eben
+braucht dich
+jetzt
+{0} aktiv
+{0} ist fertig
+vor {0} Std.
+vor {0} Min.
+{0} Min. Pause gestartet
+{0} braucht dich
+{0} wurde gestoppt
+{0} · pausiert
+Luft
+Luft · {0}
+1 {0} in {1}
+Klicken zum Kopieren · {0}
+Das Deck konnte nicht starten (Port {0} ist evtl. belegt).
+{0} kann diesen PC jetzt steuern. In der Deck-Karte entfernen.
+Phone Deck ist aus. Schalte es in den Einstellungen ein, um Musik, Maus und Apps vom Telefon aus zu steuern.
+Dein Netzwerk ist auf „Öffentlich“ gestellt, deshalb bleibt das Deck aus. Stelle es in den Windows-Netzwerkeinstellungen auf „Privat“.
+Schalte Agenten in den Einstellungen ein, um Claude Code und Codex live zu sehen
+Schalte es in den Einstellungen ein, um Kopiertes zu behalten
+Füge in den Einstellungen einen Twitch-Kanal hinzu, um den Chat zu sehen
+Mit dem Telefon scannen oder öffnen
+und eingeben
+Dieses Telefon verliert sofort den Zugriff
+Aktive Zeit heute
+Wähle eine Farbe auf dem Bildschirm · Esc bricht ab
+Bereich ausschneiden und Text kopieren (Windows-OCR)
+X-Notch-Alt-Tab
+X-Notch-Erinnerung
+Aufgaben & Fokus
+Wasser-Tracking (Trinken)
+Schlaf-Tracking & Zeitplan
+Systemleistung & Telemetrie
+Benachrichtigungsverlauf & Hinweise
+Musikplayer-Karte
+Audio-Visualizer
+Webcam-Spiegel
+Bei Inaktivität ausblenden
+Schatten anzeigen
+An Windows-Design anpassen
+Unter der Kamera einblenden
+Am Mauszeiger zentriert einblenden
+Plug-in-Verwaltung
+Plug-ins durchsuchen

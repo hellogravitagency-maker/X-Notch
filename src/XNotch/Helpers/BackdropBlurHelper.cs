@@ -54,12 +54,12 @@ public static class BackdropBlurHelper
     /// Captures a padded screen region into a WriteableBitmap, applying edge
     /// refraction and vibrancy. All coordinates are physical pixels.
     /// </summary>
-    public static void CaptureInto(WriteableBitmap wb, int x, int y, int width, int height, int padding = 8)
+    public static void CaptureInto(WriteableBitmap wb, int x, int y, int width, int height, int padding = 8, bool refract = true)
     {
         if (width < 4 || height < 4) return;
 
-        // The rim can't be wider than a third of the smaller side (tiny pills)
-        int rim = Math.Min(RimSize, Math.Min(width, height) / 3);
+        // The rim can't be wider than a third of the smaller side (tiny pills). Frosted glass: no lens.
+        int rim = refract ? Math.Min(RimSize, Math.Min(width, height) / 3) : 0;
 
         int cw = width + padding * 2;
         int ch = height + padding * 2;

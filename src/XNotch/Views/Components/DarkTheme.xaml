@@ -5,6 +5,7 @@
 
     <!-- Notch: Apple Dynamic Island pure OLED obsidian black (seamless, borderless, shadowless) -->
     <SolidColorBrush x:Key="NotchFillBrush" Color="#000000"/>
+    <SolidColorBrush x:Key="IslandFillBrush" Color="#000000"/>
     <SolidColorBrush x:Key="NotchShadowBrush" Color="Transparent"/>
     <SolidColorBrush x:Key="NotchBorderBrush" Color="Transparent"/>
     <SolidColorBrush x:Key="ShelfBadgeBgBrush" Color="#22FFFFFF"/>
