@@ -70,3 +70,74 @@ Untouched (per spec): `DeckServer.cs`, installer, `build.bat`, `.github`, `Plugi
 4. Alerts, HUD and Spotlight morph.
 5. Plugin SDK additions and the Focus Timer live activity.
 6. Settings UI, locales, final notes.
+
+---
+
+## Outcome (phases 1–6)
+
+Commits on `feat/dynamic-island`, one per phase:
+
+| Phase | Commit summary |
+| --- | --- |
+| 0 | `docs:` this plan |
+| 1 | presentation machine, priority resolver, alert queue, metrics, springs, `Retarget` |
+| 2 | dynamic presentation in the window, shape morph and choreography |
+| 3 | live activities, rolling numbers, gooey minimal, assistant glow |
+| 4 | alerts, HUD and Spotlight morph |
+| 5 | `ILiveActivityPlugin` / `IIslandAlerts`, Focus Timer live activity, SDK 0.9.0 |
+| 6 | settings rows, locale strings, these notes |
+
+After every phase, `dotnet build -c Release` and `dotnet test tests/XNotch.Tests` passed (189 tests). The single-file `win-x64` publish still produces `X-Notch.exe`.
+
+### Files added
+
+- `src/XNotch/Island/`: `IslandPresentation.cs` (enum, `IslandAlert`, `IClock`), `IslandPresentationMachine.cs`, `ActivityPriorityResolver.cs`, `AlertQueue.cs`, `IslandMetrics.cs` (+ `IslandColors`), `IslandSprings.cs`, `GooBridgeGeometry.cs`, `RollingDigits.cs`, `IslandContentLayer.cs`, `AssistantGlow.cs`
+- `src/XNotch/Island/Activities/`: `ILiveActivity.cs`, `BuiltInActivities.cs` (Music, Timer, Stopwatch, Agent, Shelf), `IslandVisuals.cs` (text, glyphs, art, `ProgressRing`, `WaveformBars`, rows)
+- `src/XNotch/Controls/RollingNumberText.cs`
+- `src/XNotch/Plugins/ILiveActivityPlugin.cs` (`ILiveActivityPlugin`, `IIslandAlerts`)
+- `src/XNotch/Views/NotchWindow.Island.cs` (presentation, choreography, squash, goo geometry, frame loop), `NotchWindow.Activities.cs` (activities, minimal circle, glow, pages, plugin activities), `NotchWindow.Alerts.cs` (alert sources, HUD, Spotlight morph)
+- `tests/XNotch.Tests/IslandModelTests.cs`
+
+### Files changed
+
+- `Helpers/SpringAnimation.cs`: `Retarget`, static `AnimationStarted`
+- `Views/NotchWindow.xaml.cs`: Dynamic branches in transitions, layout and window bounds; capsule alerts route to the queue; on-demand frame loop
+- `Models/AppSettings.cs`: `IslandMode`, `IslandStyle`
+- `Views/SettingsWindow.cs`: two rows under Appearance → Island shape
+- Theme dictionaries and `ThemeService`: `IslandFillBrush`
+- `Services/AudioCaptureService.cs`: `DefaultRenderDeviceChanged`
+- `Views/StopwatchWidgetView.xaml.cs`: `IsRunning` / `Elapsed` / `RunningChanged`
+- `Views/MusicPlayerView.xaml(.cs)`: names plus `ApplyIslandStyle`
+- `Views/SpotlightLauncher.xaml(.cs)`: names plus the island presentation (logic untouched)
+- `Plugins/PluginManager.cs`: `GetLiveActivityPlugins`
+- The 6 locale files
+- `Examples/Plugins/FocusTimerPlugin` (1.1.0)
+- `src/XNotch.PluginSdk` (0.9.0, README)
+
+### Tests added
+
+- Machine: Idle → Compact → Minimal → Expanded, peek, alert overlay and restore, HUD reset, Spotlight modal and restore, game-mode suppression, swap, change events.
+- Resolver: ordering, recency ties, promotion, plugin clamp, plugins can't outrank the agent.
+- AlertQueue (fake clock): 2.6 s, hover pause, 1 s dedupe, FIFO max 3, 10 s game-mode hold.
+- `Retarget` continuity: value and velocity within 1e-6. Expand-activity overshoot is 2.5–5.5 %.
+- Goo: the neck exists below the break distance, is absent above it, and stays inside the hull.
+- Rolling digits: only changed columns animate, right-aligned length changes.
+
+### Deviations and known gaps
+
+1. **Settings persistence:** JSON, not Sqlite. `AppSettings` lives in `settings.json`, and `XNotchDatabase` never stored settings, so the new settings use the real layer.
+2. **SDK location:** the plugin interfaces are defined in `src/XNotch/Plugins`. The SDK project only packs the app's reference assembly, so the new interfaces ship there too.
+3. **Animation-plugin preset overrides:** not wired. No plugin overrides spring presets today: `IAnimationPlugin` is Storyboard-based and `GetAnimationPlugins()` was never called. `IslandSprings.Overrides` / `Resolve` is the hook a future mechanism can use.
+4. **Spotlight is not reparented into the island.** The island morphs to 600×56 on `ExpandActivity`. The existing launcher window is then laid exactly over it in an island style (its background is the island's own fill). The island grows to 600×360 when a query shows results. Moving the launcher's code-behind logic into the island would have meant refactoring logic the spec says to keep untouched.
+5. **Goo resting gap vs. break distance.** The 8 px gap gives a centre distance of 40, which is inside the 42 px break distance. Taken literally, the neck would never snap at rest. The neck snaps on the split overshoot, or when the split settles, and stays broken until a merge starts.
+6. **Reduced motion:** the shape still uses the existing reduced spring (critically damped, ≤ 0.22 s), not a 150 ms fade, because snapping the size and fading would read as a jump. Content uses 150 ms fades. Goo, squash and glow rotation are off.
+7. **Hit-testing:** the existing per-pixel layered-window hit-test already passes clicks outside the shape on every frame, so there is no `WS_EX_TRANSPARENT` toggling. The camera hover strip (1/255 alpha) is hidden in Dynamic mode because it would catch clicks around the floating pill. The under-camera pop-up is therefore off in Dynamic mode; hovering the island itself still peeks.
+8. **Phone Deck:** there is no per-phone connect/disconnect event, and `DeckServer.cs` is off limits. Pairing already raises a notification, which becomes an alert. The server switching on or off raises "Connected" / "Disconnected".
+9. **Extra routing:** in Dynamic mode, notifications, lock keys, charging and the Armoury operating mode also show as island alerts. Their classic capsules would be clipped by the 120 px idle pill.
+10. **Frame loop:** `CompositionTarget.Rendering` is now subscribed on demand in Classic mode too. This is a performance-only change; the visuals are unchanged.
+11. **Verified on screen** (1920×1080 at 125 %): idle pill, the expand overshoot with content arriving after the shape, the collapse with content leaving first, the agent compact with its glow ring, alerts, the HUD, and the Spotlight morph. **Not verified live:**
+    - music compact: no media was playing, and the user's player was not started
+    - Minimal goo: rendered offscreen only
+    - timer, stopwatch and shelf compacts
+    - the 10-clicks-in-2-s stress test
+    - frame time under 8 ms, idle CPU, and 150 % DPI

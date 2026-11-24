@@ -1446,6 +1446,7 @@ public partial class NotchWindow : Window
         CameraTriggerZone.Width = cameraZoneW;
         CameraTriggerZone.Height = cameraZoneH;
         CameraTriggerZone.IsHitTestVisible = (_dock == NotchDock.Top && _vm.NotchState != NotchState.Open);
+        CameraTriggerZone.Visibility = Visibility.Visible;
 
         // Dynamic Island Alerts (Notifications, Power Surge, Lock State, USB, Operating Mode)
         bool showNotification = (_activeNotification != null || _notificationOpacitySpring.IsAnimating || _currentNotificationOpacity > 0.01) && _vm.NotchState != NotchState.Open;
@@ -1484,6 +1485,9 @@ public partial class NotchWindow : Window
             ClosedContent.IsHitTestVisible = false;
             ShadowPath.Visibility = Visibility.Collapsed;
             TimerBubble.Visibility = Visibility.Collapsed;
+            // The camera hover strip is 1/255 alpha: a layered window would still take clicks
+            // there, around the floating pill. Dynamic mode keeps every pixel outside the shape click-through.
+            CameraTriggerZone.Visibility = Visibility.Collapsed;
             NotificationCapsule.Visibility = PowerSurgeCapsule.Visibility = LockStateCapsule.Visibility =
                 UsbDriveCapsule.Visibility = OperatingModeCapsule.Visibility = Visibility.Collapsed;
             LayoutIslandExtras(geometry, offsetX, offsetY, w, h, windowW);

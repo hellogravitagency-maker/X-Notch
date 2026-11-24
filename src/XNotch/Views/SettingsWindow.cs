@@ -392,6 +392,12 @@ public sealed class SettingsWindow : Window
 
         Header(b, "Island shape");
         var g = Group(b);
+        Choice(g, "Island mode", [(IslandMode.Dynamic, "Dynamic"), (IslandMode.Classic, "Classic")],
+            () => _s.IslandMode, v => _s.IslandMode = v,
+            "Dynamic shows live activities, alerts and the HUD in the island. Classic is the original island.");
+        Choice(g, "Island style", [(IslandStyle.Floating, "Floating"), (IslandStyle.Attached, "Attached")],
+            () => _s.IslandStyle, v => _s.IslandStyle = v,
+            "Floating sits just below the top edge. Attached joins the top edge. Applies to Dynamic mode.");
         Range(g, "Corner roundness", 0.5, 1.6, 0.05, () => _s.CornerRadiusScale, v => _s.CornerRadiusScale = v, v => $"{v:0.00}×");
         Toggle(g, "Shadow", () => _s.ShowShadow, v => _s.ShowShadow = v, "A soft shadow under the island, like the iPhone Dynamic Island.");
         Toggle(g, "Album art glow", () => _s.ShowAlbumGlow, v => _s.ShowAlbumGlow = v, "A soft halo in the album's colour while music plays.");
