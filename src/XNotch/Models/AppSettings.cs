@@ -33,6 +33,22 @@ public enum AppTheme
     Oled
 }
 
+/// <summary>Dynamic = Apple-style live activities; Classic = the v0.9.0 island, unchanged.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum IslandMode
+{
+    Dynamic,
+    Classic
+}
+
+/// <summary>Floating = a pill 8 px below the screen top; Attached = flush with the top edge.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum IslandStyle
+{
+    Floating,
+    Attached
+}
+
 /// <summary>
 /// User-configurable settings, persisted to %AppData%/X-Notch/settings.json.
 /// </summary>
@@ -78,6 +94,12 @@ public class AppSettings
     public bool ReserveSpaceAtTop { get; set; }
 
     // Appearance
+    /// <summary>Dynamic (default) or Classic island behaviour.</summary>
+    public IslandMode IslandMode { get; set; } = IslandMode.Dynamic;
+
+    /// <summary>Floating (default) or Attached to the top edge. Dynamic mode only.</summary>
+    public IslandStyle IslandStyle { get; set; } = IslandStyle.Floating;
+
     public AppTheme Theme { get; set; } = AppTheme.Auto;
     public bool AdaptToWindowsTheme { get; set; } = true;
     public double CornerRadiusScale { get; set; } = 1.0;

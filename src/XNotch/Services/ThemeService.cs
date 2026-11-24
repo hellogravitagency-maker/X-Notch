@@ -334,6 +334,12 @@ public class ThemeService
         {
             Application.Current.Resources["VisualizerBarColor"] = palette.VisualizerBar;
         }
+
+        // Dynamic island fill: Apple keeps the island black in light mode too; the glass
+        // themes keep their glass material (same shape and motion).
+        UpdateBrush("IslandFillBrush", UsesBackdrop
+            ? FindBrushResource("NotchFillBrush")?.Color ?? Colors.Black
+            : Colors.Black);
     }
 
     private void UpdateBrush(string key, Color color)

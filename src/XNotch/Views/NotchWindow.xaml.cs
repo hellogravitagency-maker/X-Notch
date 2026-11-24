@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using XNotch.Helpers;
+using XNotch.Island;
 using XNotch.Models;
 using XNotch.Plugins;
 using XNotch.Services;
@@ -351,8 +352,10 @@ public partial class NotchWindow : Window
         ApplyLiquidGlassEffect(_themeService.UsesBackdrop);
         _themeService.ThemeChanged += () => Dispatcher.Invoke(() => ApplyLiquidGlassEffect(_themeService.UsesBackdrop));
 
-        // Register for per-frame rendering
-        CompositionTarget.Rendering += OnRendering;
+        // Per-frame rendering only while something moves (idle CPU ~ 0)
+        SpringAnimator.AnimationStarted += OnAnySpringStarted;
+        HookRendering();
+        InitIsland();
 
         // Mouse events on the notch path
         // Camera trigger zone events
@@ -807,12 +810,13 @@ public partial class NotchWindow : Window
         bool music = _settings.ShowMusicControls && info.HasMedia && info.IsPlaying;
 
         // Split island: music owns the island, the timer detaches into its own bubble
-        double bubble = topDocked && music && TimerActive && _vm.NotchState != NotchState.Open && !AnyCapsuleActive ? 1 : 0;
+        double bubble = topDocked && !IsDynamic && music && TimerActive && _vm.NotchState != NotchState.Open && !AnyCapsuleActive ? 1 : 0;
         if (Math.Abs(_bubbleSpring.TargetValue - bubble) > 0.001)
             _bubbleSpring.AnimateTo(bubble, _currentBubble);
         TimerCompactBadge.Visibility = TimerActive && bubble == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         double glow = !topDocked || !music || !_settings.ShowAlbumGlow || AnyCapsuleActive ? 0
+            : IsDynamic ? IslandMetrics.GlowOpacity
             : _vm.NotchState switch
             {
                 NotchState.Open => NotchConstants.GlowOpenOpacity,
@@ -1015,6 +1019,15 @@ public partial class NotchWindow : Window
 
         _fixedWindowWidth = maxTallAxis + padding * 2;
         _fixedWindowHeight = maxShortAxis + padding + 10;
+
+        if (IsDynamic)
+        {
+            // Room for the floating offset, the Spotlight results and an unclipped glow / shadow.
+            double tallest = Math.Max(maxTopHeight + 2 * IslandMetrics.ExpandedPadding, IslandMetrics.SpotlightResultsHeight);
+            _fixedWindowHeight = Math.Max(_fixedWindowHeight,
+                tallest + IslandMetrics.FloatingTopOffset + 2 + IslandMetrics.WindowGlowMargin);
+            _fixedWindowWidth = Math.Max(_fixedWindowWidth, IslandMetrics.SpotlightWidth + 2 * IslandMetrics.WindowGlowMargin);
+        }
     }
 
     private void RefreshPluginHostLayout()
@@ -1025,6 +1038,8 @@ public partial class NotchWindow : Window
             return;
 
         RepositionForDock();
+
+        if (IsDynamicTop) { RetargetIsland(force: true); return; }
 
         if (_vm.NotchState != NotchState.Open)
             return;
@@ -1202,6 +1217,8 @@ public partial class NotchWindow : Window
             anyAnimating = true;
         }
 
+        anyAnimating |= TickIsland();
+
         if (anyAnimating)
         {
             _wasAnimating = true;
@@ -1217,6 +1234,10 @@ public partial class NotchWindow : Window
                 _idleTrimTimer?.Start();
             }
         }
+        else
+        {
+            UnhookRendering(); // resubscribed by SpringAnimator.AnimationStarted
+        }
     }
 
     private void UpdateNotchVisuals()
@@ -1228,6 +1249,13 @@ public partial class NotchWindow : Window
         double topR = Math.Max(0, _currentTopRadius * radiusScale);
         double bottomR = Math.Clamp(_currentBottomRadius * radiusScale, 0,
             Math.Max(0, Math.Min(h - topR, (w - 2 * topR) / 2)));
+        bool island = IsDynamicTop && _island != null;
+        if (island)
+        {
+            // Dynamic metrics are exact (concentric rule), so the roundness scale is not applied.
+            topR = IsFloating ? 0 : Math.Max(0, _currentTopRadius);
+            bottomR = Math.Clamp(_currentBottomRadius, 0, Math.Max(0, Math.Min(h - topR, (w - 2 * topR) / 2)));
+        }
 
         // Generate notch geometry
         var rect = new Rect(0, 0, w, h);
@@ -1239,6 +1267,8 @@ public partial class NotchWindow : Window
             geometry = NotchShape.CreateSideNotchGeometry(rect, topR, bottomR, isLeft: true);
         else if (_dock == NotchDock.Right)
             geometry = NotchShape.CreateSideNotchGeometry(rect, topR, bottomR, isLeft: false);
+        else if (island)
+            geometry = IslandGeometry(rect, topR, bottomR);
         else
             geometry = NotchShape.CreateNotchGeometry(rect, topR, bottomR);
 
@@ -1299,9 +1329,10 @@ public partial class NotchWindow : Window
         }
         else
         {
-            // Top dock: centered horizontally at top
+            // Top dock: centered horizontally at top (Floating: 8 px below the screen edge;
+            // the window itself starts 2 px above it)
             offsetX = (windowW - w) / 2;
-            offsetY = 0;
+            offsetY = island && IsFloating ? IslandMetrics.FloatingTopOffset + 2 : 0;
         }
 
         System.Windows.Controls.Canvas.SetLeft(NotchPath, offsetX);
@@ -1350,6 +1381,14 @@ public partial class NotchWindow : Window
             contentTop = offsetY + topR + bottomR;
             contentWidth = Math.Max(0, w - topR);
             contentHeight = Math.Max(0, h - 2 * (topR + bottomR));
+        }
+        else if (island)
+        {
+            // Island content owns the whole shape; OpenContent adds the 16 px padding.
+            contentLeft = offsetX + topR;
+            contentTop = offsetY;
+            contentWidth = Math.Max(0, w - 2 * topR);
+            contentHeight = h;
         }
         else
         {
@@ -1433,6 +1472,18 @@ public partial class NotchWindow : Window
             ClosedContent.IsHitTestVisible = ClosedContent.Opacity > 0.5;
         }
 
+        if (island)
+        {
+            // Compact content lives in the island layer; classic capsules route to alerts.
+            ClosedContent.Visibility = Visibility.Collapsed;
+            ClosedContent.IsHitTestVisible = false;
+            ShadowPath.Visibility = Visibility.Collapsed;
+            TimerBubble.Visibility = Visibility.Collapsed;
+            NotificationCapsule.Visibility = PowerSurgeCapsule.Visibility = LockStateCapsule.Visibility =
+                UsbDriveCapsule.Visibility = OperatingModeCapsule.Visibility = Visibility.Collapsed;
+            LayoutIslandExtras(geometry, offsetX, offsetY, w, h, windowW);
+        }
+
         // Canvas covers the full window
         NotchCanvas.Width = windowW;
         NotchCanvas.Height = windowH;
@@ -1476,6 +1527,14 @@ public partial class NotchWindow : Window
         if (!_applyingSyncedState)
             UserStateChanged?.Invoke(NotchState.Open);
 
+        if (IsDynamicTop && _island != null)
+        {
+            _island.SetInteraction(NotchState.Open); // shape first, content 90 ms later
+            RetargetIsland();
+            UpdateIslandExtras();
+            return;
+        }
+
         _widthSpring.Response = 0.38;
         _widthSpring.DampingFraction = 0.82;
         _heightSpring.Response = 0.36;
@@ -1515,6 +1574,13 @@ public partial class NotchWindow : Window
         if (_vm.NotchState == NotchState.Peeking || _vm.NotchState == NotchState.Open) return;
         _vm.Peek();
         NotifyPluginsStateChanged(NotchState.Peeking);
+
+        if (IsDynamicTop && _island != null)
+        {
+            _island.SetInteraction(NotchState.Peeking); // +6 / +2 on the peek preset
+            RetargetIsland();
+            return;
+        }
 
         bool hasMusic = _settings.ShowMusicControls && _mediaService.MediaInfo.HasMedia && _mediaService.MediaInfo.IsPlaying;
         if (hasMusic)
@@ -1558,6 +1624,14 @@ public partial class NotchWindow : Window
         _vm.Close();
         WindowHelper.DisableActivation(this);
         System.Windows.Input.Keyboard.ClearFocus();
+
+        if (IsDynamicTop && _island != null)
+        {
+            _island.SetInteraction(NotchState.Closed); // content exits first, then the shape
+            RetargetIsland();
+            UpdateIslandExtras();
+            return;
+        }
 
         _widthSpring.Response = 0.34;
         _widthSpring.DampingFraction = 0.86;
@@ -1765,6 +1839,7 @@ public partial class NotchWindow : Window
     {
         _isDragging = true;
         _isMouseDownOnNotch = false;
+        if (IsDynamic) ApplyIslandMode(); // classic visuals while the pill is in the air
 
         // A floating island shouldn't hold reserved screen space
         _appBar.Release();
@@ -1914,6 +1989,8 @@ public partial class NotchWindow : Window
         _bottomRadiusSpring.AnimateTo(NotchConstants.ClosedBottomRadius, _currentBottomRadius);
         _shadowOpacitySpring.AnimateTo(ClosedShadowOpacity, _currentShadowOpacity);
         _contentOpacitySpring.AnimateTo(0.0, _currentContentOpacity);
+
+        if (IsDynamic) ApplyIslandMode(); // top dock: island targets; side docks: classic
     }
 
     private void RepositionForDock()
@@ -2157,6 +2234,7 @@ public partial class NotchWindow : Window
         // closing (e.g. multi-screen toggled off) must not tear them down.
         CompositionTarget.Rendering -= OnRenderBackdrop;
         CompositionTarget.Rendering -= OnRendering;
+        SpringAnimator.AnimationStarted -= OnAnySpringStarted;
         _hoverOpenTimer?.Stop();
         _hoverCloseTimer?.Stop();
         _cameraProximityTimer?.Stop();
@@ -2229,8 +2307,19 @@ public partial class NotchWindow : Window
             WebcamMirror.StopCamera();
         }
 
+        // Island mode / style may have changed: window bounds, fill, choreography
+        if (_island != null && (_appliedIslandMode != settings.IslandMode || _appliedIslandStyle != settings.IslandStyle))
+        {
+            _appliedIslandMode = settings.IslandMode;
+            _appliedIslandStyle = settings.IslandStyle;
+            UpdateFixedWindowBounds();
+            if (!_isDragging) RepositionForDock();
+            ApplyIslandMode();
+        }
+
         // Re-adjust notch size if currently open
-        if (_vm.NotchState == NotchState.Open)
+        if (IsDynamicTop) RetargetIsland(force: true);
+        else if (_vm.NotchState == NotchState.Open)
         {
             if (_dock == NotchDock.Top)
             {
@@ -2721,6 +2810,7 @@ public partial class NotchWindow : Window
         ShelfPanel.Visibility = hasItems ? Visibility.Visible : Visibility.Collapsed;
 
         // Adjust open height if notch is open
+        if (IsDynamicTop) { RefreshIslandActivities(); RetargetIsland(force: true); return; }
         if (_vm.NotchState == NotchState.Open)
         {
             double targetHeight = GetTopOpenHeight();
@@ -2745,7 +2835,8 @@ public partial class NotchWindow : Window
             ShelfPanel.Visibility = Visibility.Visible;
             ShelfPanel.ShowDropZone();
 
-            _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
+            if (IsDynamicTop) RetargetIsland(force: true);
+            else _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
 
             e.Handled = true;
         }
@@ -2770,7 +2861,8 @@ public partial class NotchWindow : Window
         if (!_shelfService.HasItems)
         {
             ShelfPanel.Visibility = Visibility.Collapsed;
-            if (_vm.NotchState == NotchState.Open)
+            if (IsDynamicTop) RetargetIsland(force: true);
+            else if (_vm.NotchState == NotchState.Open)
             {
                 _heightSpring.AnimateTo(GetTopOpenHeight(), _currentHeight);
             }
@@ -2814,6 +2906,12 @@ public partial class NotchWindow : Window
 
     public void ShowNotification(NotificationItem item)
     {
+        if (IsDynamicTop)
+        {
+            var v = NotificationVisualResolver.Resolve(item);
+            PostIslandAlert(new IslandAlert("notif:" + item.Id, v.Title, v.Body, v.Glyph));
+            return;
+        }
         _activeNotification = item;
 
         // Resolve authentic iOS Dynamic Island app-specific visuals, gradient badge & color
@@ -3058,6 +3156,13 @@ public partial class NotchWindow : Window
         double targetW = hasMusic ? NotchConstants.AudioPeekWidth : Math.Max(240, NotchConstants.PeekWidth);
         double targetH = hasMusic ? NotchConstants.AudioPeekHeight : 38;
 
+        if (IsDynamicTop && _island != null)
+        {
+            _island.SetInteraction(NotchState.Peeking);
+            RetargetIsland();
+        }
+        else
+        {
         _widthSpring.Response = 0.32;
         _widthSpring.DampingFraction = 0.74;
         _heightSpring.Response = 0.28;
@@ -3068,6 +3173,7 @@ public partial class NotchWindow : Window
         _topRadiusSpring.AnimateTo(NotchConstants.PeekTopRadius, _currentTopRadius);
         _bottomRadiusSpring.AnimateTo(NotchConstants.PeekBottomRadius, _currentBottomRadius);
         _shadowOpacitySpring.AnimateTo(ClosedShadowOpacity + 0.20, _currentShadowOpacity);
+        }
 
         if (hasMusic)
             LiveActivity.IsPeeking = true;
@@ -3090,6 +3196,13 @@ public partial class NotchWindow : Window
 
         _isCameraPopUpActive = false;
         LiveActivity.IsPeeking = false;
+
+        if (IsDynamicTop && _island != null)
+        {
+            _island.SetInteraction(_vm.NotchState);
+            RetargetIsland();
+            return;
+        }
 
         // Smoothly settle back to resting closed dimensions
         _widthSpring.Response = 0.32;
@@ -3140,6 +3253,12 @@ public partial class NotchWindow : Window
 
     private void OnTimerCompleted()
     {
+        if (IsDynamicTop)
+        {
+            PostIslandAlert(new IslandAlert("timer:done", Loc.T("Timer done"), _services.Timer.Label, "\uE916", AccentHex: IslandColors.Timer));
+            PulseTimerRing();
+            return;
+        }
         TimerCompactBadge.Visibility = Visibility.Collapsed;
         ShowPowerSurge(100, false);
         PowerSurgeTitleText.Text = "Focus Session Completed!";
@@ -3186,6 +3305,13 @@ public partial class NotchWindow : Window
 
     public void ShowPowerSurge(int percent, bool isCharging)
     {
+        if (IsDynamicTop)
+        {
+            PostIslandAlert(new IslandAlert("power:" + isCharging, Loc.T(isCharging ? "Charging" : "Battery"),
+                Loc.T(isCharging ? "Power connected" : "On battery"), isCharging ? "\uE83E" : "\uE850",
+                Value: percent, AccentHex: isCharging ? IslandColors.Success : null));
+            return;
+        }
         _powerSurgeActive = true;
         if (isCharging)
         {
@@ -3278,6 +3404,11 @@ public partial class NotchWindow : Window
 
     public void ShowLockState(string lockName, bool isLocked)
     {
+        if (IsDynamicTop)
+        {
+            PostIslandAlert(new IslandAlert("lock:" + lockName, lockName, Loc.T(isLocked ? "On" : "Off"), isLocked ? "\uE72E" : "\uE785"));
+            return;
+        }
         _lockStateActive = true;
         LockStateTitleText.Text = $"{lockName} {(isLocked ? "ON" : "OFF")}";
         LockStateIconText.Text = isLocked ? "⇪" : "⇩";
@@ -3351,6 +3482,13 @@ public partial class NotchWindow : Window
 
     public void ShowUsbDriveAlert(string driveLetter, string? label, long totalBytes, bool isConnected)
     {
+        if (IsDynamicTop)
+        {
+            PostIslandAlert(new IslandAlert("usb:" + driveLetter + isConnected,
+                isConnected ? $"{label ?? Loc.T("USB Drive")} ({driveLetter}:)" : $"{Loc.T("Drive")} ({driveLetter}:)",
+                Loc.T(isConnected ? "Connected" : "Removed"), "\uE88E"));
+            return;
+        }
         _activeUsbDriveLetter = driveLetter;
         _usbDriveActive = true;
 
@@ -3450,6 +3588,12 @@ public partial class NotchWindow : Window
 
     public void ShowOperatingModeAlert(ArmouryOperatingMode mode)
     {
+        if (IsDynamicTop)
+        {
+            var d = ArmouryCrateService.GetModeDetails(mode);
+            PostIslandAlert(new IslandAlert("mode:" + mode, d.Title, d.Description, d.Icon));
+            return;
+        }
         var details = ArmouryCrateService.GetModeDetails(mode);
         _operatingModeActive = true;
 
