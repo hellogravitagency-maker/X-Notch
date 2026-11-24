@@ -9,6 +9,7 @@
 - Rotates into a long break after a configurable number of focus blocks
 - Supports light and dark themes
 - Includes a compact vertical-friendly layout for side docking
+- Shows a running session as a Dynamic Island live activity (progress ring + rolling time). This is the reference sample for `ILiveActivityPlugin`, and it needs X-Notch 0.9.0 or newer.
 
 ## Setup
 

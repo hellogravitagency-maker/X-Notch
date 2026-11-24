@@ -623,6 +623,7 @@ public partial class NotchWindow : Window
                 _audioCaptureService, _shelfService, _webcamService,
                 _fullscreenService, _settings);
             _pluginContext.RegisterService(new PluginManagerNavigationService(OpenPluginManager));
+            _pluginContext.RegisterService<IIslandAlerts>(new IslandAlertsForPlugins(this));
 
             _pluginManager = new PluginManager(_pluginContext);
             _pluginLibraryService = new PluginLibraryService();
@@ -631,9 +632,11 @@ public partial class NotchWindow : Window
 
             // Inject UI plugin elements into the notch
             InjectPluginUI();
+            InjectPluginActivities();
 
             // Enable/disable now applies live — re-inject without a restart
             _pluginManager.PluginStateChanged += () => Dispatcher.Invoke(InjectPluginUI);
+            _pluginManager.PluginStateChanged += () => Dispatcher.Invoke(InjectPluginActivities);
         }
         catch (Exception ex)
         {

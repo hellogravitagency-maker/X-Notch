@@ -62,13 +62,53 @@ public partial class NotchWindow
     {
         if (_liveActivities.Any(a => a.Id == activity.Id)) return;
         _liveActivities.Add(activity);
-        activity.Changed += () => Dispatcher.BeginInvoke(RefreshIslandActivities);
+        if (_subscribedActivities.Add(activity)) // plugins may hand back the same instance after a re-inject
+            activity.Changed += () => Dispatcher.BeginInvoke(RefreshIslandActivities);
     }
 
     internal void RemoveLiveActivity(string id)
     {
         _liveActivities.RemoveAll(a => a.Id == id);
         RefreshIslandActivities();
+    }
+
+    private readonly HashSet<string> _pluginActivityIds = [];
+    private readonly HashSet<ILiveActivity> _subscribedActivities = [];
+
+    /// <summary>(Re)loads activities from enabled ILiveActivityPlugins.</summary>
+    private void InjectPluginActivities()
+    {
+        if (_pluginManager == null) return;
+        foreach (var id in _pluginActivityIds) _liveActivities.RemoveAll(a => a.Id == id);
+        _pluginActivityIds.Clear();
+        foreach (var plugin in _pluginManager.GetLiveActivityPlugins())
+        {
+            try
+            {
+                foreach (var activity in plugin.GetLiveActivities())
+                {
+                    if (_liveActivities.Any(a => a.Id == activity.Id)) continue;
+                    AddLiveActivity(activity);
+                    _pluginActivityIds.Add(activity.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Live activities of plugin {plugin.Name} failed: {ex.Message}");
+            }
+        }
+        RefreshIslandActivities();
+    }
+
+    /// <summary>IIslandAlerts for plugins: island alert in Dynamic mode, notification otherwise.</summary>
+    private sealed class IslandAlertsForPlugins(NotchWindow window) : Plugins.IIslandAlerts
+    {
+        public void Post(string title, string? subtitle = null, string? icon = null, string? key = null) =>
+            window.Dispatcher.BeginInvoke(() =>
+            {
+                if (window.IsDynamicTop) window.PostIslandAlert(new IslandAlert("plugin:" + (key ?? title), title, subtitle, icon));
+                else window._services.Notifications.AddNotification("X-Notch", title, subtitle ?? "");
+            });
     }
 
     private ILiveActivity? FindActivity(string? id) => id == null ? null : _liveActivities.FirstOrDefault(a => a.Id == id);

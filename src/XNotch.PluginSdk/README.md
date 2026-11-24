@@ -12,8 +12,30 @@
   - `IServicePlugin`
   - `IAnimationPlugin`
   - `IConfigurablePlugin`
+  - `ILiveActivityPlugin` and `IIslandAlerts` (Dynamic Island, 0.9.0+)
   - `PluginBase`
   - `PluginManifest`
+
+## Dynamic Island (0.9.0+)
+
+Additive APIs. Every earlier interface works unchanged.
+
+- `ILiveActivityPlugin.GetLiveActivities()` returns `XNotch.Island.Activities.ILiveActivity` instances. Each one supplies:
+  - `Id`
+  - `Priority`, clamped to 0–80 (default 40). Built-ins: agent 90, timer 70, stopwatch 60, media 50, shelf 30.
+  - `StartedAt` and `IsActive`, plus a `Changed` event
+  - view factories: `CreateCompactLeading` (22 px slot), `CreateCompactTrailing`, `CreateMinimalView` (32 px circle) and `CreateExpandedView` (a carousel page, optional)
+- `Context.GetService<IIslandAlerts>()?.Post(title, subtitle, icon, key)` shows a 2.6 s island alert. In Classic mode it shows a regular notification instead.
+- `XNotch.Island.Activities.IslandVisuals`, `ProgressRing`, `WaveformBars` and `XNotch.Controls.RollingNumberText` give plugin views the island look.
+
+The Focus Timer example (`Examples/Plugins/FocusTimerPlugin`) is the reference implementation. A running session shows as a compact ring plus rolling time.
+
+```csharp
+public sealed class MyPlugin : PluginBase, ILiveActivityPlugin
+{
+    public IEnumerable<ILiveActivity> GetLiveActivities() { yield return _activity; }
+}
+```
 
 ## Install from GitHub Packages
 
